@@ -16,13 +16,18 @@ app.get("/health", (req, res) => {
 // SMTP transporter
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
-  secure: process.env.SMTP_SECURE === "true",
+  port: Number(process.env.SMTP_PORT || 587),
+  secure: process.env.SMTP_SECURE === "true", // false for 587
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS
-  }
+  },
+  requireTLS: true,
+  connectionTimeout: 20000,
+  greetingTimeout: 20000,
+  socketTimeout: 20000
 });
+
 
 // submit endpoint
 app.post("/api/submit", async (req, res) => {
@@ -60,3 +65,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Server running on http://localhost:" + PORT);
 });
+
