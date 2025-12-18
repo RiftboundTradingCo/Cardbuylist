@@ -238,12 +238,17 @@ row.dataset.cardName = card.name;
   const cards = cardsTextarea.value;
   const total = totalEl.textContent;
 
-  try {
-    const res = await fetch("/api/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, cards, total })
-    });
+const res = await fetch("/api/submit", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    name,
+    email,
+    total,
+    order // <-- send the full structured order
+  })
+});
+
 
     const data = await res.json();
 
@@ -274,3 +279,4 @@ row.dataset.cardName = card.name;
   renderResults(buylist);
 
 });
+
