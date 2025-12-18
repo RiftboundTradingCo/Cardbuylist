@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sell Your Cards</title>
+
+  <!-- Link CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>Sell Your Cards</h1>
+  <p>Search our buylist, add your cards, and submit your sell order.</p>
+
+  <!-- BUYLIST SEARCH -->
+  <h2>Search Our Buylist</h2>
+
+  <input
+    type="text"
+    id="search"
+    placeholder="Search cards..."
+  >
+
+  <!-- SEARCH RESULTS -->
+  <div id="results"></div>
+
+  <!-- ORDER SUMMARY -->
+  <h3>Your Sell Order</h3>
+
+  <ul id="orderList"></ul>
+
+  <p>
+    Total: $<span id="total">0.00</span>
+  </p>
+
+  <!-- SELL FORM -->
+  <form id="sellForm">
+
+    <label>
+      Your Name
+      <input type="text" id="name" required>
+    </label>
+
+    <label>
+      Email Address
+      <input type="email" id="email" required>
+    </label>
+
+    <label>
+      Cards You’re Selling
+      <textarea
+        id="cards"
+        placeholder="Your selected cards will appear here"
+        readonly
+      ></textarea>
+    </label>
+
+    <button type="submit">
+      Submit Sell Order
+    </button>
+
+  </form>
+
+  <!-- CONFIRMATION MESSAGE -->
+  <p id="message"></p>
+
+  <!-- Link JavaScript (must be last) -->
+  <script src="script.js"></script>
+
+</body>
+</html>
