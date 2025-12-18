@@ -10,13 +10,13 @@ document.addEventListener("DOMContentLoaded", function () {
     MP: 0.8
   };
 
+  // Update these image paths to match your /images folder
   const buylist = [
   { name: "Jinx - Loose Cannon (Signature)", price: 540.00, image: "images/Jinx - Loose Cannon (Signature).jpg" },
   { name: "Deadbloom Predator - Origins", price: 82.50, image: "images/Deadbloom Predator - Origins.jpg" },
   { name: "Kai'Sa - Survivor (Alternate Art) - Origins", price: 72.00, image: "images/Kai'Sa - Survivor (Alternate Art) - Origins.jpg" },
   { name: "Time Warp - Origins", price: 52.50, image: "images/Time Warp - Origins.jpg" }
-];
-
+  ];
 
   /* ===============================
      ELEMENTS
@@ -47,9 +47,14 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function findLineIndex(name, condition) {
-    return order.findIndex(
-      l => l.name === name && l.condition === condition
-    );
+    return order.findIndex(l => l.name === name && l.condition === condition);
+  }
+
+  function clampQty(n) {
+    if (!Number.isInteger(n)) return 1;
+    if (n < 1) return 1;
+    if (n > 999) return 999;
+    return n;
   }
 
   /* ===============================
@@ -65,24 +70,30 @@ document.addEventListener("DOMContentLoaded", function () {
       row.dataset.cardName = card.name;
 
       row.innerHTML = `
-  <img class="card-img" src="${card.image}" alt="${card.name}">
+        <img class="card-img" src="${card.image || ""}" alt="${card.name}">
 
-  <div class="card-title">
-    ${card.name} — $${money(card.price)} (NM base)
-  </div>
+        <div class="card-title">
+          ${card.name} — $${money(card.price)} (NM base)
+        </div>
 
-  <select class="cond">
-    <option value="NM">NM</option>
-    <option value="LP">LP</option>
-    <option value="MP">MP</option>
-  </select>
+        <select class="cond">
+          <option value="NM">NM</option>
+          <option value="LP">LP</option>
+          <option value="MP">MP</option>
+        </select>
 
-  <input class="qty" type="number" min="1" max="999" value="1">
+        <input
+          class="qty"
+          type="number"
+          min="1"
+          max="999"
+          value="1"
+        >
 
-  <button class="add-btn" type="button">Add</button>
-`;
-
-row.dataset.cardName = card.name;
+        <button class="add-btn" type="button">
+          Add
+        </button>
+      `;
 
       results.appendChild(row);
     });
@@ -99,15 +110,10 @@ row.dataset.cardName = card.name;
     const cardName = row.dataset.cardName;
 
     const condition = row.querySelector(".cond").value;
-    const qty = parseInt(row.querySelector(".qty").value, 10);
+    const qty = clampQty(parseInt(row.querySelector(".qty").value, 10));
 
     if (!CONDITIONS[condition]) {
       alert("Invalid condition.");
-      return;
-    }
-
-    if (!Number.isInteger(qty) || qty < 1 || qty > 999) {
-      alert("Quantity must be between 1 and 999.");
       return;
     }
 
@@ -118,7 +124,7 @@ row.dataset.cardName = card.name;
 
     const idx = findLineIndex(card.name, condition);
     if (idx >= 0) {
-      order[idx].qty += qty;
+      order[idx].qty = clampQty(order[idx].qty + qty);
     } else {
       order.push({
         name: card.name,
@@ -132,7 +138,7 @@ row.dataset.cardName = card.name;
   });
 
   /* ===============================
-     RENDER ORDER (with + / − buttons)
+     RENDER ORDER (with + / − and remove)
   =============================== */
 
   function renderOrder() {
@@ -169,6 +175,7 @@ row.dataset.cardName = card.name;
 
     totalEl.textContent = money(total);
 
+    // Keep the textarea as a human-readable summary (still useful)
     cardsTextarea.value = order
       .map(l => `${l.qty}x ${l.name} (${l.condition})`)
       .join(", ");
@@ -185,21 +192,17 @@ row.dataset.cardName = card.name;
     const name = li.dataset.name;
     const condition = li.dataset.condition;
 
-    const idx = order.findIndex(
-      l => l.name === name && l.condition === condition
-    );
+    const idx = findLineIndex(name, condition);
     if (idx === -1) return;
 
-    // PLUS
     if (e.target.classList.contains("plus")) {
-      order[idx].qty += 1;
+      order[idx].qty = clampQty(order[idx].qty + 1);
       renderOrder();
       return;
     }
 
-    // MINUS
     if (e.target.classList.contains("minus")) {
-      order[idx].qty -= 1;
+      order[idx].qty = order[idx].qty - 1;
       if (order[idx].qty <= 0) {
         order.splice(idx, 1);
       }
@@ -207,7 +210,6 @@ row.dataset.cardName = card.name;
       return;
     }
 
-    // REMOVE
     if (e.target.classList.contains("remove-btn")) {
       order.splice(idx, 1);
       renderOrder();
@@ -220,57 +222,60 @@ row.dataset.cardName = card.name;
 
   searchInput.addEventListener("input", function () {
     const q = searchInput.value.toLowerCase().trim();
-    const filtered = buylist.filter(c =>
-      c.name.toLowerCase().includes(q)
-    );
+    const filtered = buylist.filter(c => c.name.toLowerCase().includes(q));
     renderResults(filtered);
   });
 
   /* ===============================
-     FORM SUBMIT
+     FORM SUBMIT (send structured order)
   =============================== */
 
   form.addEventListener("submit", async function (event) {
-  event.preventDefault();
+    event.preventDefault();
 
-  const name = document.getElementById("name").value;
-  const email = document.getElementById("email").value;
-  const cards = cardsTextarea.value;
-  const total = totalEl.textContent;
-
-const res = await fetch("/api/submit", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    name,
-    email,
-    total,
-    order // <-- send the full structured order
-  })
-});
-
-
-    const data = await res.json();
-
-    if (!data.ok) {
-      message.textContent = "Error: " + (data.error || "Could not send email.");
+    if (!order.length) {
+      message.textContent = "Please add at least one card to your sell order.";
       message.style.color = "red";
       return;
     }
 
-    message.textContent = "Submitted! We emailed you the sell order.";
-    message.style.color = "green";
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const total = totalEl.textContent;
 
-    form.reset();
-    order = [];
-    renderOrder();
-    renderResults(buylist);
-    searchInput.value = "";
-  } catch (e) {
-    message.textContent = "Network error. Could not submit.";
-    message.style.color = "red";
-  }
-});
+    try {
+      const res = await fetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          total,
+          order
+        })
+      });
+
+      const data = await res.json();
+
+      if (!data.ok) {
+        message.textContent = "Error: " + (data.error || "Could not send email.");
+        message.style.color = "red";
+        return;
+      }
+
+      message.textContent = "Submitted! We received your sell order.";
+      message.style.color = "green";
+
+      form.reset();
+      order = [];
+      renderOrder();
+      renderResults(buylist);
+      searchInput.value = "";
+    } catch (e) {
+      message.textContent = "Network error. Could not submit.";
+      message.style.color = "red";
+    }
+  });
 
   /* ===============================
      INITIAL LOAD
