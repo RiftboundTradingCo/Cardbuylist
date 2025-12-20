@@ -1,6 +1,9 @@
 document.addEventListener("DOMContentLoaded", function () {
-  const buySearch = document.getElementById("buySearch");
-  const storeGrid = document.getElementById("storeGrid");
+  const buySearch = document.getElementById("buySearch") || document.querySelector(".buy-search");
+  const storeGrid = document.getElementById("storeGrid") || document.querySelector(".store-grid");
+
+  // If the grid isn't on this page, just do nothing (no popups)
+  if (!storeGrid) return;
 
   function loadBuyCart() {
     const raw = localStorage.getItem("buyCart");
@@ -13,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Search filter
-  if (buySearch && storeGrid) {
+  if (buySearch) {
     buySearch.addEventListener("input", function () {
       const q = buySearch.value.toLowerCase().trim();
       storeGrid.querySelectorAll(".store-card").forEach(card => {
@@ -21,28 +24,31 @@ document.addEventListener("DOMContentLoaded", function () {
         card.style.display = name.includes(q) ? "" : "none";
       });
     });
-
-    // Add to cart (event delegation)
-    storeGrid.addEventListener("click", function (e) {
-      if (!e.target.classList.contains("buy-add-btn")) return;
-
-      const card = e.target.closest(".store-card");
-      const name = card.dataset.name;
-      const price = Number(card.dataset.price);
-      const image = card.dataset.image || "";
-
-      if (!name || !Number.isFinite(price)) return;
-
-      const cart = loadBuyCart();
-      const idx = cart.findIndex(i => i.name === name);
-
-      if (idx >= 0) cart[idx].qty += 1;
-      else cart.push({ name, price, image, qty: 1 });
-
-      saveBuyCart(cart);
-
-      e.target.textContent = "Added!";
-      setTimeout(() => (e.target.textContent = "Add to Cart"), 700);
-    });
   }
+
+  // Add to cart
+  storeGrid.addEventListener("click", function (e) {
+    const btn = e.target.closest(".buy-add-btn");
+    if (!btn) return;
+
+    const card = btn.closest(".store-card");
+    if (!card) return;
+
+    const name = (card.dataset.name || "").trim();
+    const price = Number(card.dataset.price); // must be like 999.99 (no $)
+    const image = card.dataset.image || "";
+
+    if (!name || !Number.isFinite(price)) return;
+
+    const cartArr = loadBuyCart();
+    const idx = cartArr.findIndex(i => i.name === name);
+
+    if (idx >= 0) cartArr[idx].qty += 1;
+    else cartArr.push({ name, price, image, qty: 1 });
+
+    saveBuyCart(cartArr);
+
+    btn.textContent = "Added ✓";
+    setTimeout(() => (btn.textContent = "Add to Cart"), 700);
+  });
 });
