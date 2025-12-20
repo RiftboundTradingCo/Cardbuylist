@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Your Buy Cart | Riftbound Trading Co</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark">⚡</span>
+      <span class="brand-name">Riftbound Trading Co</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/" class="nav-link">Sell Cards</a>
+      <a href="/buy.html" class="nav-link">Buy Cards</a>
+      <a href="/buy-cart.html" class="nav-link active">Buy Cart</a>
+      <a href="/shipping.html" class="nav-link">Shipping</a>
+      <a href="/contact.html" class="nav-link">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <h1>Your Buy Cart</h1>
+  <p>Review your cart items below.</p>
+
+  <ul id="buyCartList"></ul>
+
+  <p class="recap-total">
+    <strong>Total:</strong> $<span id="buyCartTotal">0.00</span>
+  </p>
+
+  <button id="buyClearCartBtn" class="clear-cart-btn" type="button">Clear Cart</button>
+
+  <p style="margin-top:16px;">
+    <a href="/buy.html">← Continue shopping</a>
+  </p>
+
+  <p id="buyCartMessage"></p>
+</main>
+
+<script src="buy-cart.js"></script>
+</body>
+</html>
