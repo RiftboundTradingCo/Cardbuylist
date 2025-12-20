@@ -1,97 +1,110 @@
 document.addEventListener("DOMContentLoaded", function () {
-  // Visible proof the JS loaded
-  const badge = document.createElement("div");
-  badge.textContent = "Buy page JS loaded ✓";
-  badge.style.position = "fixed";
-  badge.style.bottom = "14px";
-  badge.style.right = "14px";
-  badge.style.padding = "10px 12px";
-  badge.style.borderRadius = "10px";
-  badge.style.background = "rgba(17,24,39,0.92)";
-  badge.style.color = "white";
-  badge.style.fontSize = "12px";
-  badge.style.zIndex = "9999";
-  document.body.appendChild(badge);
-  setTimeout(() => badge.remove(), 1800);
+  const list = document.getElementById("buyCartList");
+  const totalEl = document.getElementById("buyCartTotal");
+  const clearBtn = document.getElementById("buyClearCartBtn");
+  const msg = document.getElementById("buyCartMessage");
 
-  // Grab elements in a robust way (doesn't require IDs)
-  const buySearch = document.getElementById("buySearch") || document.querySelector(".buy-search");
-  const storeGrid = document.getElementById("storeGrid") || document.querySelector(".store-grid");
+  function money(n) { return Number(n).toFixed(2); }
 
-  if (!storeGrid) {
-    alert("Could not find the store grid (.store-grid). Check buy.html markup.");
-    return;
-  }
-
-  function loadBuyCart() {
+  function load() {
     const raw = localStorage.getItem("buyCart");
     if (!raw) return [];
     try { return JSON.parse(raw); } catch { return []; }
   }
 
-  function saveBuyCart(cart) {
+  function save(cart) {
     localStorage.setItem("buyCart", JSON.stringify(cart));
   }
 
-  function toast(text) {
-    const t = document.createElement("div");
-    t.textContent = text;
-    t.style.position = "fixed";
-    t.style.top = "70px";
-    t.style.right = "14px";
-    t.style.padding = "10px 12px";
-    t.style.borderRadius = "10px";
-    t.style.background = "rgba(34,197,94,0.95)";
-    t.style.color = "#111";
-    t.style.fontWeight = "700";
-    t.style.zIndex = "9999";
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 1200);
+  function total(cart) {
+    return cart.reduce((sum, i) => sum + (Number(i.qty)||0) * (Number(i.price)||0), 0);
   }
 
-  // Search filter
-  if (buySearch) {
-    buySearch.addEventListener("input", function () {
-      const q = buySearch.value.toLowerCase().trim();
-      storeGrid.querySelectorAll(".store-card").forEach(card => {
-        const name = (card.dataset.name || "").toLowerCase();
-        card.style.display = name.includes(q) ? "" : "none";
-      });
+  function render() {
+    const cart = load();
+    list.innerHTML = "";
+
+    if (!cart.length) {
+      list.innerHTML = "<li style='list-style:none;background:white;padding:12px;border-radius:8px;'>Your buy cart is empty.</li>";
+      totalEl.textContent = "0.00";
+      return;
+    }
+
+    cart.forEach(item => {
+      const qty = Number(item.qty) || 0;
+      const price = Number(item.price) || 0;
+      const lineTotal = qty * price;
+
+      const li = document.createElement("li");
+      li.style.listStyle = "none";
+      li.style.marginBottom = "10px";
+      li.dataset.name = item.name;
+
+      li.innerHTML = `
+        <div class="order-row">
+          <div style="display:flex;gap:10px;align-items:center;">
+            ${item.image ? `<img src="${item.image}" alt="${item.name}" style="width:52px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #ddd;">` : ""}
+            <div>
+              <div><strong>${item.name}</strong></div>
+              <div>$${money(price)} each = $${money(lineTotal)}</div>
+            </div>
+          </div>
+
+          <div class="qty-controls">
+            <button class="qty-btn minus" type="button">−</button>
+            <span class="qty-value">${qty}</span>
+            <button class="qty-btn plus" type="button">+</button>
+          </div>
+
+          <button class="remove-btn" type="button">Remove</button>
+        </div>
+      `;
+
+      list.appendChild(li);
     });
+
+    totalEl.textContent = money(total(cart));
   }
 
-  // Add to cart (event delegation)
-  storeGrid.addEventListener("click", function (e) {
-    const btn = e.target.closest(".buy-add-btn");
-    if (!btn) return;
+  // + / - / remove
+  list.addEventListener("click", function (e) {
+    const li = e.target.closest("li");
+    if (!li) return;
 
-    const card = btn.closest(".store-card");
-    if (!card) return;
+    let cart = load();
+    const idx = cart.findIndex(i => i.name === li.dataset.name);
+    if (idx === -1) return;
 
-    const name = (card.dataset.name || "").trim();
-    const price = Number(card.dataset.price);
-    const image = card.dataset.image || "";
-
-    if (!name) {
-      alert("Missing data-name on .store-card");
-      return;
-    }
-    if (!Number.isFinite(price)) {
-      alert("Missing/invalid data-price on .store-card for: " + name);
+    if (e.target.classList.contains("plus")) {
+      cart[idx].qty = Math.min(999, (Number(cart[idx].qty)||0) + 1);
+      save(cart);
+      render();
       return;
     }
 
-    const cartArr = loadBuyCart();
-    const idx = cartArr.findIndex(i => i.name === name);
+    if (e.target.classList.contains("minus")) {
+      cart[idx].qty = (Number(cart[idx].qty)||0) - 1;
+      if (cart[idx].qty <= 0) cart.splice(idx, 1);
+      save(cart);
+      render();
+      return;
+    }
 
-    if (idx >= 0) cartArr[idx].qty += 1;
-    else cartArr.push({ name, price, image, qty: 1 });
-
-    saveBuyCart(cartArr);
-
-    btn.textContent = "Added ✓";
-    setTimeout(() => (btn.textContent = "Add to Cart"), 700);
-
-    toast(`Added: ${name}`);
+    if (e.target.classList.contains("remove-btn")) {
+      cart.splice(idx, 1);
+      save(cart);
+      render();
+    }
   });
+
+  // Clear cart
+  clearBtn.addEventListener("click", function () {
+    if (!confirm("Clear your buy cart?")) return;
+    localStorage.removeItem("buyCart");
+    render();
+    msg.textContent = "Cart cleared.";
+    msg.style.color = "green";
+  });
+
+  render();
 });
