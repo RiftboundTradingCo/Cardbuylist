@@ -171,3 +171,12 @@ p {
   user-select: none;
 }
 
+.clickable-img {
+  cursor: zoom-in;
+  transition: transform 0.15s ease;
+}
+
+.clickable-img:hover {
+  transform: scale(1.05);
+}
+
