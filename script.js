@@ -41,11 +41,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Each line: { name, condition, qty, unitPrice }
   let order = [];
+  function loadCart() {
+  const raw = localStorage.getItem("sellCart");
+  if (!raw) return [];
+  try { return JSON.parse(raw); } catch { return []; }
+}
+
+function saveCart(cart) {
+  localStorage.setItem("sellCart", JSON.stringify(cart));
+}
+
 
   /* ===============================
      HELPERS
   =============================== */
-
+order = loadCart();
+renderOrder();
   function money(n) {
     return Number(n).toFixed(2);
   }
@@ -60,6 +71,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (n > 999) return 999;
     return n;
   }
+
 
   /* ===============================
      RENDER SEARCH RESULTS
@@ -142,7 +154,7 @@ document.addEventListener("DOMContentLoaded", function () {
         unitPrice: unitPrice
       });
     }
-
+    saveCart(order);
     renderOrder();
   });
 
@@ -206,6 +218,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (e.target.classList.contains("plus")) {
       order[idx].qty = clampQty(order[idx].qty + 1);
+      saveCart(order);
       renderOrder();
       return;
     }
@@ -215,12 +228,14 @@ document.addEventListener("DOMContentLoaded", function () {
       if (order[idx].qty <= 0) {
         order.splice(idx, 1);
       }
+      saveCart(order);
       renderOrder();
       return;
     }
 
     if (e.target.classList.contains("remove-btn")) {
       order.splice(idx, 1);
+      saveCart(order);
       renderOrder();
     }
   });
@@ -324,6 +339,7 @@ imageModal.addEventListener("click", function (e) {
   renderResults(buylist);
 
 });
+
 
 
 
