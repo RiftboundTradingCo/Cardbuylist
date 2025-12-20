@@ -230,52 +230,61 @@ document.addEventListener("DOMContentLoaded", function () {
      FORM SUBMIT (send structured order)
   =============================== */
 
-  form.addEventListener("submit", async function (event) {
-    event.preventDefault();
+form.addEventListener("submit", async function (event) {
+  event.preventDefault();
 
-    if (!order.length) {
-      message.textContent = "Please add at least one card to your sell order.";
+  if (!order.length) {
+    message.textContent = "Please add at least one card to your sell order.";
+    message.style.color = "red";
+    return;
+  }
+
+  const name = document.getElementById("name").value;
+  const email = document.getElementById("email").value;
+
+  // Compute total on client to match email breakdown
+  let computedTotal = 0;
+  order.forEach(l => {
+    computedTotal += (Number(l.qty) || 0) * (Number(l.unitPrice) || 0);
+  });
+
+  try {
+    const res = await fetch("/api/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        email,
+        total: computedTotal.toFixed(2),
+        order
+      })
+    });
+
+    const data = await res.json();
+
+    if (!data.ok) {
+      message.textContent = "Error: " + (data.error || "Could not send email.");
       message.style.color = "red";
       return;
     }
 
-    const name = document.getElementById("name").value;
-    const email = document.getElementById("email").value;
-    const total = totalEl.textContent;
+    // Store recap data for the next page
+    sessionStorage.setItem("sellOrderRecap", JSON.stringify({
+      name,
+      email,
+      order,
+      computedTotal: computedTotal.toFixed(2)
+    }));
 
-    try {
-      const res = await fetch("/api/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          email,
-          total,
-          order
-        })
-      });
+    // Go to recap page
+    window.location.href = "/recap.html";
 
-      const data = await res.json();
+  } catch (e) {
+    message.textContent = "Network error. Could not submit.";
+    message.style.color = "red";
+  }
+});
 
-      if (!data.ok) {
-        message.textContent = "Error: " + (data.error || "Could not send email.");
-        message.style.color = "red";
-        return;
-      }
-
-      message.textContent = "Submitted! We received your sell order.";
-      message.style.color = "green";
-
-      form.reset();
-      order = [];
-      renderOrder();
-      renderResults(buylist);
-      searchInput.value = "";
-    } catch (e) {
-      message.textContent = "Network error. Could not submit.";
-      message.style.color = "red";
-    }
-  });
 
   /* ===============================
      INITIAL LOAD
@@ -284,4 +293,5 @@ document.addEventListener("DOMContentLoaded", function () {
   renderResults(buylist);
 
 });
+
 
