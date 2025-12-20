@@ -180,3 +180,42 @@ p {
   transform: scale(1.05);
 }
 
+/* ===============================
+   Header / Navigation
+=============================== */
+
+.site-header {
+  background: #111827;
+  color: white;
+  padding: 14px 0;
+  margin-bottom: 30px;
+}
+
+.header-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+}
+
+.nav-links a {
+  color: #e5e7eb;
+  text-decoration: none;
+  margin-left: 20px;
+  font-size: 15px;
+}
+
+.nav-links a:hover {
+  color: white;
+  text-decoration: underline;
+}
+
