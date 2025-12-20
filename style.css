@@ -385,6 +385,16 @@ p {
 .store-card button:hover {
   background: #1d4ed8;
 }
+.buy-search {
+  width: 100%;
+  max-width: 400px;
+  padding: 12px;
+  font-size: 16px;
+  margin: 10px 0 20px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
 
 </main>
+
 
