@@ -80,28 +80,6 @@ document.addEventListener("DOMContentLoaded", function () {
   alt="${card.name}"
   data-full="${card.image}"
 >
-// Image click → open modal
-results.addEventListener("click", function (e) {
-  if (!e.target.classList.contains("clickable-img")) return;
-
-  modalImage.src = e.target.dataset.full;
-  imageModal.classList.remove("hidden");
-});
-
-// Close modal
-modalClose.addEventListener("click", function () {
-  imageModal.classList.add("hidden");
-  modalImage.src = "";
-});
-
-// Click outside image closes modal
-imageModal.addEventListener("click", function (e) {
-  if (e.target === imageModal) {
-    imageModal.classList.add("hidden");
-    modalImage.src = "";
-  }
-});
-
 
         <div class="card-title">
           ${card.name} — $${money(card.price)} (NM base)
@@ -316,7 +294,29 @@ form.addEventListener("submit", async function (event) {
   }
 });
 
+// Image click → open modal
+results.addEventListener("click", function (e) {
+  if (!e.target.classList.contains("clickable-img")) return;
 
+  modalImage.src = e.target.dataset.full;
+  imageModal.classList.remove("hidden");
+});
+
+// Close modal
+modalClose.addEventListener("click", function () {
+  imageModal.classList.add("hidden");
+  modalImage.src = "";
+});
+
+// Click outside image closes modal
+imageModal.addEventListener("click", function (e) {
+  if (e.target === imageModal) {
+    imageModal.classList.add("hidden");
+    modalImage.src = "";
+  }
+});
+
+  
   /* ===============================
      INITIAL LOAD
   =============================== */
@@ -324,6 +324,7 @@ form.addEventListener("submit", async function (event) {
   renderResults(buylist);
 
 });
+
 
 
 
