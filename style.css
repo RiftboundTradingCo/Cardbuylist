@@ -408,8 +408,16 @@ p {
 .clear-cart-btn:hover {
   background: #fecaca;
 }
+.order-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+}
+
 
 </main>
+
 
 
 
