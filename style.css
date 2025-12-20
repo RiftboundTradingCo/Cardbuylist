@@ -337,5 +337,54 @@ p {
     padding: 9px 12px;
   }
 }
+/* ===============================
+   Buy Cards Storefront
+=============================== */
+
+.store-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.store-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+}
+
+.store-card img {
+  width: 100%;
+  max-width: 160px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.store-card h3 {
+  margin: 10px 0 4px;
+}
+
+.store-card .price {
+  font-weight: bold;
+  color: #16a34a;
+  margin-bottom: 10px;
+}
+
+.store-card button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.store-card button:hover {
+  background: #1d4ed8;
+}
 
 </main>
+
