@@ -25,24 +25,34 @@
 <main>
   <h1>Buy Cards</h1>
   <p>Browse cards available for purchase.</p>
+<input
+  type="text"
+  id="buySearch"
+  placeholder="Search cards for sale..."
+  class="buy-search"
+/>
+
+<div class="store-grid" id="storeGrid">
+  <!-- cards go here -->
+</div>
 
   <div class="store-grid">
     <!-- Card for sale -->
-    <div class="store-card">
+    <div class="store-card" data-name="jinx - loose cannon (signature)"> 
       <img src="images/Jinx - Loose Cannon (Signature).jpg" alt="Jinx - Loose Cannon (Signature)">
       <h3>Jinx - Loose Cannon (Signature)</h3>
       <p class="price">$999.99</p>
       <button>Add to Cart</button>
     </div>
 
-    <div class="store-card">
+    <div class="store-card" data-name="deadbloom predator - origins> 
       <img src="images/Deadbloom Predator - Origins.jpg" alt="Deadbloom Predator - Origins">
       <h3>Deadbloom Predator - Origins</h3>
       <p class="price">$114.99</p>
       <button>Add to Cart</button>
     </div>
 
-    <div class="store-card">
+    <div class="store-card" data-name="kai'sa - survivor (alternate art) - origins"> 
       <img src="images/Kai'Sa - Survivor (Alternate Art) - Origins" alt="Kai'Sa - Survivor (Alternate Art) - Origins">
       <h3>Kai'Sa - Survivor (Alternate Art) - Origins</h3>
       <p class="price">$104.99</p>
@@ -50,6 +60,20 @@
     </div>
   </div>
 </main>
+<script>
+  const buySearch = document.getElementById("buySearch");
+  const storeGrid = document.getElementById("storeGrid");
+  const cards = storeGrid.querySelectorAll(".store-card");
+
+  buySearch.addEventListener("input", function () {
+    const query = buySearch.value.toLowerCase().trim();
+
+    cards.forEach(card => {
+      const name = card.dataset.name;
+      card.style.display = name.includes(query) ? "" : "none";
+    });
+  });
+</script>
 
 </body>
 </html>
