@@ -22,6 +22,10 @@ document.addEventListener("DOMContentLoaded", function () {
      ELEMENTS
   =============================== */
 
+  const imageModal = document.getElementById("imageModal");
+  const modalImage = document.getElementById("modalImage");
+  const modalClose = document.getElementById("modalClose");
+
   const searchInput = document.getElementById("search");
   const results = document.getElementById("results");
   const orderList = document.getElementById("orderList");
@@ -293,5 +297,6 @@ form.addEventListener("submit", async function (event) {
   renderResults(buylist);
 
 });
+
 
 
