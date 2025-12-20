@@ -415,8 +415,24 @@ p {
   align-items: center;
 }
 
+.cart-badge {
+  background: #ef4444; /* red */
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 8px;
+  margin-left: 6px;
+  line-height: 1;
+}
+
+.cart-badge.hidden {
+  display: none;
+}
+
 
 </main>
+
 
 
 
