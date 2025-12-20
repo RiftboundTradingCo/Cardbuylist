@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>Buy Cards | Riftbound Trading Co</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+<!-- HEADER / NAV -->
 <header class="site-header">
   <div class="header-inner">
     <a class="brand" href="/">
@@ -13,7 +15,7 @@
       <span class="brand-name">Riftbound Trading Co</span>
     </a>
 
-     <nav class="nav-links">
+<nav class="nav-links">
   <a href="/" class="nav-link">Sell Cards</a>
   <a href="/cart.html" class="nav-cta">View Sell Cart</a>
      <p>
@@ -26,21 +28,26 @@
 </header>
 
 <main>
-  <h1>Buy Cards</h1>
-  <p>
-  <a href="/buy-cart.html" class="nav-cta">View Buy Cart</a>
-</p>
-  <p>Browse cards available for purchase.</p>
-<input
-  type="text"
-  id="buySearch"
-  placeholder="Search cards for sale..."
-  class="buy-search"
-/>
 
-<div class="store-grid" id="storeGrid">
-  <!-- cards go here -->
-  
+  <h1>Buy Cards</h1>
+  <p>Browse cards available for purchase.</p>
+
+  <!-- VIEW CART BUTTON -->
+  <p>
+    <a href="/buy-cart.html" class="nav-cta">View Buy Cart</a>
+  </p>
+
+  <!-- SEARCH BAR -->
+  <input
+    type="text"
+    id="buySearch"
+    class="buy-search"
+    placeholder="Search cards for sale..."
+  >
+
+  <!-- STORE GRID -->
+  <div class="store-grid" id="storeGrid">
+
     <div class="store-card" data-name="jinx - loose cannon (signature)" data-price="$999.99" data-image="images/Jinx - Loose Cannon (Signature).jpg"> 
       <img src="images/Jinx - Loose Cannon (Signature).jpg" alt="Jinx - Loose Cannon (Signature)">
       <h3>Jinx - Loose Cannon (Signature)</h3>
@@ -62,24 +69,12 @@
       <button class="buy-add-btn" type="button">Add to Cart</button>
     
   </div>
-  
-  <script src="buy.js"></script>
-  
+  </div>
+
 </main>
-<script>
-  const buySearch = document.getElementById("buySearch");
-  const storeGrid = document.getElementById("storeGrid");
-  const cards = storeGrid.querySelectorAll(".store-card");
 
-  buySearch.addEventListener("input", function () {
-    const query = buySearch.value.toLowerCase().trim();
-
-    cards.forEach(card => {
-      const name = card.dataset.name;
-      card.style.display = name.includes(query) ? "" : "none";
-    });
-  });
-</script>
-  
+<!-- IMPORTANT: LOAD JS LAST -->
+<script src="buy.js"></script>
 </body>
 </html>
+
