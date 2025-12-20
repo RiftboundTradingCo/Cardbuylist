@@ -3,6 +3,18 @@ document.addEventListener("DOMContentLoaded", function () {
   const cartTotalEl = document.getElementById("cartTotal");
   const form = document.getElementById("cartForm");
   const message = document.getElementById("cartMessage");
+  const clearBtn = document.getElementById("clearCartBtn");
+
+
+  clearBtn.addEventListener("click", function () {
+  if (!confirm("Are you sure you want to clear your sell cart?")) return;
+
+  localStorage.removeItem("sellCart");
+  renderCart();
+
+  message.textContent = "Cart cleared.";
+  message.style.color = "green";
+});
 
   function money(n) {
     return Number(n).toFixed(2);
