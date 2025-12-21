@@ -1,54 +1,27 @@
 document.addEventListener("DOMContentLoaded", function () {
-  const buySearch = document.getElementById("buySearch") || document.querySelector(".buy-search");
-  const storeGrid = document.getElementById("storeGrid") || document.querySelector(".store-grid");
+  const buySearch = document.getElementById("buySearch");
+  const storeGrid = document.getElementById("storeGrid");
 
-  // If the grid isn't on this page, just do nothing (no popups)
-  if (!storeGrid) return;
+  if (!buySearch || !storeGrid) return;
 
-  function loadBuyCart() {
-    const raw = localStorage.getItem("buyCart");
-    if (!raw) return [];
-    try { return JSON.parse(raw); } catch { return []; }
-  }
+  function filterCards() {
+    const q = buySearch.value.toLowerCase().trim();
 
-  function saveBuyCart(cart) {
-    localStorage.setItem("buyCart", JSON.stringify(cart));
-  }
+    const cards = storeGrid.querySelectorAll(".store-card");
+    cards.forEach(card => {
+      const title = (card.querySelector("h3")?.textContent || "").toLowerCase();
+      const sku = (card.dataset.sku || "").toLowerCase();
 
-  // Search filter
-  if (buySearch) {
-    buySearch.addEventListener("input", function () {
-      const q = buySearch.value.toLowerCase().trim();
-      storeGrid.querySelectorAll(".store-card").forEach(card => {
-        const name = (card.dataset.name || "").toLowerCase();
-        card.style.display = name.includes(q) ? "" : "none";
-      });
+      const match = title.includes(q) || sku.includes(q);
+      card.style.display = match ? "" : "none";
     });
   }
 
-  // Add to cart
-  storeGrid.addEventListener("click", function (e) {
-    const btn = e.target.closest(".buy-add-btn");
-    if (!btn) return;
+  // Run as user types
+  buySearch.addEventListener("input", filterCards);
 
-    const card = btn.closest(".store-card");
-    if (!card) return;
-
-    // inside click handler:
-const sku = (card.dataset.sku || "").trim();
-if (!sku) return;
-
-const cartArr = loadBuyCart();
-const idx = cartArr.findIndex(i => i.sku === sku);
-
-if (idx >= 0) cartArr[idx].qty += 1;
-else cartArr.push({ sku, qty: 1 });
-
-saveBuyCart(cartArr);
-
-    saveBuyCart(cartArr);
-
-    btn.textContent = "Added ✓";
-    setTimeout(() => (btn.textContent = "Add to Cart"), 700);
-  });
+  // Also run once after a short delay to catch auto-rendered cards
+  // (cards load after fetch in buy-render.js)
+  setTimeout(filterCards, 300);
 });
+
