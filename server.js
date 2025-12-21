@@ -19,7 +19,7 @@ function readJson(filename, fallback) {
     const full = path.join(__dirname, filename);
     if (!fs.existsSync(full)) return fallback;
     return JSON.parse(fs.readFileSync(full, "utf8"));
-  } catch (e) {
+  } catch {
     return fallback;
   }
 }
@@ -29,9 +29,28 @@ function writeJson(filename, data) {
   fs.writeFileSync(full, JSON.stringify(data, null, 2));
 }
 
-// -----------------------------
-// STRIPE WEBHOOK (must be FIRST)
-// -----------------------------
+function moneyFromCents(cents) {
+  return (Number(cents || 0) / 100).toFixed(2);
+}
+
+function formatAddress(addr) {
+  if (!addr) return "(no address collected)";
+  const parts = [
+    addr.line1,
+    addr.line2,
+    [addr.city, addr.state].filter(Boolean).join(", "),
+    addr.postal_code,
+    addr.country
+  ]
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+  return parts || "(no address collected)";
+}
+
+// ----------------------------------------------------
+// STRIPE WEBHOOK (must be FIRST, before express.json())
+// ----------------------------------------------------
 app.post(
   "/stripe/webhook",
   express.raw({ type: "application/json" }),
@@ -51,7 +70,6 @@ app.post(
     }
 
     try {
-      // We fulfill on successful Checkout payment
       if (event.type === "checkout.session.completed") {
         const session = event.data.object;
 
@@ -60,21 +78,39 @@ app.post(
 
         const orders = readJson("orders.json", {});
         const catalog = readJson("catalog.json", {});
-
         const order = orders[orderId];
+
         if (!order) throw new Error("Order not found: " + orderId);
 
-        // Idempotency: if already processed, just ACK.
+        // Idempotency: if already processed, just ACK Stripe.
         if (order.status === "paid") {
           return res.json({ received: true });
         }
 
-        // Confirm inventory exists before decrement
+        // Retrieve a fully expanded session for reliable address + line items
+        const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
+          expand: ["line_items"]
+        });
+
+        const customerEmail =
+          fullSession.customer_details?.email ||
+          fullSession.customer_email ||
+          order.customerEmail ||
+          "";
+
+        const phone = fullSession.customer_details?.phone || "";
+
+        // Stripe can store address under customer_details.address and/or shipping_details.address
+        const shippingAddr =
+          fullSession.shipping_details?.address ||
+          fullSession.customer_details?.address ||
+          null;
+
+        // Confirm inventory exists before decrementing
         for (const item of order.items) {
           const p = catalog[item.sku];
           if (!p) throw new Error("Unknown SKU in order: " + item.sku);
           if ((p.stock ?? 0) < item.qty) {
-            // In real stores you might refund here, but for v1 we error
             throw new Error(`Insufficient stock for ${p.name}`);
           }
         }
@@ -85,56 +121,50 @@ app.post(
         }
         writeJson("catalog.json", catalog);
 
-        // Mark order paid + store useful Stripe fields
+        // Mark order paid
         order.status = "paid";
-        order.stripeSessionId = session.id;
+        order.stripeSessionId = fullSession.id;
         order.paidAt = new Date().toISOString();
-        order.customerEmail =
-          session.customer_details?.email ||
-          session.customer_email ||
-          order.customerEmail ||
-          "";
-shipping_address_collection: {
-  allowed_countries: ["US"]
-},
+        order.customerEmail = customerEmail;
+        order.customerPhone = phone;
+        order.shippingAddress = shippingAddr; // stored for your records
 
         orders[orderId] = order;
         writeJson("orders.json", orders);
 
-        // Send emails: receipt to customer, notification to owner
-        await sendOrderEmails({ order, catalog });
+        // Send receipt to customer + shipping details to owner
+        await sendPaidOrderEmails({ order, catalog });
       }
 
-      // Always ACK to Stripe
       res.json({ received: true });
     } catch (err) {
       console.error("Webhook handler error:", err);
-      // Stripe will retry if we 500
+      // Stripe will retry on 500
       res.status(500).send("Webhook handler failed");
     }
   }
 );
 
 // -----------------------------
-// NORMAL MIDDLEWARE (after webhook)
+// Normal middleware (AFTER webhook)
 // -----------------------------
 app.use(express.json());
-app.use(express.static(path.join(__dirname))); // serve index.html, buy.html, js, css, images
+app.use(express.static(path.join(__dirname)));
 
 app.get("/health", (req, res) => res.send("OK"));
 
 // -----------------------------
-// API: Catalog (server source of truth)
+// API: Catalog
 // -----------------------------
 app.get("/api/catalog", (req, res) => {
   const catalog = readJson("catalog.json", {});
   res.json({ ok: true, catalog });
 });
 
-// -----------------------------
-// API: Create Stripe Checkout Session (server-side pricing)
-// cart format from browser: [{ sku, qty }]
-// -----------------------------
+// ----------------------------------------------------
+// API: Create Stripe Checkout Session (server-side prices)
+// Body: { cart: [{ sku, qty }], customerEmail? }
+// ----------------------------------------------------
 app.post("/api/create-checkout-session", async (req, res) => {
   try {
     const { cart, customerEmail } = req.body;
@@ -144,10 +174,11 @@ app.post("/api/create-checkout-session", async (req, res) => {
     }
 
     const catalog = readJson("catalog.json", {});
+
     const normalized = cart
       .map((i) => ({
         sku: String(i.sku || "").trim(),
-        qty: Math.max(1, Math.min(999, Number(i.qty) || 1)),
+        qty: Math.max(1, Math.min(999, Number(i.qty) || 1))
       }))
       .filter((i) => i.sku);
 
@@ -155,24 +186,17 @@ app.post("/api/create-checkout-session", async (req, res) => {
       return res.status(400).json({ ok: false, error: "Invalid cart." });
     }
 
-    // Validate SKUs + stock BEFORE creating session
+    // Validate SKUs + stock + price sanity
     for (const item of normalized) {
       const p = catalog[item.sku];
-      if (!p) {
-        return res.status(400).json({ ok: false, error: `Unknown SKU: ${item.sku}` });
-      }
-      if ((p.stock ?? 0) < item.qty) {
-        return res.status(400).json({ ok: false, error: `Out of stock: ${p.name}` });
-      }
-      if (!Number.isFinite(p.price_cents) || p.price_cents < 0) {
-        return res.status(500).json({ ok: false, error: `Invalid price for: ${p.name}` });
-      }
+      if (!p) return res.status(400).json({ ok: false, error: `Unknown SKU: ${item.sku}` });
+      if ((p.stock ?? 0) < item.qty) return res.status(400).json({ ok: false, error: `Out of stock: ${p.name}` });
+      if (!Number.isFinite(p.price_cents) || p.price_cents < 0) return res.status(500).json({ ok: false, error: `Invalid price for: ${p.name}` });
     }
 
-    // Create internal order (pending)
+    // Create internal order as "pending"
     const orders = readJson("orders.json", {});
-    const orderId =
-      "ord_" + Date.now() + "_" + Math.random().toString(16).slice(2, 8);
+    const orderId = "ord_" + Date.now() + "_" + Math.random().toString(16).slice(2, 8);
 
     const subtotalCents = normalized.reduce(
       (sum, i) => sum + catalog[i.sku].price_cents * i.qty,
@@ -185,13 +209,12 @@ app.post("/api/create-checkout-session", async (req, res) => {
       items: normalized, // [{ sku, qty }]
       subtotal_cents: subtotalCents,
       createdAt: new Date().toISOString(),
-      customerEmail: String(customerEmail || "").trim(),
+      customerEmail: String(customerEmail || "").trim()
     };
     writeJson("orders.json", orders);
 
     const baseUrl = process.env.PUBLIC_BASE_URL || "http://localhost:3000";
 
-    // Build Stripe line items from SERVER catalog
     const line_items = normalized.map((item) => {
       const p = catalog[item.sku];
       return {
@@ -201,33 +224,47 @@ app.post("/api/create-checkout-session", async (req, res) => {
           unit_amount: p.price_cents,
           product_data: {
             name: p.name,
-            images: p.image
-              ? [new URL(p.image, baseUrl).toString()]
-              : undefined,
-          },
-        },
+            images: p.image ? [new URL(p.image, baseUrl).toString()] : undefined
+          }
+        }
       };
     });
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items,
+
+      // Prefill email if provided
       customer_email: orders[orderId].customerEmail || undefined,
+
+      // ✅ Collect shipping address so you can ship the order
+      shipping_address_collection: {
+        allowed_countries: ["US"]
+      },
+
+      // Optional: collect phone number
+      phone_number_collection: { enabled: true },
+
       success_url: `${baseUrl}/buy-success.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/buy-cart.html`,
-      metadata: { orderId },
+
+      metadata: { orderId }
     });
 
     res.json({ ok: true, url: session.url });
   } catch (err) {
     console.error("Create checkout session error:", err);
-    res.status(500).json({ ok: false, error: "Could not create checkout session." });
+
+    // Show the real Stripe message to the browser (helpful while building)
+    const stripeMsg = err?.raw?.message || err?.message || "Could not create checkout session.";
+    res.status(500).json({ ok: false, error: stripeMsg });
   }
 });
 
-// -----------------------------
-// API: Sell order email (your buylist "sell to us" flow)
-// -----------------------------
+// ----------------------------------------------------
+// API: Sell order email (your “sell to us” flow)
+// Body: { name, email, total, order: [{name, condition, qty, unitPrice}] }
+// ----------------------------------------------------
 app.post("/api/submit", async (req, res) => {
   try {
     const { name, email, total, order } = req.body;
@@ -277,7 +314,7 @@ Total (client): $${Number(total || 0).toFixed(2)}
       to: process.env.TO_EMAIL,
       reply_to: email,
       subject: `New Sell Order from ${name}`,
-      text: emailText,
+      text: emailText
     });
 
     res.json({ ok: true });
@@ -288,19 +325,21 @@ Total (client): $${Number(total || 0).toFixed(2)}
 });
 
 // -----------------------------
-// Email helpers for paid orders
+// Paid order emails (customer + owner)
 // -----------------------------
-async function sendOrderEmails({ order, catalog }) {
+async function sendPaidOrderEmails({ order, catalog }) {
   const from = process.env.FROM_EMAIL || "Orders <onboarding@resend.dev>";
   const owner = process.env.OWNER_EMAIL;
 
   const lines = order.items.map((i) => {
     const p = catalog[i.sku];
-    const lineCents = p.price_cents * i.qty;
-    return `${i.qty}x ${p.name} — $${(p.price_cents / 100).toFixed(2)} = $${(lineCents / 100).toFixed(2)}`;
+    const lineCents = (p.price_cents || 0) * i.qty;
+    return `${i.qty}x ${p.name} — $${moneyFromCents(p.price_cents)} = $${moneyFromCents(lineCents)}`;
   });
 
-  const subtotal = (order.subtotal_cents / 100).toFixed(2);
+  const subtotal = moneyFromCents(order.subtotal_cents);
+  const shipTo = formatAddress(order.shippingAddress);
+  const phone = order.customerPhone ? `\nPhone: ${order.customerPhone}` : "";
 
   const receiptText =
 `Thanks for your order!
@@ -312,6 +351,9 @@ ${lines.join("\n")}
 
 Subtotal: $${subtotal}
 
+Shipping to:
+${shipTo}
+
 We’ll follow up with shipping updates soon.
 `;
 
@@ -321,27 +363,30 @@ We’ll follow up with shipping updates soon.
       from,
       to: order.customerEmail,
       subject: `Your receipt (${order.id})`,
-      text: receiptText,
+      text: receiptText
     });
   }
 
-  // Owner notification
+  // Owner order email (what you use to ship)
   if (owner) {
     await resend.emails.send({
       from,
       to: owner,
-      subject: `New paid order: ${order.id}`,
+      subject: `PAID ORDER: ${order.id}`,
       text:
-`PAID ORDER
+`PAID ORDER ✅
 
 Order ID: ${order.id}
-Customer: ${order.customerEmail || "(no email collected)"}
+Customer: ${order.customerEmail || "(no email)"}${phone}
+
+Shipping address:
+${shipTo}
 
 Items:
 ${lines.join("\n")}
 
 Subtotal: $${subtotal}
-`,
+`
     });
   }
 }
@@ -349,6 +394,7 @@ Subtotal: $${subtotal}
 // -----------------------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log("Server running on port", PORT));
+
 
 
 
