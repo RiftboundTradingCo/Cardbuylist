@@ -31,13 +31,15 @@ document.addEventListener("DOMContentLoaded", async function () {
       const name = String(p.name || sku);
       const priceCents = Number(p.price_cents || 0);
       const image = String(p.image || "");
-
+      const imagePath = p.image || "";
+      const imageSrc = imagePath ? encodeURI(imagePath.startsWith("/") ? imagePath : "/" + imagePath) : "";
       const card = document.createElement("div");
       card.className = "store-card";
       card.dataset.sku = sku;
 
       card.innerHTML = `
-        <img src="${image}" alt="${name}">
+        <img src="${encodeURI(p.image)}" alt="${p.name}">
+        ${imageSrc ? `<img src="${imageSrc}" alt="${name}">` : ""}
         <h3>${name}</h3>
         <p class="price">$${(priceCents / 100).toFixed(2)}</p>
         <button class="buy-add-btn" type="button">Add to Cart</button>
