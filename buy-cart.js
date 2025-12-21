@@ -3,6 +3,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const totalEl = document.getElementById("buyCartTotal");
   const clearBtn = document.getElementById("buyClearCartBtn");
   const msg = document.getElementById("buyCartMessage");
+  const checkoutBtn = document.getElementById("checkoutBtn");
+  const checkoutMsg = document.getElementById("checkoutMsg");
+
 
   function money(n) { return Number(n).toFixed(2); }
 
@@ -108,3 +111,36 @@ document.addEventListener("DOMContentLoaded", function () {
 
   render();
 });
+
+checkoutBtn.addEventListener("click", async function () {
+  checkoutMsg.textContent = "";
+  checkoutBtn.disabled = true;
+
+  try {
+    const cart = load(); // your existing load() reads localStorage "buyCart"
+    if (!cart.length) {
+      checkoutMsg.textContent = "Your cart is empty.";
+      checkoutBtn.disabled = false;
+      return;
+    }
+
+    const res = await fetch("/api/create-checkout-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cart })
+    });
+
+    const data = await res.json();
+    if (!data.ok || !data.url) {
+      checkoutMsg.textContent = "Checkout error: " + (data.error || "Unknown error");
+      checkoutBtn.disabled = false;
+      return;
+    }
+
+    window.location.href = data.url; // Redirect to Stripe Checkout
+  } catch (e) {
+    checkoutMsg.textContent = "Network error. Please try again.";
+    checkoutBtn.disabled = false;
+  }
+});
+
