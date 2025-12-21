@@ -2,7 +2,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   const grid = document.getElementById("storeGrid");
   if (!grid) return;
 
-  // show something so you know it's running
   grid.innerHTML = "<p>Loading catalog...</p>";
 
   try {
@@ -18,7 +17,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const entries = Object.entries(catalog);
 
     if (entries.length === 0) {
-      grid.innerHTML = "<p>No products found. (catalog.json is empty)</p>";
+      grid.innerHTML = "<p>No products found.</p>";
       return;
     }
 
@@ -26,19 +25,23 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     for (const [sku, p] of entries) {
       const stock = Number(p.stock ?? 0);
-      if (stock <= 0) continue; // hide out of stock
+      if (stock <= 0) continue; // hide out-of-stock items
 
       const name = String(p.name || sku);
       const priceCents = Number(p.price_cents || 0);
-      const image = String(p.image || "");
-      const imagePath = p.image || "";
-      const imageSrc = imagePath ? encodeURI(imagePath.startsWith("/") ? imagePath : "/" + imagePath) : "";
+      const imagePath = String(p.image || "");
+
+      const imageSrc = imagePath
+        ? encodeURI(imagePath.startsWith("/") ? imagePath : "/" + imagePath)
+        : "";
+
       const card = document.createElement("div");
       card.className = "store-card";
       card.dataset.sku = sku;
+      card.dataset.name = name.toLowerCase(); // 🔍 search support
 
       card.innerHTML = `
-        <img src="${encodeURI(p.image)}" alt="${p.name}">
+        ${imageSrc ? `<img src="${imageSrc}" alt="${name}">` : ""}
         <h3>${name}</h3>
         <p class="price">$${(priceCents / 100).toFixed(2)}</p>
         <button class="buy-add-btn" type="button">Add to Cart</button>
@@ -50,17 +53,21 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (grid.children.length === 0) {
       grid.innerHTML = "<p>All items are out of stock.</p>";
     }
-  } catch (e) {
-    console.error("buy-render.js error:", e);
+  } catch (err) {
+    console.error("buy-render.js error:", err);
     grid.innerHTML = "<p>Error loading catalog. Check console.</p>";
   }
-  document.getElementById("buySearch")?.dispatchEvent(new Event("input"));
-  // IMAGE MODAL LOGIC
+});
+
+/* ============================
+   IMAGE MODAL (CLICK TO ENLARGE)
+   ============================ */
+
 const modal = document.getElementById("imageModal");
 const modalImg = document.getElementById("imageModalImg");
 const modalClose = document.getElementById("imageModalClose");
 
-// Open modal when clicking a card image
+// Open modal on image click
 document.addEventListener("click", function (e) {
   const img = e.target.closest(".store-card img");
   if (!img) return;
@@ -69,28 +76,27 @@ document.addEventListener("click", function (e) {
   modal.classList.remove("hidden");
 });
 
-// Close modal (X or background)
-modalClose.addEventListener("click", () => {
+// Close modal (X)
+modalClose?.addEventListener("click", () => {
   modal.classList.add("hidden");
   modalImg.src = "";
 });
 
-modal.addEventListener("click", (e) => {
+// Close modal by clicking background
+modal?.addEventListener("click", (e) => {
   if (e.target === modal) {
     modal.classList.add("hidden");
     modalImg.src = "";
   }
 });
 
-// Close on ESC
+// Close modal with ESC key
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
-    modal.classList.add("hidden");
-    modalImg.src = "";
+    modal?.classList.add("hidden");
+    if (modalImg) modalImg.src = "";
   }
 });
-
-
 
 
 
