@@ -323,12 +323,6 @@
     "stock": 8,
     "image": "images/Consult the Past - Origins.jpg"
   },
-  "Con_ion": {
-    "name": "Convergent Mutation",
-    "price_cents": 100,
-    "stock": 6,
-    "image": "images/Convergent Mutation - Origins.jpg"
-  },
   "Con_ont": {
     "name": "Confront",
     "price_cents": 100,
@@ -592,12 +586,6 @@
     "price_cents": 100,
     "stock": 7,
     "image": "images/Flurry of Blades - Origins.jpg"
-  },
-  "For_ed)": {
-    "name": "Fortified Position (Oversized)",
-    "price_cents": 600,
-    "stock": 10,
-    "image": "images/Fortified Position (Oversized) - Origins.jpg"
   },
   "For_ion": {
     "name": "Fortified Position",
@@ -1733,12 +1721,6 @@
     "stock": 7,
     "image": "images/Stacked Deck - Origins.jpg"
   },
-  "Sta_ed)": {
-    "name": "Startipped Peak (Oversized)",
-    "price_cents": 600,
-    "stock": 1,
-    "image": "images/Startipped Peak (Oversized) - Origins.jpg"
-  },
   "Sta_oro": {
     "name": "Stalwart Poro",
     "price_cents": 100,
@@ -1948,12 +1930,6 @@
     "price_cents": 100,
     "stock": 5,
     "image": "images/Trifarian War Camp - Origins.jpg"
-  },
-  "Tri_ed)": {
-    "name": "Trifarian War Camp (Oversized)",
-    "price_cents": 500,
-    "stock": 4,
-    "image": "images/Trifarian War Camp (Oversized) - Origins.jpg"
   },
   "Tri_ker": {
     "name": "Trifarian Gloryseeker",
