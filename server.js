@@ -1,10 +1,5 @@
 require("dotenv").config();
 
-console.log("==== STRIPE WEBHOOK HIT ====");
-console.log("Time:", new Date().toISOString());
-console.log("Signature header present:", Boolean(req.headers["stripe-signature"]));
-console.log("Stripe event:", event.type, "id:", event.id);
-
 const fs = require("fs");
 const path = require("path");
 const express = require("express");
@@ -17,7 +12,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // -----------------------------
-// Helpers: read/write JSON files
+// Helpers
 // -----------------------------
 function readJson(filename, fallback) {
   try {
@@ -40,26 +35,35 @@ function moneyFromCents(cents) {
 
 function formatAddress(addr) {
   if (!addr) return "(no address collected)";
-  const parts = [
-    addr.line1,
-    addr.line2,
-    [addr.city, addr.state].filter(Boolean).join(", "),
-    addr.postal_code,
-    addr.country
-  ]
-    .filter(Boolean)
-    .join("\n")
-    .trim();
-  return parts || "(no address collected)";
+  const lines = [];
+  if (addr.line1) lines.push(addr.line1);
+  if (addr.line2) lines.push(addr.line2);
+
+  const cityState = [addr.city, addr.state].filter(Boolean).join(", ");
+  const postal = addr.postal_code ? String(addr.postal_code) : "";
+  const cityLine = [cityState, postal].filter(Boolean).join(" ");
+  if (cityLine) lines.push(cityLine);
+
+  if (addr.country) lines.push(addr.country);
+
+  return lines.join("\n") || "(no address collected)";
 }
 
 // ----------------------------------------------------
 // STRIPE WEBHOOK (must be FIRST, before express.json())
 // ----------------------------------------------------
-app.post("/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+app.post(
+  "/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    console.log("==== STRIPE WEBHOOK HIT ====");
+    console.log("Time:", new Date().toISOString());
+    console.log(
+      "Signature header present:",
+      Boolean(req.headers["stripe-signature"])
+    );
 
     let event;
-
     try {
       const sig = req.headers["stripe-signature"];
       event = stripe.webhooks.constructEvent(
@@ -72,27 +76,31 @@ app.post("/stripe/webhook", express.raw({ type: "application/json" }), async (re
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
+    console.log("Stripe event:", event.type, "id:", event.id);
+
     try {
       if (event.type === "checkout.session.completed") {
         const session = event.data.object;
-
         const orderId = session?.metadata?.orderId;
+
+        console.log("Checkout completed. Session:", session.id, "orderId:", orderId);
+
         if (!orderId) throw new Error("Missing orderId in Stripe session metadata");
 
         const orders = readJson("orders.json", {});
         const catalog = readJson("catalog.json", {});
         const order = orders[orderId];
 
-        console.log("Checkout completed. Session:", session.id, "orderId:", session?.metadata?.orderId);
-
         if (!order) throw new Error("Order not found: " + orderId);
 
-        // Idempotency: if already processed, just ACK Stripe.
+        // Idempotency
         if (order.status === "paid") {
+          console.log("Order already paid, skipping:", orderId);
+          res.set("X-Riftbound-Webhook", "onrender-v1");
           return res.json({ received: true });
         }
 
-        // Retrieve a fully expanded session for reliable address + line items
+        // Retrieve full session for address/email reliability
         const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
           expand: ["line_items"]
         });
@@ -103,15 +111,14 @@ app.post("/stripe/webhook", express.raw({ type: "application/json" }), async (re
           order.customerEmail ||
           "";
 
-        const phone = fullSession.customer_details?.phone || "";
+        const customerPhone = fullSession.customer_details?.phone || "";
 
-        // Stripe can store address under customer_details.address and/or shipping_details.address
         const shippingAddr =
           fullSession.shipping_details?.address ||
           fullSession.customer_details?.address ||
           null;
 
-        // Confirm inventory exists before decrementing
+        // Verify stock
         for (const item of order.items) {
           const p = catalog[item.sku];
           if (!p) throw new Error("Unknown SKU in order: " + item.sku);
@@ -120,31 +127,33 @@ app.post("/stripe/webhook", express.raw({ type: "application/json" }), async (re
           }
         }
 
-        // Decrement inventory
+        // Decrement stock
         for (const item of order.items) {
           catalog[item.sku].stock -= item.qty;
         }
         writeJson("catalog.json", catalog);
 
-        // Mark order paid
+        // Mark paid
         order.status = "paid";
         order.stripeSessionId = fullSession.id;
         order.paidAt = new Date().toISOString();
         order.customerEmail = customerEmail;
-        order.customerPhone = phone;
-        order.shippingAddress = shippingAddr; // stored for your records
+        order.customerPhone = customerPhone;
+        order.shippingAddress = shippingAddr;
 
         orders[orderId] = order;
         writeJson("orders.json", orders);
 
-        // Send receipt to customer + shipping details to owner
+        // Emails
         await sendPaidOrderEmails({ order, catalog });
+
+        console.log("Fulfilled order:", orderId);
       }
 
+      res.set("X-Riftbound-Webhook", "onrender-v1");
       res.json({ received: true });
     } catch (err) {
       console.error("Webhook handler error:", err);
-      // Stripe will retry on 500
       res.status(500).send("Webhook handler failed");
     }
   }
@@ -191,7 +200,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
       return res.status(400).json({ ok: false, error: "Invalid cart." });
     }
 
-    // Validate SKUs + stock + price sanity
+    // Validate SKUs + stock + price
     for (const item of normalized) {
       const p = catalog[item.sku];
       if (!p) return res.status(400).json({ ok: false, error: `Unknown SKU: ${item.sku}` });
@@ -199,19 +208,19 @@ app.post("/api/create-checkout-session", async (req, res) => {
       if (!Number.isFinite(p.price_cents) || p.price_cents < 0) return res.status(500).json({ ok: false, error: `Invalid price for: ${p.name}` });
     }
 
-    // Create internal order as "pending"
+    // Create internal order (pending)
     const orders = readJson("orders.json", {});
     const orderId = "ord_" + Date.now() + "_" + Math.random().toString(16).slice(2, 8);
 
     const subtotalCents = normalized.reduce(
-      (sum, i) => sum + catalog[i.sku].price_cents * i.qty,
+      (sum, i) => sum + (catalog[i.sku].price_cents * i.qty),
       0
     );
 
     orders[orderId] = {
       id: orderId,
       status: "pending",
-      items: normalized, // [{ sku, qty }]
+      items: normalized,
       subtotal_cents: subtotalCents,
       createdAt: new Date().toISOString(),
       customerEmail: String(customerEmail || "").trim()
@@ -238,16 +247,10 @@ app.post("/api/create-checkout-session", async (req, res) => {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items,
-
-      // Prefill email if provided
       customer_email: orders[orderId].customerEmail || undefined,
 
-      // ✅ Collect shipping address so you can ship the order
-      shipping_address_collection: {
-        allowed_countries: ["US"]
-      },
-
-      // Optional: collect phone number
+      // Collect shipping address (so you can ship)
+      shipping_address_collection: { allowed_countries: ["US"] },
       phone_number_collection: { enabled: true },
 
       success_url: `${baseUrl}/buy-success.html?session_id={CHECKOUT_SESSION_ID}`,
@@ -259,15 +262,13 @@ app.post("/api/create-checkout-session", async (req, res) => {
     res.json({ ok: true, url: session.url });
   } catch (err) {
     console.error("Create checkout session error:", err);
-
-    // Show the real Stripe message to the browser (helpful while building)
     const stripeMsg = err?.raw?.message || err?.message || "Could not create checkout session.";
     res.status(500).json({ ok: false, error: stripeMsg });
   }
 });
 
 // ----------------------------------------------------
-// API: Sell order email (your “sell to us” flow)
+// API: Sell order email (sell-to-us flow)
 // Body: { name, email, total, order: [{name, condition, qty, unitPrice}] }
 // ----------------------------------------------------
 app.post("/api/submit", async (req, res) => {
@@ -330,7 +331,7 @@ Total (client): $${Number(total || 0).toFixed(2)}
 });
 
 // -----------------------------
-// Paid order emails (customer + owner)
+// Email helpers for paid orders
 // -----------------------------
 async function sendPaidOrderEmails({ order, catalog }) {
   const from = process.env.FROM_EMAIL || "Orders <onboarding@resend.dev>";
@@ -344,7 +345,7 @@ async function sendPaidOrderEmails({ order, catalog }) {
 
   const subtotal = moneyFromCents(order.subtotal_cents);
   const shipTo = formatAddress(order.shippingAddress);
-  const phone = order.customerPhone ? `\nPhone: ${order.customerPhone}` : "";
+  const phoneLine = order.customerPhone ? `Phone: ${order.customerPhone}\n\n` : "";
 
   const receiptText =
 `Thanks for your order!
@@ -370,9 +371,11 @@ We’ll follow up with shipping updates soon.
       subject: `Your receipt (${order.id})`,
       text: receiptText
     });
+  } else {
+    console.log("No customer email collected; skipping customer receipt.");
   }
 
-  // Owner order email (what you use to ship)
+  // Owner notification (this is what you use to ship)
   if (owner) {
     await resend.emails.send({
       from,
@@ -382,9 +385,9 @@ We’ll follow up with shipping updates soon.
 `PAID ORDER ✅
 
 Order ID: ${order.id}
-Customer: ${order.customerEmail || "(no email)"}${phone}
+Customer: ${order.customerEmail || "(no email collected)"}
 
-Shipping address:
+${phoneLine}Shipping address:
 ${shipTo}
 
 Items:
@@ -393,12 +396,15 @@ ${lines.join("\n")}
 Subtotal: $${subtotal}
 `
     });
+  } else {
+    console.log("OWNER_EMAIL not set; skipping owner notification email.");
   }
 }
 
 // -----------------------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log("Server running on port", PORT));
+
 
 
 
