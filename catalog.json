@@ -2075,12 +2075,6 @@
     "stock": 3,
     "image": "images/Void Gate - Origins.jpg"
   },
-  "Voi_ed)": {
-    "name": "Void Gate (Oversized)",
-    "price_cents": 500,
-    "stock": 2,
-    "image": "images/Void Gate (Oversized) - Origins.jpg"
-  },
   "Voi_ker": {
     "name": "Void Seeker",
     "price_cents": 100,
