@@ -1,5 +1,10 @@
 require("dotenv").config();
 
+console.log("==== STRIPE WEBHOOK HIT ====");
+console.log("Time:", new Date().toISOString());
+console.log("Signature header present:", Boolean(req.headers["stripe-signature"]));
+console.log("Stripe event:", event.type, "id:", event.id);
+
 const fs = require("fs");
 const path = require("path");
 const express = require("express");
@@ -51,10 +56,8 @@ function formatAddress(addr) {
 // ----------------------------------------------------
 // STRIPE WEBHOOK (must be FIRST, before express.json())
 // ----------------------------------------------------
-app.post(
-  "/stripe/webhook",
-  express.raw({ type: "application/json" }),
-  async (req, res) => {
+app.post("/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+
     let event;
 
     try {
@@ -79,6 +82,8 @@ app.post(
         const orders = readJson("orders.json", {});
         const catalog = readJson("catalog.json", {});
         const order = orders[orderId];
+
+        console.log("Checkout completed. Session:", session.id, "orderId:", session?.metadata?.orderId);
 
         if (!order) throw new Error("Order not found: " + orderId);
 
@@ -394,6 +399,7 @@ Subtotal: $${subtotal}
 // -----------------------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log("Server running on port", PORT));
+
 
 
 
