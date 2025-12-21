@@ -1,2300 +1,2300 @@
 {
   "Acc_ses": {
-    "Name": "Acceptable Losses",
-    "Price": 15100,
-    "Stock": 10,
-    "IMG": "Acceptable Losses - Origins.jpg"
+    "name": "Acceptable Losses",
+    "price_cents": 15100,
+    "stock": 10,
+    "images/": "Acceptable Losses - Origins.jpg"
   },
   "Ada_ron": {
-    "Name": "Adaptatron",
-    "Price": 14700,
-    "Stock": 9,
-    "IMG": "Adaptatron - Origins.jpg"
+    "name": "Adaptatron",
+    "price_cents": 14700,
+    "stock": 9,
+    "images/": "Adaptatron - Origins.jpg"
   },
   "Aga_dds": {
-    "Name": "Against the Odds",
-    "Price": 100000,
-    "Stock": 8,
-    "IMG": "Against the Odds - Origins.jpg"
+    "name": "Against the Odds",
+    "price_cents": 100000,
+    "stock": 8,
+    "images/": "Against the Odds - Origins.jpg"
   },
   "Ahr_ed)": {
-    "Name": "Ahri - Nine-Tailed Fox (Overnumbered)",
-    "Price": 19599,
-    "Stock": 7,
-    "IMG": "Ahri - Nine-Tailed Fox (Overnumbered) - Origins.jpg"
+    "name": "Ahri - Nine-Tailed Fox (Overnumbered)",
+    "price_cents": 19599,
+    "stock": 7,
+    "images/": "Ahri - Nine-Tailed Fox (Overnumbered) - Origins.jpg"
   },
   "Ahr_Fox": {
-    "Name": "Ahri - Nine-Tailed Fox",
-    "Price": 200,
-    "Stock": 9,
-    "IMG": "Ahri - Nine-Tailed Fox - Origins.jpg"
+    "name": "Ahri - Nine-Tailed Fox",
+    "price_cents": 200,
+    "stock": 9,
+    "images/": "Ahri - Nine-Tailed Fox - Origins.jpg"
   },
   "Ahr_ing": {
-    "Name": "Ahri - Alluring",
-    "Price": 200,
-    "Stock": 7,
-    "IMG": "Ahri - Alluring - Origins.jpg"
+    "name": "Ahri - Alluring",
+    "price_cents": 200,
+    "stock": 7,
+    "images/": "Ahri - Alluring - Origins.jpg"
   },
   "Ahr_ive": {
-    "Name": "Ahri - Inquisitive",
-    "Price": 1400,
-    "Stock": 4,
-    "IMG": "Ahri - Inquisitive - Origins.jpg"
+    "name": "Ahri - Inquisitive",
+    "price_cents": 1400,
+    "stock": 4,
+    "images/": "Ahri - Inquisitive - Origins.jpg"
   },
   "Ahr_Inq_rt)": {
-    "Name": "Ahri - Inquisitive (Alternate Art)",
-    "Price": 2000,
-    "Stock": 3,
-    "IMG": "Ahri - Inquisitive (Alternate Art) - Origins.jpg"
+    "name": "Ahri - Inquisitive (Alternate Art)",
+    "price_cents": 2000,
+    "stock": 3,
+    "images/": "Ahri - Inquisitive (Alternate Art) - Origins.jpg"
   },
   "Ahr_All_rt)": {
-    "Name": "Ahri - Alluring (Alternate Art)",
-    "Price": 800,
-    "Stock": 6,
-    "IMG": "Ahri - Alluring (Alternate Art) - Origins.jpg"
+    "name": "Ahri - Alluring (Alternate Art)",
+    "price_cents": 800,
+    "stock": 6,
+    "images/": "Ahri - Alluring (Alternate Art) - Origins.jpg"
   },
   "Ahr_ve)": {
-    "Name": "Ahri - Alluring (Launch Exclusive)",
-    "Price": 8700,
-    "Stock": 5,
-    "IMG": "Ahri - Alluring (Launch Exclusive) - Origins.jpg"
+    "name": "Ahri - Alluring (Launch Exclusive)",
+    "price_cents": 8700,
+    "stock": 5,
+    "images/": "Ahri - Alluring (Launch Exclusive) - Origins.jpg"
   },
   "Alb_ros": {
-    "Name": "Albus Ferros",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Albus Ferros - Origins.jpg"
+    "name": "Albus Ferros",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Albus Ferros - Origins.jpg"
   },
   "Alt_ity": {
-    "Name": "Altar to Unity",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Altar to Unity - Origins.jpg"
+    "name": "Altar to Unity",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Altar to Unity - Origins.jpg"
   },
   "Ani_mal": {
-    "Name": "Anivia - Primal",
-    "Price": 100,
-    "Stock": 8,
-    "IMG": "Anivia - Primal - Origins.jpg"
+    "name": "Anivia - Primal",
+    "price_cents": 100,
+    "stock": 8,
+    "images/": "Anivia - Primal - Origins.jpg"
   },
   "Ann_er)": {
-    "Name": "Annie - Dark Child (Starter)",
-    "Price": 2400,
-    "Stock": 6,
-    "IMG": "Annie - Dark Child (Starter) - Origins.jpg"
+    "name": "Annie - Dark Child (Starter)",
+    "price_cents": 2400,
+    "stock": 6,
+    "images/": "Annie - Dark Child (Starter) - Origins.jpg"
   },
   "Ann_ery": {
-    "Name": "Annie - Fiery",
-    "Price": 200,
-    "Stock": 5,
-    "IMG": "Annie - Fiery - Origins.jpg"
+    "name": "Annie - Fiery",
+    "price_cents": 200,
+    "stock": 5,
+    "images/": "Annie - Fiery - Origins.jpg"
   },
   "Ann_orn": {
-    "Name": "Annie - Stubborn",
-    "Price": 600,
-    "Stock": 4,
-    "IMG": "Annie - Stubborn - Origins.jpg"
+    "name": "Annie - Stubborn",
+    "price_cents": 600,
+    "stock": 4,
+    "images/": "Annie - Stubborn - Origins.jpg"
   },
   "Are_Bar": {
-    "Name": "Arena Bar",
-    "Price": 100,
-    "Stock": 8,
-    "IMG": "Arena Bar - Origins.jpg"
+    "name": "Arena Bar",
+    "price_cents": 100,
+    "stock": 8,
+    "images/": "Arena Bar - Origins.jpg"
   },
   "Asp_imb": {
-    "Name": "Aspirant's Climb",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "Aspirant's Climb - Origins.jpg"
+    "name": "Aspirant's Climb",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "Aspirant's Climb - Origins.jpg"
   },
   "Ava_ver": {
-    "Name": "Ava Achiever",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Ava Achiever - Origins.jpg"
+    "name": "Ava Achiever",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Ava Achiever - Origins.jpg"
   },
   "Bac_ack": {
-    "Name": "Back to Back",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Back to Back - Origins.jpg"
+    "name": "Back to Back",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Back to Back - Origins.jpg"
   },
   "Bac_Bar": {
-    "Name": "Back-Alley Bar",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Back-Alley Bar - Origins.jpg"
+    "name": "Back-Alley Bar",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Back-Alley Bar - Origins.jpg"
   },
   "Bai_ook": {
-    "Name": "Baited Hook",
-    "Price": 3700,
-    "Stock": 2,
-    "IMG": "Baited Hook - Origins.jpg"
+    "name": "Baited Hook",
+    "price_cents": 3700,
+    "stock": 2,
+    "images/": "Baited Hook - Origins.jpg"
   },
   "Ban_ree": {
-    "Name": "Bandle Tree",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Bandle Tree - Origins.jpg"
+    "name": "Bandle Tree",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Bandle Tree - Origins.jpg"
   },
   "Bil_lly": {
-    "Name": "Bilgewater Bully",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Bilgewater Bully - Origins.jpg"
+    "name": "Bilgewater Bully",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Bilgewater Bully - Origins.jpg"
   },
   "Bla_Fae": {
-    "Name": "Blastcone Fae",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Blastcone Fae - Origins.jpg"
+    "name": "Blastcone Fae",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Blastcone Fae - Origins.jpg"
   },
   "Bla_her": {
-    "Name": "Blazing Scorcher",
-    "Price": 100,
-    "Stock": 8,
-    "IMG": "Blazing Scorcher - Origins.jpg"
+    "name": "Blazing Scorcher",
+    "price_cents": 100,
+    "stock": 8,
+    "images/": "Blazing Scorcher - Origins.jpg"
   },
   "Bla_wer": {
-    "Name": "Blast of Power",
-    "Price": 200,
-    "Stock": 10,
-    "IMG": "Blast of Power - Origins.jpg"
+    "name": "Blast of Power",
+    "price_cents": 200,
+    "stock": 10,
+    "images/": "Blast of Power - Origins.jpg"
   },
   "Bli_ive": {
-    "Name": "Blitzcrank - Impassive",
-    "Price": 200,
-    "Stock": 4,
-    "IMG": "Blitzcrank - Impassive - Origins.jpg"
+    "name": "Blitzcrank - Impassive",
+    "price_cents": 200,
+    "stock": 4,
+    "images/": "Blitzcrank - Impassive - Origins.jpg"
   },
   "Bli_ury": {
-    "Name": "Blind Fury",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Blind Fury - Origins.jpg"
+    "name": "Blind Fury",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Blind Fury - Origins.jpg"
   },
   "Blo_ock": {
-    "Name": "Block",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Block - Origins.jpg"
+    "name": "Block",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Block - Origins.jpg"
   },
   "Bod_rt)": {
-    "Name": "Body Rune (Alternate Art)",
-    "Price": 1500,
-    "Stock": 8,
-    "IMG": "Body Rune (Alternate Art) - Origins.jpg"
+    "name": "Body Rune (Alternate Art)",
+    "price_cents": 1500,
+    "stock": 8,
+    "images/": "Body Rune (Alternate Art) - Origins.jpg"
   },
   "Bod_une": {
-    "Name": "Body Rune",
-    "Price": 100,
-    "Stock": 10,
-    "IMG": "Body Rune - Origins.jpg"
+    "name": "Body Rune",
+    "price_cents": 100,
+    "stock": 10,
+    "images/": "Body Rune - Origins.jpg"
   },
   "Bra_eer": {
-    "Name": "Brazen Buccaneer",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Brazen Buccaneer - Origins.jpg"
+    "name": "Brazen Buccaneer",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Brazen Buccaneer - Origins.jpg"
   },
   "Bry_ong": {
-    "Name": "Brynhir Thundersong",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Brynhir Thundersong - Origins.jpg"
+    "name": "Brynhir Thundersong",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Brynhir Thundersong - Origins.jpg"
   },
   "Buf_uff": {
-    "Name": "Buff",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Buff - Origins.jpg"
+    "name": "Buff",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Buff - Origins.jpg"
   },
   "Bul_ime": {
-    "Name": "Bullet Time",
-    "Price": 2400,
-    "Stock": 7,
-    "IMG": "Bullet Time - Origins.jpg"
+    "name": "Bullet Time",
+    "price_cents": 2400,
+    "stock": 7,
+    "images/": "Bullet Time - Origins.jpg"
   },
   "Cai_ing": {
-    "Name": "Caitlyn - Patrolling",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "Caitlyn - Patrolling - Origins.jpg"
+    "name": "Caitlyn - Patrolling",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "Caitlyn - Patrolling - Origins.jpg"
   },
   "Cal_ory": {
-    "Name": "Call to Glory",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Call to Glory - Origins.jpg"
+    "name": "Call to Glory",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Call to Glory - Origins.jpg"
   },
   "Cal_rt)": {
-    "Name": "Calm Rune (Alternate Art)",
-    "Price": 2000,
-    "Stock": 10,
-    "IMG": "Calm Rune (Alternate Art) - Origins.jpg"
+    "name": "Calm Rune (Alternate Art)",
+    "price_cents": 2000,
+    "stock": 10,
+    "images/": "Calm Rune (Alternate Art) - Origins.jpg"
   },
   "Cal_une": {
-    "Name": "Calm Rune",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Calm Rune - Origins.jpg"
+    "name": "Calm Rune",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Calm Rune - Origins.jpg"
   },
   "Can_age": {
-    "Name": "Cannon Barrage",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Cannon Barrage - Origins.jpg"
+    "name": "Cannon Barrage",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Cannon Barrage - Origins.jpg"
   },
   "Cap_ron": {
-    "Name": "Captain Farron",
-    "Price": 100,
-    "Stock": 8,
-    "IMG": "Captain Farron - Origins.jpg"
+    "name": "Captain Farron",
+    "price_cents": 100,
+    "stock": 8,
+    "images/": "Captain Farron - Origins.jpg"
   },
   "Car_ine": {
-    "Name": "Carnivorous Snapvine",
-    "Price": 200,
-    "Stock": 6,
-    "IMG": "Carnivorous Snapvine - Origins.jpg"
+    "name": "Carnivorous Snapvine",
+    "price_cents": 200,
+    "stock": 6,
+    "images/": "Carnivorous Snapvine - Origins.jpg"
   },
   "Cat_ons": {
-    "Name": "Catalyst of Aeons",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "Catalyst of Aeons - Origins.jpg"
+    "name": "Catalyst of Aeons",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "Catalyst of Aeons - Origins.jpg"
   },
   "Cem_ant": {
-    "Name": "Cemetery Attendant",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Cemetery Attendant - Origins.jpg"
+    "name": "Cemetery Attendant",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Cemetery Attendant - Origins.jpg"
   },
   "Cha_arm": {
-    "Name": "Charm",
-    "Price": 100,
-    "Stock": 8,
-    "IMG": "Charm - Origins.jpg"
+    "name": "Charm",
+    "price_cents": 100,
+    "stock": 8,
+    "images/": "Charm - Origins.jpg"
   },
   "Cha_nge": {
-    "Name": "Challenge",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Challenge - Origins.jpg"
+    "name": "Challenge",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Challenge - Origins.jpg"
   },
   "Cha_rt)": {
-    "Name": "Chaos Rune (Alternate Art)",
-    "Price": 2200,
-    "Stock": 9,
-    "IMG": "Chaos Rune (Alternate Art) - Origins.jpg"
+    "name": "Chaos Rune (Alternate Art)",
+    "price_cents": 2200,
+    "stock": 9,
+    "images/": "Chaos Rune (Alternate Art) - Origins.jpg"
   },
   "Cha_une": {
-    "Name": "Chaos Rune",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Chaos Rune - Origins.jpg"
+    "name": "Chaos Rune",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Chaos Rune - Origins.jpg"
   },
   "Che_cer": {
-    "Name": "Chemtech Enforcer",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Chemtech Enforcer - Origins.jpg"
+    "name": "Chemtech Enforcer",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Chemtech Enforcer - Origins.jpg"
   },
   "Cit_eld": {
-    "Name": "Cithria of Cloudfield",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "Cithria of Cloudfield - Origins.jpg"
+    "name": "Cithria of Cloudfield",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "Cithria of Cloudfield - Origins.jpg"
   },
   "Cle_ave": {
-    "Name": "Cleave",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Cleave - Origins.jpg"
+    "name": "Cleave",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Cleave - Origins.jpg"
   },
   "Clo_per": {
-    "Name": "Clockwork Keeper",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Clockwork Keeper - Origins.jpg"
+    "name": "Clockwork Keeper",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Clockwork Keeper - Origins.jpg"
   },
   "Com_ros": {
-    "Name": "Commander Ledros",
-    "Price": 100,
-    "Stock": 10,
-    "IMG": "Commander Ledros - Origins.jpg"
+    "name": "Commander Ledros",
+    "price_cents": 100,
+    "stock": 10,
+    "images/": "Commander Ledros - Origins.jpg"
   },
   "Con_ast": {
-    "Name": "Consult the Past",
-    "Price": 100,
-    "Stock": 8,
-    "IMG": "Consult the Past - Origins.jpg"
+    "name": "Consult the Past",
+    "price_cents": 100,
+    "stock": 8,
+    "images/": "Consult the Past - Origins.jpg"
   },
   "Con_ion": {
-    "Name": "Convergent Mutation",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Convergent Mutation - Origins.jpg"
+    "name": "Convergent Mutation",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Convergent Mutation - Origins.jpg"
   },
   "Con_ont": {
-    "Name": "Confront",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Confront - Origins.jpg"
+    "name": "Confront",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Confront - Origins.jpg"
   },
   "Cra_air": {
-    "Name": "Crackshot Corsair",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Crackshot Corsair - Origins.jpg"
+    "name": "Crackshot Corsair",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Crackshot Corsair - Origins.jpg"
   },
   "Crue_tron": {
-    "Name": "Cruel Patron",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Cruel Patron - Origins.jpg"
+    "name": "Cruel Patron",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Cruel Patron - Origins.jpg"
   },
   "Cul_eak": {
-    "Name": "Cull the Weak",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Cull the Weak - Origins.jpg"
+    "name": "Cull the Weak",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Cull the Weak - Origins.jpg"
   },
   "Dan_Duo": {
-    "Name": "Dangerous Duo",
-    "Price": 100,
-    "Stock": 7,
-    "IMG": "Dangerous Duo - Origins.jpg"
+    "name": "Dangerous Duo",
+    "price_cents": 100,
+    "stock": 7,
+    "images/": "Dangerous Duo - Origins.jpg"
   },
   "Dar_ed)": {
-    "Name": "Darius - Hand of Noxus (Overnumbered)",
-    "Price": 5400,
-    "Stock": 7,
-    "IMG": "Darius - Hand of Noxus (Overnumbered) - Origins.jpg"
+    "name": "Darius - Hand of Noxus (Overnumbered)",
+    "price_cents": 5400,
+    "stock": 7,
+    "images/": "Darius - Hand of Noxus (Overnumbered) - Origins.jpg"
   },
   "Dar_ian": {
-    "Name": "Darius - Trifarian",
-    "Price": 800,
-    "Stock": 5,
-    "IMG": "Darius - Trifarian - Origins.jpg"
+    "name": "Darius - Trifarian",
+    "price_cents": 800,
+    "stock": 5,
+    "images/": "Darius - Trifarian - Origins.jpg"
   },
   "Dar_ner": {
-    "Name": "Darius - Executioner",
-    "Price": 500,
-    "Stock": 4,
-    "IMG": "Darius - Executioner - Origins.jpg"
+    "name": "Darius - Executioner",
+    "price_cents": 500,
+    "stock": 4,
+    "images/": "Darius - Executioner - Origins.jpg"
   },
   "Dar_oro": {
-    "Name": "Daring Poro",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Daring Poro - Origins.jpg"
+    "name": "Daring Poro",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Daring Poro - Origins.jpg"
   },
   "Dar_re)": {
-    "Name": "Darius - Hand of Noxus (Signature)",
-    "Price": 54198,
-    "Stock": 6,
-    "IMG": "Darius - Hand of Noxus (Signature) - Origins.jpg"
+    "name": "Darius - Hand of Noxus (Signature)",
+    "price_cents": 54198,
+    "stock": 6,
+    "images/": "Darius - Hand of Noxus (Signature) - Origins.jpg"
   },
   "Dar_Tri_rt)": {
-    "Name": "Darius - Trifarian (Alternate Art)",
-    "Price": 2200,
-    "Stock": 4,
-    "IMG": "Darius - Trifarian (Alternate Art) - Origins.jpg"
+    "name": "Darius - Trifarian (Alternate Art)",
+    "price_cents": 2200,
+    "stock": 4,
+    "images/": "Darius - Trifarian (Alternate Art) - Origins.jpg"
   },
   "Dar_Exe_rt)": {
-    "Name": "Darius - Executioner (Alternate Art)",
-    "Price": 700,
-    "Stock": 3,
-    "IMG": "Darius - Executioner (Alternate Art) - Origins.jpg"
+    "name": "Darius - Executioner (Alternate Art)",
+    "price_cents": 700,
+    "stock": 3,
+    "images/": "Darius - Executioner (Alternate Art) - Origins.jpg"
   },
   "Dar_xus": {
-    "Name": "Darius - Hand of Noxus",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Darius - Hand of Noxus - Origins.jpg"
+    "name": "Darius - Hand of Noxus",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Darius - Hand of Noxus - Origins.jpg"
   },
   "Daz_ora": {
-    "Name": "Dazzling Aurora",
-    "Price": 7900,
-    "Stock": 2,
-    "IMG": "Dazzling Aurora - Origins.jpg"
+    "name": "Dazzling Aurora",
+    "price_cents": 7900,
+    "stock": 2,
+    "images/": "Dazzling Aurora - Origins.jpg"
   },
   "Dea_tor": {
-    "Name": "Deadbloom Predator",
-    "Price": 10799,
-    "Stock": 1,
-    "IMG": "Deadbloom Predator - Origins.jpg"
+    "name": "Deadbloom Predator",
+    "price_cents": 10799,
+    "stock": 1,
+    "images/": "Deadbloom Predator - Origins.jpg"
   },
   "Dec_ike": {
-    "Name": "Decisive Strike",
-    "Price": 200,
-    "Stock": 9,
-    "IMG": "Decisive Strike - Origins.jpg"
+    "name": "Decisive Strike",
+    "price_cents": 200,
+    "stock": 9,
+    "images/": "Decisive Strike - Origins.jpg"
   },
   "Def_efy": {
-    "Name": "Defy",
-    "Price": 100,
-    "Stock": 7,
-    "IMG": "Defy - Origins.jpg"
+    "name": "Defy",
+    "price_cents": 100,
+    "stock": 7,
+    "images/": "Defy - Origins.jpg"
   },
   "Dis_ate": {
-    "Name": "Disintegrate",
-    "Price": 100,
-    "Stock": 10,
-    "IMG": "Disintegrate - Origins.jpg"
+    "name": "Disintegrate",
+    "price_cents": 100,
+    "stock": 10,
+    "images/": "Disintegrate - Origins.jpg"
   },
   "Dis_ine": {
-    "Name": "Discipline",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Discipline - Origins.jpg"
+    "name": "Discipline",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Discipline - Origins.jpg"
   },
   "Div_ent": {
-    "Name": "Divine Judgment",
-    "Price": 1200,
-    "Stock": 9,
-    "IMG": "Divine Judgment - Origins.jpg"
+    "name": "Divine Judgment",
+    "price_cents": 1200,
+    "stock": 9,
+    "images/": "Divine Judgment - Origins.jpg"
   },
   "Dr._ert": {
-    "Name": "Dr. Mundo - Expert",
-    "Price": 400,
-    "Stock": 4,
-    "IMG": "Dr. Mundo - Expert - Origins.jpg"
+    "name": "Dr. Mundo - Expert",
+    "price_cents": 400,
+    "stock": 4,
+    "images/": "Dr. Mundo - Expert - Origins.jpg"
   },
   "Dra_age": {
-    "Name": "Dragon's Rage",
-    "Price": 600,
-    "Stock": 2,
-    "IMG": "Dragon's Rage - Origins.jpg"
+    "name": "Dragon's Rage",
+    "price_cents": 600,
+    "stock": 2,
+    "images/": "Dragon's Rage - Origins.jpg"
   },
   "Dra_oat": {
-    "Name": "Draven - Showboat",
-    "Price": 300,
-    "Stock": 7,
-    "IMG": "Draven - Showboat - Origins.jpg"
+    "name": "Draven - Showboat",
+    "price_cents": 300,
+    "stock": 7,
+    "images/": "Draven - Showboat - Origins.jpg"
   },
   "Dun_ake": {
-    "Name": "Dune Drake",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Dune Drake - Origins.jpg"
+    "name": "Dune Drake",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Dune Drake - Origins.jpg"
   },
   "Eag_ice": {
-    "Name": "Eager Apprentice",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Eager Apprentice - Origins.jpg"
+    "name": "Eager Apprentice",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Eager Apprentice - Origins.jpg"
   },
   "Ecl_ald": {
-    "Name": "Eclipse Herald",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Eclipse Herald - Origins.jpg"
+    "name": "Eclipse Herald",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Eclipse Herald - Origins.jpg"
   },
   "Ekk_ent": {
-    "Name": "Ekko - Recurrent",
-    "Price": 100,
-    "Stock": 7,
-    "IMG": "Ekko - Recurrent - Origins.jpg"
+    "name": "Ekko - Recurrent",
+    "price_cents": 100,
+    "stock": 7,
+    "images/": "Ekko - Recurrent - Origins.jpg"
   },
   "Emb_onk": {
-    "Name": "Ember Monk",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Ember Monk - Origins.jpg"
+    "name": "Ember Monk",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Ember Monk - Origins.jpg"
   },
   "En _rde": {
-    "Name": "En Garde",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "En Garde - Origins.jpg"
+    "name": "En Garde",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "En Garde - Origins.jpg"
   },
   "Ene_uit": {
-    "Name": "Energy Conduit",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Energy Conduit - Origins.jpg"
+    "name": "Energy Conduit",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Energy Conduit - Origins.jpg"
   },
   "Fac_ker": {
-    "Name": "Facebreaker",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Facebreaker - Origins.jpg"
+    "name": "Facebreaker",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Facebreaker - Origins.jpg"
   },
   "Fad_ies": {
-    "Name": "Fading Memories",
-    "Price": 100,
-    "Stock": 10,
-    "IMG": "Fading Memories - Origins.jpg"
+    "name": "Fading Memories",
+    "price_cents": 100,
+    "stock": 10,
+    "images/": "Fading Memories - Origins.jpg"
   },
   "Fai_tor": {
-    "Name": "Faithful Manufactor",
-    "Price": 100,
-    "Stock": 7,
-    "IMG": "Faithful Manufactor - Origins.jpg"
+    "name": "Faithful Manufactor",
+    "price_cents": 100,
+    "stock": 7,
+    "images/": "Faithful Manufactor - Origins.jpg"
   },
   "Fal_met": {
-    "Name": "Falling Comet",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Falling Comet - Origins.jpg"
+    "name": "Falling Comet",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Falling Comet - Origins.jpg"
   },
   "Fal_tar": {
-    "Name": "Falling Star",
-    "Price": 700,
-    "Stock": 5,
-    "IMG": "Falling Star - Origins.jpg"
+    "name": "Falling Star",
+    "price_cents": 700,
+    "stock": 5,
+    "images/": "Falling Star - Origins.jpg"
   },
   "Fig_ght": {
-    "Name": "Fight or Flight",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Fight or Flight - Origins.jpg"
+    "name": "Fight or Flight",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Fight or Flight - Origins.jpg"
   },
   "Fin_ark": {
-    "Name": "Final Spark",
-    "Price": 400,
-    "Stock": 1,
-    "IMG": "Final Spark - Origins.jpg"
+    "name": "Final Spark",
+    "price_cents": 400,
+    "stock": 1,
+    "images/": "Final Spark - Origins.jpg"
   },
   "Fin_ter": {
-    "Name": "Find Your Center",
-    "Price": 100,
-    "Stock": 10,
-    "IMG": "Find Your Center - Origins.jpg"
+    "name": "Find Your Center",
+    "price_cents": 100,
+    "stock": 10,
+    "images/": "Find Your Center - Origins.jpg"
   },
   "Fio_ous": {
-    "Name": "Fiora - Victorious",
-    "Price": 500,
-    "Stock": 5,
-    "IMG": "Fiora - Victorious - Origins.jpg"
+    "name": "Fiora - Victorious",
+    "price_cents": 500,
+    "stock": 5,
+    "images/": "Fiora - Victorious - Origins.jpg"
   },
   "Fir_ate": {
-    "Name": "First Mate",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "First Mate - Origins.jpg"
+    "name": "First Mate",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "First Mate - Origins.jpg"
   },
   "Fir_orm": {
-    "Name": "Firestorm",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Firestorm - Origins.jpg"
+    "name": "Firestorm",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Firestorm - Origins.jpg"
   },
   "Fla_ash": {
-    "Name": "Flash",
-    "Price": 4400,
-    "Stock": 8,
-    "IMG": "Flash - Origins.jpg"
+    "name": "Flash",
+    "price_cents": 4400,
+    "stock": 8,
+    "images/": "Flash - Origins.jpg"
   },
   "Fla_ers": {
-    "Name": "Flame Chompers",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Flame Chompers - Origins.jpg"
+    "name": "Flame Chompers",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Flame Chompers - Origins.jpg"
   },
   "Flu_des": {
-    "Name": "Flurry of Blades",
-    "Price": 100,
-    "Stock": 7,
-    "IMG": "Flurry of Blades - Origins.jpg"
+    "name": "Flurry of Blades",
+    "price_cents": 100,
+    "stock": 7,
+    "images/": "Flurry of Blades - Origins.jpg"
   },
   "For_ed)": {
-    "Name": "Fortified Position (Oversized)",
-    "Price": 600,
-    "Stock": 10,
-    "IMG": "Fortified Position (Oversized) - Origins.jpg"
+    "name": "Fortified Position (Oversized)",
+    "price_cents": 600,
+    "stock": 10,
+    "images/": "Fortified Position (Oversized) - Origins.jpg"
   },
   "For_ion": {
-    "Name": "Fortified Position",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Fortified Position - Origins.jpg"
+    "name": "Fortified Position",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Fortified Position - Origins.jpg"
   },
   "For_ure": {
-    "Name": "Forge of the Future",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Forge of the Future - Origins.jpg"
+    "name": "Forge of the Future",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Forge of the Future - Origins.jpg"
   },
   "Fox_ire": {
-    "Name": "Fox-Fire",
-    "Price": 1300,
-    "Stock": 9,
-    "IMG": "Fox-Fire - Origins.jpg"
+    "name": "Fox-Fire",
+    "price_cents": 1300,
+    "stock": 9,
+    "images/": "Fox-Fire - Origins.jpg"
   },
   "Fur_rt)": {
-    "Name": "Fury Rune (Alternate Art)",
-    "Price": 2200,
-    "Stock": 4,
-    "IMG": "Fury Rune (Alternate Art) - Origins.jpg"
+    "name": "Fury Rune (Alternate Art)",
+    "price_cents": 2200,
+    "stock": 4,
+    "images/": "Fury Rune (Alternate Art) - Origins.jpg"
   },
   "Fur_une": {
-    "Name": "Fury Rune",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Fury Rune - Origins.jpg"
+    "name": "Fury Rune",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Fury Rune - Origins.jpg"
   },
   "Gar_ber": {
-    "Name": "Garbage Grabber",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Garbage Grabber - Origins.jpg"
+    "name": "Garbage Grabber",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Garbage Grabber - Origins.jpg"
   },
   "Gar_der": {
-    "Name": "Garen - Commander",
-    "Price": 300,
-    "Stock": 2,
-    "IMG": "Garen - Commander - Origins.jpg"
+    "name": "Garen - Commander",
+    "price_cents": 300,
+    "stock": 2,
+    "images/": "Garen - Commander - Origins.jpg"
   },
   "Gar_er)": {
-    "Name": "Garen - Might of Demacia (Starter)",
-    "Price": 200,
-    "Stock": 10,
-    "IMG": "Garen - Might of Demacia (Starter) - Origins.jpg"
+    "name": "Garen - Might of Demacia (Starter)",
+    "price_cents": 200,
+    "stock": 10,
+    "images/": "Garen - Might of Demacia (Starter) - Origins.jpg"
   },
   "Gar_ged": {
-    "Name": "Garen - Rugged",
-    "Price": 200,
-    "Stock": 9,
-    "IMG": "Garen - Rugged - Origins.jpg"
+    "name": "Garen - Rugged",
+    "price_cents": 200,
+    "stock": 9,
+    "images/": "Garen - Rugged - Origins.jpg"
   },
   "Gem_eer": {
-    "Name": "Gemcraft Seer",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Gemcraft Seer - Origins.jpg"
+    "name": "Gemcraft Seer",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Gemcraft Seer - Origins.jpg"
   },
   "Gen_uel": {
-    "Name": "Gentlemen's Duel",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "Gentlemen's Duel - Origins.jpg"
+    "name": "Gentlemen's Duel",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "Gentlemen's Duel - Origins.jpg"
   },
   "Get_ed!": {
-    "Name": "Get Excited!",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Get Excited! - Origins.jpg"
+    "name": "Get Excited!",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Get Excited! - Origins.jpg"
   },
   "Gra_gem": {
-    "Name": "Grand Strategem",
-    "Price": 200,
-    "Stock": 2,
-    "IMG": "Grand Strategem - Origins.jpg"
+    "name": "Grand Strategem",
+    "price_cents": 200,
+    "stock": 2,
+    "images/": "Grand Strategem - Origins.jpg"
   },
   "Gro_low": {
-    "Name": "Grove of the God-Willow",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Grove of the God-Willow - Origins.jpg"
+    "name": "Grove of the God-Willow",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Grove of the God-Willow - Origins.jpg"
   },
   "Gue_are": {
-    "Name": "Guerilla Warfare",
-    "Price": 1200,
-    "Stock": 7,
-    "IMG": "Guerilla Warfare - Origins.jpg"
+    "name": "Guerilla Warfare",
+    "price_cents": 1200,
+    "stock": 7,
+    "images/": "Guerilla Warfare - Origins.jpg"
   },
   "Gus_ust": {
-    "Name": "Gust",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Gust - Origins.jpg"
+    "name": "Gust",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Gust - Origins.jpg"
   },
   "Hal_omb": {
-    "Name": "Hallowed Tomb",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Hallowed Tomb - Origins.jpg"
+    "name": "Hallowed Tomb",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Hallowed Tomb - Origins.jpg"
   },
   "Har_gon": {
-    "Name": "Harnessed Dragon",
-    "Price": 200,
-    "Stock": 2,
-    "IMG": "Harnessed Dragon - Origins.jpg"
+    "name": "Harnessed Dragon",
+    "price_cents": 200,
+    "stock": 2,
+    "images/": "Harnessed Dragon - Origins.jpg"
   },
   "Hei_tor": {
-    "Name": "Heimerdinger - Inventor",
-    "Price": 100,
-    "Stock": 8,
-    "IMG": "Heimerdinger - Inventor - Origins.jpg"
+    "name": "Heimerdinger - Inventor",
+    "price_cents": 100,
+    "stock": 8,
+    "images/": "Heimerdinger - Inventor - Origins.jpg"
   },
   "Her_les": {
-    "Name": "Herald of Scales",
-    "Price": 100,
-    "Stock": 7,
-    "IMG": "Herald of Scales - Origins.jpg"
+    "name": "Herald of Scales",
+    "price_cents": 100,
+    "stock": 7,
+    "images/": "Herald of Scales - Origins.jpg"
   },
   "Hex_Ray": {
-    "Name": "Hextech Ray",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Hextech Ray - Origins.jpg"
+    "name": "Hextech Ray",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Hextech Ray - Origins.jpg"
   },
   "Hid_ade": {
-    "Name": "Hidden Blade",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Hidden Blade - Origins.jpg"
+    "name": "Hidden Blade",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Hidden Blade - Origins.jpg"
   },
   "Hig_der": {
-    "Name": "Highlander",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Highlander - Origins.jpg"
+    "name": "Highlander",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Highlander - Origins.jpg"
   },
   "Ica_ain": {
-    "Name": "Icathian Rain",
-    "Price": 3400,
-    "Stock": 8,
-    "IMG": "Icathian Rain - Origins.jpg"
+    "name": "Icathian Rain",
+    "price_cents": 3400,
+    "stock": 8,
+    "images/": "Icathian Rain - Origins.jpg"
   },
   "Imm_nix": {
-    "Name": "Immortal Phoenix",
-    "Price": 800,
-    "Stock": 7,
-    "IMG": "Immortal Phoenix - Origins.jpg"
+    "name": "Immortal Phoenix",
+    "price_cents": 800,
+    "stock": 7,
+    "images/": "Immortal Phoenix - Origins.jpg"
   },
   "Imp_ree": {
-    "Name": "Imperial Decree",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Imperial Decree - Origins.jpg"
+    "name": "Imperial Decree",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Imperial Decree - Origins.jpg"
   },
   "Inc_ate": {
-    "Name": "Incinerate",
-    "Price": 200,
-    "Stock": 5,
-    "IMG": "Incinerate - Origins.jpg"
+    "name": "Incinerate",
+    "price_cents": 200,
+    "stock": 5,
+    "images/": "Incinerate - Origins.jpg"
   },
   "Inv_nes": {
-    "Name": "Invert Timelines",
-    "Price": 3500,
-    "Stock": 4,
-    "IMG": "Invert Timelines - Origins.jpg"
+    "name": "Invert Timelines",
+    "price_cents": 3500,
+    "stock": 4,
+    "images/": "Invert Timelines - Origins.jpg"
   },
   "Iro_sta": {
-    "Name": "Iron Ballista",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "Iron Ballista - Origins.jpg"
+    "name": "Iron Ballista",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "Iron Ballista - Origins.jpg"
   },
   "Jew_sus": {
-    "Name": "Jeweled Colossus",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Jeweled Colossus - Origins.jpg"
+    "name": "Jeweled Colossus",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Jeweled Colossus - Origins.jpg"
   },
   "Jin_bel": {
-    "Name": "Jinx - Rebel",
-    "Price": 500,
-    "Stock": 6,
-    "IMG": "Jinx - Rebel - Origins.jpg"
+    "name": "Jinx - Rebel",
+    "price_cents": 500,
+    "stock": 6,
+    "images/": "Jinx - Rebel - Origins.jpg"
   },
   "Jin_ed)": {
-    "Name": "Jinx - Loose Cannon (Overnumbered)",
-    "Price": 8800,
-    "Stock": 8,
-    "IMG": "Jinx - Loose Cannon (Overnumbered) - Origins.jpg"
+    "name": "Jinx - Loose Cannon (Overnumbered)",
+    "price_cents": 8800,
+    "stock": 8,
+    "images/": "Jinx - Loose Cannon (Overnumbered) - Origins.jpg"
   },
   "Jin_ist": {
-    "Name": "Jinx - Demolitionist",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Jinx - Demolitionist - Origins.jpg"
+    "name": "Jinx - Demolitionist",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Jinx - Demolitionist - Origins.jpg"
   },
   "Jin_non": {
-    "Name": "Jinx - Loose Cannon",
-    "Price": 100,
-    "Stock": 10,
-    "IMG": "Jinx - Loose Cannon - Origins.jpg"
+    "name": "Jinx - Loose Cannon",
+    "price_cents": 100,
+    "stock": 10,
+    "images/": "Jinx - Loose Cannon - Origins.jpg"
   },
   "Jin_re)": {
-    "Name": "Jinx - Loose Cannon (Signature)",
-    "Price": 84999,
-    "Stock": 7,
-    "IMG": "Jinx - Loose Cannon (Signature) - Origins.jpg"
+    "name": "Jinx - Loose Cannon (Signature)",
+    "price_cents": 84999,
+    "stock": 7,
+    "images/": "Jinx - Loose Cannon (Signature) - Origins.jpg"
   },
   "Jin_Dem_rt)": {
-    "Name": "Jinx - Demolitionist (Alternate Art)",
-    "Price": 800,
-    "Stock": 2,
-    "IMG": "Jinx - Demolitionist (Alternate Art) - Origins.jpg"
+    "name": "Jinx - Demolitionist (Alternate Art)",
+    "price_cents": 800,
+    "stock": 2,
+    "images/": "Jinx - Demolitionist (Alternate Art) - Origins.jpg"
   },
   "Jin_Reb_rt)": {
-    "Name": "Jinx - Rebel (Alternate Art)",
-    "Price": 500,
-    "Stock": 4,
-    "IMG": "Jinx - Rebel (Alternate Art) - Origins.jpg"
+    "name": "Jinx - Rebel (Alternate Art)",
+    "price_cents": 500,
+    "stock": 4,
+    "images/": "Jinx - Rebel (Alternate Art) - Origins.jpg"
   },
   "Kad_nal": {
-    "Name": "Kadregrin the Infernal",
-    "Price": 1000,
-    "Stock": 3,
-    "IMG": "Kadregrin the Infernal - Origins.jpg"
+    "name": "Kadregrin the Infernal",
+    "price_cents": 1000,
+    "stock": 3,
+    "images/": "Kadregrin the Infernal - Origins.jpg"
   },
   "Kai_ary": {
-    "Name": "Kai'Sa - Evolutionary",
-    "Price": 100,
-    "Stock": 7,
-    "IMG": "Kai'Sa - Evolutionary - Origins.jpg"
+    "name": "Kai'Sa - Evolutionary",
+    "price_cents": 100,
+    "stock": 7,
+    "images/": "Kai'Sa - Evolutionary - Origins.jpg"
   },
   "Kai_ed)": {
-    "Name": "Kai'Sa - Daughter of the Void (Overnumbered)",
-    "Price": 16099,
-    "Stock": 9,
-    "IMG": "Kai'Sa - Daughter of the Void (Overnumbered) - Origins.jpg"
+    "name": "Kai'Sa - Daughter of the Void (Overnumbered)",
+    "price_cents": 16099,
+    "stock": 9,
+    "images/": "Kai'Sa - Daughter of the Void (Overnumbered) - Origins.jpg"
   },
   "Kai_oid": {
-    "Name": "Kai'Sa - Daughter of the Void",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Kai'Sa - Daughter of the Void - Origins.jpg"
+    "name": "Kai'Sa - Daughter of the Void",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Kai'Sa - Daughter of the Void - Origins.jpg"
   },
   "Kai_re)": {
-    "Name": "Kai'Sa - Daughter of the Void (Signature)",
-    "Price": 229994,
-    "Stock": 8,
-    "IMG": "Kai'Sa - Daughter of the Void (Signature) - Origins.jpg"
+    "name": "Kai'Sa - Daughter of the Void (Signature)",
+    "price_cents": 229994,
+    "stock": 8,
+    "images/": "Kai'Sa - Daughter of the Void (Signature) - Origins.jpg"
   },
   "Kai_Sur_rt)": {
-    "Name": "Kai'Sa - Survivor (Alternate Art)",
-    "Price": 9992,
-    "Stock": 4,
-    "IMG": "Kai'Sa - Survivor (Alternate Art) - Origins.jpg"
+    "name": "Kai'Sa - Survivor (Alternate Art)",
+    "price_cents": 9992,
+    "stock": 4,
+    "images/": "Kai'Sa - Survivor (Alternate Art) - Origins.jpg"
   },
   "Kai_Evo_rt)": {
-    "Name": "Kai'Sa - Evolutionary (Alternate Art)",
-    "Price": 400,
-    "Stock": 6,
-    "IMG": "Kai'Sa - Evolutionary (Alternate Art) - Origins.jpg"
+    "name": "Kai'Sa - Evolutionary (Alternate Art)",
+    "price_cents": 400,
+    "stock": 6,
+    "images/": "Kai'Sa - Evolutionary (Alternate Art) - Origins.jpg"
   },
   "Kai_vor": {
-    "Name": "Kai'Sa - Survivor",
-    "Price": 9491,
-    "Stock": 5,
-    "IMG": "Kai'Sa - Survivor - Origins.jpg"
+    "name": "Kai'Sa - Survivor",
+    "price_cents": 9491,
+    "stock": 5,
+    "images/": "Kai'Sa - Survivor - Origins.jpg"
   },
   "Kar_ler": {
-    "Name": "Karma - Channeler",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Karma - Channeler - Origins.jpg"
+    "name": "Karma - Channeler",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Karma - Channeler - Origins.jpg"
   },
   "Kar_nal": {
-    "Name": "Karthus - Eternal",
-    "Price": 200,
-    "Stock": 10,
-    "IMG": "Karthus - Eternal - Origins.jpg"
+    "name": "Karthus - Eternal",
+    "price_cents": 200,
+    "stock": 10,
+    "images/": "Karthus - Eternal - Origins.jpg"
   },
   "Kay_hed": {
-    "Name": "Kayn - Unleashed",
-    "Price": 200,
-    "Stock": 8,
-    "IMG": "Kayn - Unleashed - Origins.jpg"
+    "name": "Kayn - Unleashed",
+    "price_cents": 200,
+    "stock": 8,
+    "images/": "Kayn - Unleashed - Origins.jpg"
   },
   "Kin_ict": {
-    "Name": "King's Edict",
-    "Price": 100,
-    "Stock": 7,
-    "IMG": "King's Edict - Origins.jpg"
+    "name": "King's Edict",
+    "price_cents": 100,
+    "stock": 7,
+    "images/": "King's Edict - Origins.jpg"
   },
   "Kin_onk": {
-    "Name": "Kinkou Monk",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Kinkou Monk - Origins.jpg"
+    "name": "Kinkou Monk",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Kinkou Monk - Origins.jpg"
   },
   "Kog_tic": {
-    "Name": "Kog'Maw - Caustic",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "Kog'Maw - Caustic - Origins.jpg"
+    "name": "Kog'Maw - Caustic",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "Kog'Maw - Caustic - Origins.jpg"
   },
   "Kra_ter": {
-    "Name": "Kraken Hunter",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Kraken Hunter - Origins.jpg"
+    "name": "Kraken Hunter",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Kraken Hunter - Origins.jpg"
   },
   "Las_and": {
-    "Name": "Last Stand",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Last Stand - Origins.jpg"
+    "name": "Last Stand",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Last Stand - Origins.jpg"
   },
   "Las_ath": {
-    "Name": "Last Breath",
-    "Price": 700,
-    "Stock": 3,
-    "IMG": "Last Breath - Origins.jpg"
+    "name": "Last Breath",
+    "price_cents": 700,
+    "stock": 3,
+    "images/": "Last Breath - Origins.jpg"
   },
   "Lec_dle": {
-    "Name": "Lecturing Yordle",
-    "Price": 100,
-    "Stock": 8,
-    "IMG": "Lecturing Yordle - Origins.jpg"
+    "name": "Lecturing Yordle",
+    "price_cents": 100,
+    "stock": 8,
+    "images/": "Lecturing Yordle - Origins.jpg"
   },
   "Lee_ed)": {
-    "Name": "Lee Sin - Blind Monk (Overnumbered)",
-    "Price": 6900,
-    "Stock": 1,
-    "IMG": "Lee Sin - Blind Monk (Overnumbered) - Origins.jpg"
+    "name": "Lee Sin - Blind Monk (Overnumbered)",
+    "price_cents": 6900,
+    "stock": 1,
+    "images/": "Lee Sin - Blind Monk (Overnumbered) - Origins.jpg"
   },
   "Lee_onk": {
-    "Name": "Lee Sin - Blind Monk",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Lee Sin - Blind Monk - Origins.jpg"
+    "name": "Lee Sin - Blind Monk",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Lee Sin - Blind Monk - Origins.jpg"
   },
   "Lee_re)": {
-    "Name": "Lee Sin - Blind Monk (Signature)",
-    "Price": 70000,
-    "Stock": 10,
-    "IMG": "Lee Sin - Blind Monk (Signature) - Origins.jpg"
+    "name": "Lee Sin - Blind Monk (Signature)",
+    "price_cents": 70000,
+    "stock": 10,
+    "images/": "Lee Sin - Blind Monk (Signature) - Origins.jpg"
   },
   "Lee_red": {
-    "Name": "Lee Sin - Centered",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Lee Sin - Centered - Origins.jpg"
+    "name": "Lee Sin - Centered",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Lee Sin - Centered - Origins.jpg"
   },
   "Lee_Cen_rt)": {
-    "Name": "Lee Sin - Centered (Alternate Art)",
-    "Price": 600,
-    "Stock": 8,
-    "IMG": "Lee Sin - Centered (Alternate Art) - Origins.jpg"
+    "name": "Lee Sin - Centered (Alternate Art)",
+    "price_cents": 600,
+    "stock": 8,
+    "images/": "Lee Sin - Centered (Alternate Art) - Origins.jpg"
   },
   "Lee_Asc_rt)": {
-    "Name": "Lee Sin - Ascetic (Alternate Art)",
-    "Price": 600,
-    "Stock": 5,
-    "IMG": "Lee Sin - Ascetic (Alternate Art) - Origins.jpg"
+    "name": "Lee Sin - Ascetic (Alternate Art)",
+    "price_cents": 600,
+    "stock": 5,
+    "images/": "Lee Sin - Ascetic (Alternate Art) - Origins.jpg"
   },
   "Lee_tic": {
-    "Name": "Lee Sin - Ascetic",
-    "Price": 300,
-    "Stock": 7,
-    "IMG": "Lee Sin - Ascetic - Origins.jpg"
+    "name": "Lee Sin - Ascetic",
+    "price_cents": 300,
+    "stock": 7,
+    "images/": "Lee Sin - Ascetic - Origins.jpg"
   },
   "Leg_ard": {
-    "Name": "Legion Rearguard",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Legion Rearguard - Origins.jpg"
+    "name": "Legion Rearguard",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Legion Rearguard - Origins.jpg"
   },
   "Leo_awn": {
-    "Name": "Leona - Radiant Dawn",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Leona - Radiant Dawn - Origins.jpg"
+    "name": "Leona - Radiant Dawn",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Leona - Radiant Dawn - Origins.jpg"
   },
   "Leo_ed)": {
-    "Name": "Leona - Radiant Dawn (Overnumbered)",
-    "Price": 9198,
-    "Stock": 10,
-    "IMG": "Leona - Radiant Dawn (Overnumbered) - Origins.jpg"
+    "name": "Leona - Radiant Dawn (Overnumbered)",
+    "price_cents": 9198,
+    "stock": 10,
+    "images/": "Leona - Radiant Dawn (Overnumbered) - Origins.jpg"
   },
   "Leo_lot": {
-    "Name": "Leona - Zealot",
-    "Price": 500,
-    "Stock": 8,
-    "IMG": "Leona - Zealot - Origins.jpg"
+    "name": "Leona - Zealot",
+    "price_cents": 500,
+    "stock": 8,
+    "images/": "Leona - Zealot - Origins.jpg"
   },
   "Leo_ned": {
-    "Name": "Leona - Determined",
-    "Price": 300,
-    "Stock": 5,
-    "IMG": "Leona - Determined - Origins.jpg"
+    "name": "Leona - Determined",
+    "price_cents": 300,
+    "stock": 5,
+    "images/": "Leona - Determined - Origins.jpg"
   },
   "Leo_re)": {
-    "Name": "Leona - Radiant Dawn (Signature)",
-    "Price": 62899,
-    "Stock": 9,
-    "IMG": "Leona - Radiant Dawn (Signature) - Origins.jpg"
+    "name": "Leona - Radiant Dawn (Signature)",
+    "price_cents": 62899,
+    "stock": 9,
+    "images/": "Leona - Radiant Dawn (Signature) - Origins.jpg"
   },
   "Leo_Det_rt)": {
-    "Name": "Leona - Determined (Alternate Art)",
-    "Price": 1100,
-    "Stock": 4,
-    "IMG": "Leona - Determined (Alternate Art) - Origins.jpg"
+    "name": "Leona - Determined (Alternate Art)",
+    "price_cents": 1100,
+    "stock": 4,
+    "images/": "Leona - Determined (Alternate Art) - Origins.jpg"
   },
   "Leo_Zea_rt)": {
-    "Name": "Leona - Zealot (Alternate Art)",
-    "Price": 1000,
-    "Stock": 7,
-    "IMG": "Leona - Zealot (Alternate Art) - Origins.jpg"
+    "name": "Leona - Zealot (Alternate Art)",
+    "price_cents": 1000,
+    "stock": 7,
+    "images/": "Leona - Zealot (Alternate Art) - Origins.jpg"
   },
   "Lux_ard": {
-    "Name": "Lux - Crownguard",
-    "Price": 600,
-    "Stock": 7,
-    "IMG": "Lux - Crownguard - Origins.jpg"
+    "name": "Lux - Crownguard",
+    "price_cents": 600,
+    "stock": 7,
+    "images/": "Lux - Crownguard - Origins.jpg"
   },
   "Lux_er)": {
-    "Name": "Lux - Lady of Luminosity (Starter)",
-    "Price": 600,
-    "Stock": 4,
-    "IMG": "Lux - Lady of Luminosity (Starter) - Origins.jpg"
+    "name": "Lux - Lady of Luminosity (Starter)",
+    "price_cents": 600,
+    "stock": 4,
+    "images/": "Lux - Lady of Luminosity (Starter) - Origins.jpg"
   },
   "Lux_ted": {
-    "Name": "Lux - Illuminated",
-    "Price": 200,
-    "Stock": 6,
-    "IMG": "Lux - Illuminated - Origins.jpg"
+    "name": "Lux - Illuminated",
+    "price_cents": 200,
+    "stock": 6,
+    "images/": "Lux - Illuminated - Origins.jpg"
   },
   "Mac_gel": {
-    "Name": "Machine Evangel",
-    "Price": 300,
-    "Stock": 3,
-    "IMG": "Machine Evangel - Origins.jpg"
+    "name": "Machine Evangel",
+    "price_cents": 300,
+    "stock": 3,
+    "images/": "Machine Evangel - Origins.jpg"
   },
   "Mad_der": {
-    "Name": "Maddened Marauder",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Maddened Marauder - Origins.jpg"
+    "name": "Maddened Marauder",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Maddened Marauder - Origins.jpg"
   },
   "Mag_den": {
-    "Name": "Mageseeker Warden",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Mageseeker Warden - Origins.jpg"
+    "name": "Mageseeker Warden",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Mageseeker Warden - Origins.jpg"
   },
   "Mag_urm": {
-    "Name": "Magma Wurm",
-    "Price": 100,
-    "Stock": 10,
-    "IMG": "Magma Wurm - Origins.jpg"
+    "name": "Magma Wurm",
+    "price_cents": 100,
+    "stock": 10,
+    "images/": "Magma Wurm - Origins.jpg"
   },
   "Mal_tic": {
-    "Name": "Malzahar - Fanatic",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Malzahar - Fanatic - Origins.jpg"
+    "name": "Malzahar - Fanatic",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Malzahar - Fanatic - Origins.jpg"
   },
   "Mas_er)": {
-    "Name": "Master Yi - Wuju Bladesman (Starter)",
-    "Price": 1800,
-    "Stock": 1,
-    "IMG": "Master Yi - Wuju Bladesman (Starter) - Origins.jpg"
+    "name": "Master Yi - Wuju Bladesman (Starter)",
+    "price_cents": 1800,
+    "stock": 1,
+    "images/": "Master Yi - Wuju Bladesman (Starter) - Origins.jpg"
   },
   "Mas_ght": {
-    "Name": "Mask of Foresight",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Mask of Foresight - Origins.jpg"
+    "name": "Mask of Foresight",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Mask of Foresight - Origins.jpg"
   },
   "Mas_ive": {
-    "Name": "Master Yi - Meditative",
-    "Price": 300,
-    "Stock": 3,
-    "IMG": "Master Yi - Meditative - Origins.jpg"
+    "name": "Master Yi - Meditative",
+    "price_cents": 300,
+    "stock": 3,
+    "images/": "Master Yi - Meditative - Origins.jpg"
   },
   "Mas_ned": {
-    "Name": "Master Yi - Honed",
-    "Price": 500,
-    "Stock": 4,
-    "IMG": "Master Yi - Honed - Origins.jpg"
+    "name": "Master Yi - Honed",
+    "price_cents": 500,
+    "stock": 4,
+    "images/": "Master Yi - Honed - Origins.jpg"
   },
   "Med_ion": {
-    "Name": "Meditation",
-    "Price": 100,
-    "Stock": 10,
-    "IMG": "Meditation - Origins.jpg"
+    "name": "Meditation",
+    "price_cents": 100,
+    "stock": 10,
+    "images/": "Meditation - Origins.jpg"
   },
   "Meg_ech": {
-    "Name": "Mega-Mech",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Mega-Mech - Origins.jpg"
+    "name": "Mega-Mech",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Mega-Mech - Origins.jpg"
   },
   "Min_rt)": {
-    "Name": "Mind Rune (Alternate Art)",
-    "Price": 2700,
-    "Stock": 6,
-    "IMG": "Mind Rune (Alternate Art) - Origins.jpg"
+    "name": "Mind Rune (Alternate Art)",
+    "price_cents": 2700,
+    "stock": 6,
+    "images/": "Mind Rune (Alternate Art) - Origins.jpg"
   },
   "Min_ter": {
-    "Name": "Mindsplitter",
-    "Price": 900,
-    "Stock": 5,
-    "IMG": "Mindsplitter - Origins.jpg"
+    "name": "Mindsplitter",
+    "price_cents": 900,
+    "stock": 5,
+    "images/": "Mindsplitter - Origins.jpg"
   },
   "Min_une": {
-    "Name": "Mind Rune",
-    "Price": 100,
-    "Stock": 8,
-    "IMG": "Mind Rune - Origins.jpg"
+    "name": "Mind Rune",
+    "price_cents": 100,
+    "stock": 8,
+    "images/": "Mind Rune - Origins.jpg"
   },
   "Mis_ain": {
-    "Name": "Miss Fortune - Captain",
-    "Price": 1000,
-    "Stock": 4,
-    "IMG": "Miss Fortune - Captain - Origins.jpg"
+    "name": "Miss Fortune - Captain",
+    "price_cents": 1000,
+    "stock": 4,
+    "images/": "Miss Fortune - Captain - Origins.jpg"
   },
   "Mis_all": {
-    "Name": "Mistfall",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Mistfall - Origins.jpg"
+    "name": "Mistfall",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Mistfall - Origins.jpg"
   },
   "Mis_ed)": {
-    "Name": "Miss Fortune - Bounty Hunter (Overnumbered)",
-    "Price": 12099,
-    "Stock": 9,
-    "IMG": "Miss Fortune - Bounty Hunter (Overnumbered) - Origins.jpg"
+    "name": "Miss Fortune - Bounty Hunter (Overnumbered)",
+    "price_cents": 12099,
+    "stock": 9,
+    "images/": "Miss Fortune - Bounty Hunter (Overnumbered) - Origins.jpg"
   },
   "Mis_eer": {
-    "Name": "Miss Fortune - Buccaneer",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Miss Fortune - Buccaneer - Origins.jpg"
+    "name": "Miss Fortune - Buccaneer",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Miss Fortune - Buccaneer - Origins.jpg"
   },
   "Mis_re)": {
-    "Name": "Miss Fortune - Bounty Hunter (Signature)",
-    "Price": 84098,
-    "Stock": 8,
-    "IMG": "Miss Fortune - Bounty Hunter (Signature) - Origins.jpg"
+    "name": "Miss Fortune - Bounty Hunter (Signature)",
+    "price_cents": 84098,
+    "stock": 8,
+    "images/": "Miss Fortune - Bounty Hunter (Signature) - Origins.jpg"
   },
   "Mis_Cap_rt)": {
-    "Name": "Miss Fortune - Captain (Alternate Art)",
-    "Price": 2000,
-    "Stock": 3,
-    "IMG": "Miss Fortune - Captain (Alternate Art) - Origins.jpg"
+    "name": "Miss Fortune - Captain (Alternate Art)",
+    "price_cents": 2000,
+    "stock": 3,
+    "images/": "Miss Fortune - Captain (Alternate Art) - Origins.jpg"
   },
   "Mis_Buc_rt)": {
-    "Name": "Miss Fortune - Buccaneer (Alternate Art)",
-    "Price": 500,
-    "Stock": 5,
-    "IMG": "Miss Fortune - Buccaneer (Alternate Art) - Origins.jpg"
+    "name": "Miss Fortune - Buccaneer (Alternate Art)",
+    "price_cents": 500,
+    "stock": 5,
+    "images/": "Miss Fortune - Buccaneer (Alternate Art) - Origins.jpg"
   },
   "Mis_ter": {
-    "Name": "Miss Fortune - Bounty Hunter",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Miss Fortune - Bounty Hunter - Origins.jpg"
+    "name": "Miss Fortune - Bounty Hunter",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Miss Fortune - Bounty Hunter - Origins.jpg"
   },
   "Mob_ize": {
-    "Name": "Mobilize",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Mobilize - Origins.jpg"
+    "name": "Mobilize",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Mobilize - Origins.jpg"
   },
   "Mon_ana": {
-    "Name": "Monastery of Hirana",
-    "Price": 100,
-    "Stock": 10,
-    "IMG": "Monastery of Hirana - Origins.jpg"
+    "name": "Monastery of Hirana",
+    "price_cents": 100,
+    "stock": 10,
+    "images/": "Monastery of Hirana - Origins.jpg"
   },
   "Mor_urn": {
-    "Name": "Morbid Return",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Morbid Return - Origins.jpg"
+    "name": "Morbid Return",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Morbid Return - Origins.jpg"
   },
   "Mou_ake": {
-    "Name": "Mountain Drake",
-    "Price": 100,
-    "Stock": 8,
-    "IMG": "Mountain Drake - Origins.jpg"
+    "name": "Mountain Drake",
+    "price_cents": 100,
+    "stock": 8,
+    "images/": "Mountain Drake - Origins.jpg"
   },
   "Mus_uch": {
-    "Name": "Mushroom Pouch",
-    "Price": 100,
-    "Stock": 7,
-    "IMG": "Mushroom Pouch - Origins.jpg"
+    "name": "Mushroom Pouch",
+    "price_cents": 100,
+    "stock": 7,
+    "images/": "Mushroom Pouch - Origins.jpg"
   },
   "Mys_oro": {
-    "Name": "Mystic Poro",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Mystic Poro - Origins.jpg"
+    "name": "Mystic Poro",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Mystic Poro - Origins.jpg"
   },
   "Mys_sal": {
-    "Name": "Mystic Reversal",
-    "Price": 1200,
-    "Stock": 5,
-    "IMG": "Mystic Reversal - Origins.jpg"
+    "name": "Mystic Reversal",
+    "price_cents": 1200,
+    "stock": 5,
+    "images/": "Mystic Reversal - Origins.jpg"
   },
   "Nav_Pit": {
-    "Name": "Navori Fighting Pit",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Navori Fighting Pit - Origins.jpg"
+    "name": "Navori Fighting Pit",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Navori Fighting Pit - Origins.jpg"
   },
   "Noc_ing": {
-    "Name": "Nocturne - Horrifying",
-    "Price": 500,
-    "Stock": 1,
-    "IMG": "Nocturne - Horrifying - Origins.jpg"
+    "name": "Nocturne - Horrifying",
+    "price_cents": 500,
+    "stock": 1,
+    "images/": "Nocturne - Horrifying - Origins.jpg"
   },
   "Nox_eur": {
-    "Name": "Noxus Saboteur",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Noxus Saboteur - Origins.jpg"
+    "name": "Noxus Saboteur",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Noxus Saboteur - Origins.jpg"
   },
   "Nox_ful": {
-    "Name": "Noxus Hopeful",
-    "Price": 100,
-    "Stock": 7,
-    "IMG": "Noxus Hopeful - Origins.jpg"
+    "name": "Noxus Hopeful",
+    "price_cents": 100,
+    "stock": 7,
+    "images/": "Noxus Hopeful - Origins.jpg"
   },
   "Nox_ine": {
-    "Name": "Noxian Guillotine",
-    "Price": 300,
-    "Stock": 8,
-    "IMG": "Noxian Guillotine - Origins.jpg"
+    "name": "Noxian Guillotine",
+    "price_cents": 300,
+    "stock": 8,
+    "images/": "Noxian Guillotine - Origins.jpg"
   },
   "Nox_mer": {
-    "Name": "Noxian Drummer",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Noxian Drummer - Origins.jpg"
+    "name": "Noxian Drummer",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Noxian Drummer - Origins.jpg"
   },
   "Obe_wer": {
-    "Name": "Obelisk of Power",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "Obelisk of Power - Origins.jpg"
+    "name": "Obelisk of Power",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "Obelisk of Power - Origins.jpg"
   },
   "Orb_ret": {
-    "Name": "Orb of Regret",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Orb of Regret - Origins.jpg"
+    "name": "Orb of Regret",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Orb of Regret - Origins.jpg"
   },
   "Ord_rt)": {
-    "Name": "Order Rune (Alternate Art)",
-    "Price": 1700,
-    "Stock": 10,
-    "IMG": "Order Rune (Alternate Art) - Origins.jpg"
+    "name": "Order Rune (Alternate Art)",
+    "price_cents": 1700,
+    "stock": 10,
+    "images/": "Order Rune (Alternate Art) - Origins.jpg"
   },
   "Ord_une": {
-    "Name": "Order Rune",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Order Rune - Origins.jpg"
+    "name": "Order Rune",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Order Rune - Origins.jpg"
   },
   "Ove_ion": {
-    "Name": "Overt Operation",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Overt Operation - Origins.jpg"
+    "name": "Overt Operation",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Overt Operation - Origins.jpg"
   },
   "Pac_ers": {
-    "Name": "Pack of Wonders",
-    "Price": 100,
-    "Stock": 10,
-    "IMG": "Pack of Wonders - Origins.jpg"
+    "name": "Pack of Wonders",
+    "price_cents": 100,
+    "stock": 10,
+    "images/": "Pack of Wonders - Origins.jpg"
   },
   "Pak_Cub": {
-    "Name": "Pakaa Cub",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Pakaa Cub - Origins.jpg"
+    "name": "Pakaa Cub",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Pakaa Cub - Origins.jpg"
   },
   "Par_ors": {
-    "Name": "Party Favors",
-    "Price": 100,
-    "Stock": 7,
-    "IMG": "Party Favors - Origins.jpg"
+    "name": "Party Favors",
+    "price_cents": 100,
+    "stock": 7,
+    "images/": "Party Favors - Origins.jpg"
   },
   "Pea_ian": {
-    "Name": "Peak Guardian",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Peak Guardian - Origins.jpg"
+    "name": "Peak Guardian",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Peak Guardian - Origins.jpg"
   },
   "Pet_cer": {
-    "Name": "Petty Officer",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Petty Officer - Origins.jpg"
+    "name": "Petty Officer",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Petty Officer - Origins.jpg"
   },
   "Pir_ven": {
-    "Name": "Pirate's Haven",
-    "Price": 100,
-    "Stock": 10,
-    "IMG": "Pirate's Haven - Origins.jpg"
+    "name": "Pirate's Haven",
+    "price_cents": 100,
+    "stock": 10,
+    "images/": "Pirate's Haven - Origins.jpg"
   },
   "Pit_kie": {
-    "Name": "Pit Rookie",
-    "Price": 100,
-    "Stock": 8,
-    "IMG": "Pit Rookie - Origins.jpg"
+    "name": "Pit Rookie",
+    "price_cents": 100,
+    "stock": 8,
+    "images/": "Pit Rookie - Origins.jpg"
   },
   "Pit_rew": {
-    "Name": "Pit Crew",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Pit Crew - Origins.jpg"
+    "name": "Pit Crew",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Pit Crew - Origins.jpg"
   },
   "Pla_tom": {
-    "Name": "Playful Phantom",
-    "Price": 100,
-    "Stock": 7,
-    "IMG": "Playful Phantom - Origins.jpg"
+    "name": "Playful Phantom",
+    "price_cents": 100,
+    "stock": 7,
+    "images/": "Playful Phantom - Origins.jpg"
   },
   "Por_cue": {
-    "Name": "Portal Rescue",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Portal Rescue - Origins.jpg"
+    "name": "Portal Rescue",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Portal Rescue - Origins.jpg"
   },
   "Por_der": {
-    "Name": "Poro Herder",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "Poro Herder - Origins.jpg"
+    "name": "Poro Herder",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "Poro Herder - Origins.jpg"
   },
   "Pos_ion": {
-    "Name": "Possession",
-    "Price": 900,
-    "Stock": 2,
-    "IMG": "Possession - Origins.jpg"
+    "name": "Possession",
+    "price_cents": 900,
+    "stock": 2,
+    "images/": "Possession - Origins.jpg"
   },
   "Pou_oro": {
-    "Name": "Pouty Poro",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Pouty Poro - Origins.jpg"
+    "name": "Pouty Poro",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Pouty Poro - Origins.jpg"
   },
   "Pri_gth": {
-    "Name": "Primal Strength",
-    "Price": 300,
-    "Stock": 7,
-    "IMG": "Primal Strength - Origins.jpg"
+    "name": "Primal Strength",
+    "price_cents": 300,
+    "stock": 7,
+    "images/": "Primal Strength - Origins.jpg"
   },
   "Pro_Day": {
-    "Name": "Progress Day",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Progress Day - Origins.jpg"
+    "name": "Progress Day",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Progress Day - Origins.jpg"
   },
   "Pro_ure": {
-    "Name": "Promising Future",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Promising Future - Origins.jpg"
+    "name": "Promising Future",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Promising Future - Origins.jpg"
   },
   "Qiy_ous": {
-    "Name": "Qiyana - Victorious",
-    "Price": 600,
-    "Stock": 1,
-    "IMG": "Qiyana - Victorious - Origins.jpg"
+    "name": "Qiyana - Victorious",
+    "price_cents": 600,
+    "stock": 1,
+    "images/": "Qiyana - Victorious - Origins.jpg"
   },
   "Rag_and": {
-    "Name": "Raging Firebrand",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Raging Firebrand - Origins.jpg"
+    "name": "Raging Firebrand",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Raging Firebrand - Origins.jpg"
   },
   "Rag_oul": {
-    "Name": "Raging Soul",
-    "Price": 100,
-    "Stock": 8,
-    "IMG": "Raging Soul - Origins.jpg"
+    "name": "Raging Soul",
+    "price_cents": 100,
+    "stock": 8,
+    "images/": "Raging Soul - Origins.jpg"
   },
   "Rav_ent": {
-    "Name": "Ravenbloom Student",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "Ravenbloom Student - Origins.jpg"
+    "name": "Ravenbloom Student",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "Ravenbloom Student - Origins.jpg"
   },
   "Rav_ome": {
-    "Name": "Ravenborn Tome",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Ravenborn Tome - Origins.jpg"
+    "name": "Ravenborn Tome",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Ravenborn Tome - Origins.jpg"
   },
   "Rea_Row": {
-    "Name": "Reaver's Row",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Reaver's Row - Origins.jpg"
+    "name": "Reaver's Row",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Reaver's Row - Origins.jpg"
   },
   "Reb_uke": {
-    "Name": "Rebuke",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Rebuke - Origins.jpg"
+    "name": "Rebuke",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Rebuke - Origins.jpg"
   },
   "Rec_ard": {
-    "Name": "Recruit the Vanguard",
-    "Price": 500,
-    "Stock": 6,
-    "IMG": "Recruit the Vanguard - Origins.jpg"
+    "name": "Recruit the Vanguard",
+    "price_cents": 500,
+    "stock": 6,
+    "images/": "Recruit the Vanguard - Origins.jpg"
   },
   "Rec_ena": {
-    "Name": "Reckoner's Arena",
-    "Price": 100,
-    "Stock": 10,
-    "IMG": "Reckoner's Arena - Origins.jpg"
+    "name": "Reckoner's Arena",
+    "price_cents": 100,
+    "stock": 10,
+    "images/": "Reckoner's Arena - Origins.jpg"
   },
   "Rec_uff_273": {
-    "Name": "Recruit (273) - Buff",
-    "Price": 100,
-    "Stock": 7,
-    "IMG": "Recruit (273) - Buff - Origins.jpg"
+    "name": "Recruit (273) - Buff",
+    "price_cents": 100,
+    "stock": 7,
+    "images/": "Recruit (273) - Buff - Origins.jpg"
   },
   "Rec_uff_272": {
-    "Name": "Recruit (272) - Buff",
-    "Price": 100,
-    "Stock": 8,
-    "IMG": "Recruit (272) - Buff - Origins.jpg"
+    "name": "Recruit (272) - Buff",
+    "price_cents": 100,
+    "stock": 8,
+    "images/": "Recruit (272) - Buff - Origins.jpg"
   },
   "Rec_uff_271": {
-    "Name": "Recruit (271) - Buff",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Recruit (271) - Buff - Origins.jpg"
+    "name": "Recruit (271) - Buff",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Recruit (271) - Buff - Origins.jpg"
   },
   "Rei_rce": {
-    "Name": "Reinforce",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Reinforce - Origins.jpg"
+    "name": "Reinforce",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Reinforce - Origins.jpg"
   },
   "Ret_eat": {
-    "Name": "Retreat",
-    "Price": 300,
-    "Stock": 7,
-    "IMG": "Retreat - Origins.jpg"
+    "name": "Retreat",
+    "price_cents": 300,
+    "stock": 7,
+    "images/": "Retreat - Origins.jpg"
   },
   "Rha_rer": {
-    "Name": "Rhasa the Sunderer",
-    "Price": 200,
-    "Stock": 6,
-    "IMG": "Rhasa the Sunderer - Origins.jpg"
+    "name": "Rhasa the Sunderer",
+    "price_cents": 200,
+    "stock": 6,
+    "images/": "Rhasa the Sunderer - Origins.jpg"
   },
   "Rid_ind": {
-    "Name": "Ride The Wind",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Ride The Wind - Origins.jpg"
+    "name": "Ride The Wind",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Ride The Wind - Origins.jpg"
   },
   "Rip_Rex": {
-    "Name": "Riptide Rex",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Riptide Rex - Origins.jpg"
+    "name": "Riptide Rex",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Riptide Rex - Origins.jpg"
   },
   "Run_son": {
-    "Name": "Rune Prison",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Rune Prison - Origins.jpg"
+    "name": "Rune Prison",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Rune Prison - Origins.jpg"
   },
   "Sab_age": {
-    "Name": "Sabotage",
-    "Price": 500,
-    "Stock": 8,
-    "IMG": "Sabotage - Origins.jpg"
+    "name": "Sabotage",
+    "price_cents": 500,
+    "stock": 8,
+    "images/": "Sabotage - Origins.jpg"
   },
   "Sai_out": {
-    "Name": "Sai Scout",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Sai Scout - Origins.jpg"
+    "name": "Sai Scout",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Sai Scout - Origins.jpg"
   },
   "Sal_age": {
-    "Name": "Salvage",
-    "Price": 200,
-    "Stock": 5,
-    "IMG": "Salvage - Origins.jpg"
+    "name": "Salvage",
+    "price_cents": 200,
+    "stock": 5,
+    "images/": "Salvage - Origins.jpg"
   },
   "Scr_eap": {
-    "Name": "Scrapheap",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Scrapheap - Origins.jpg"
+    "name": "Scrapheap",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Scrapheap - Origins.jpg"
   },
   "Scr_ion": {
-    "Name": "Scrapyard Champion",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Scrapyard Champion - Origins.jpg"
+    "name": "Scrapyard Champion",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Scrapyard Champion - Origins.jpg"
   },
   "Sea_age": {
-    "Name": "Seal of Rage",
-    "Price": 2300,
-    "Stock": 4,
-    "IMG": "Seal of Rage - Origins.jpg"
+    "name": "Seal of Rage",
+    "price_cents": 2300,
+    "stock": 4,
+    "images/": "Seal of Rage - Origins.jpg"
   },
   "Sea_cus": {
-    "Name": "Seal of Focus",
-    "Price": 1700,
-    "Stock": 8,
-    "IMG": "Seal of Focus - Origins.jpg"
+    "name": "Seal of Focus",
+    "price_cents": 1700,
+    "stock": 8,
+    "images/": "Seal of Focus - Origins.jpg"
   },
   "Sea_ght": {
-    "Name": "Seal of Insight",
-    "Price": 2000,
-    "Stock": 6,
-    "IMG": "Seal of Insight - Origins.jpg"
+    "name": "Seal of Insight",
+    "price_cents": 2000,
+    "stock": 6,
+    "images/": "Seal of Insight - Origins.jpg"
   },
   "Sea_gth": {
-    "Name": "Seal of Strength",
-    "Price": 1100,
-    "Stock": 2,
-    "IMG": "Seal of Strength - Origins.jpg"
+    "name": "Seal of Strength",
+    "price_cents": 1100,
+    "stock": 2,
+    "images/": "Seal of Strength - Origins.jpg"
   },
   "Sea_ity": {
-    "Name": "Seal of Unity",
-    "Price": 3700,
-    "Stock": 10,
-    "IMG": "Seal of Unity - Origins.jpg"
+    "name": "Seal of Unity",
+    "price_cents": 3700,
+    "stock": 10,
+    "images/": "Seal of Unity - Origins.jpg"
   },
   "Sea_ord": {
-    "Name": "Seal of Discord",
-    "Price": 1600,
-    "Stock": 10,
-    "IMG": "Seal of Discord - Origins.jpg"
+    "name": "Seal of Discord",
+    "price_cents": 1600,
+    "stock": 10,
+    "images/": "Seal of Discord - Origins.jpg"
   },
   "Set_ed)": {
-    "Name": "Sett - The Boss (Overnumbered)",
-    "Price": 9887,
-    "Stock": 6,
-    "IMG": "Sett - The Boss (Overnumbered) - Origins.jpg"
+    "name": "Sett - The Boss (Overnumbered)",
+    "price_cents": 9887,
+    "stock": 6,
+    "images/": "Sett - The Boss (Overnumbered) - Origins.jpg"
   },
   "Set_ler": {
-    "Name": "Sett - Brawler",
-    "Price": 1800,
-    "Stock": 5,
-    "IMG": "Sett - Brawler - Origins.jpg"
+    "name": "Sett - Brawler",
+    "price_cents": 1800,
+    "stock": 5,
+    "images/": "Sett - Brawler - Origins.jpg"
   },
   "Set_oss": {
-    "Name": "Sett - The Boss",
-    "Price": 100,
-    "Stock": 8,
-    "IMG": "Sett - The Boss - Origins.jpg"
+    "name": "Sett - The Boss",
+    "price_cents": 100,
+    "stock": 8,
+    "images/": "Sett - The Boss - Origins.jpg"
   },
   "Set_pin": {
-    "Name": "Sett - Kingpin",
-    "Price": 200,
-    "Stock": 1,
-    "IMG": "Sett - Kingpin - Origins.jpg"
+    "name": "Sett - Kingpin",
+    "price_cents": 200,
+    "stock": 1,
+    "images/": "Sett - Kingpin - Origins.jpg"
   },
   "Set_re)": {
-    "Name": "Sett - The Boss (Signature)",
-    "Price": 78000,
-    "Stock": 5,
-    "IMG": "Sett - The Boss (Signature) - Origins.jpg"
+    "name": "Sett - The Boss (Signature)",
+    "price_cents": 78000,
+    "stock": 5,
+    "images/": "Sett - The Boss (Signature) - Origins.jpg"
   },
   "Set_Bra_rt)": {
-    "Name": "Sett - Brawler (Alternate Art)",
-    "Price": 2300,
-    "Stock": 4,
-    "IMG": "Sett - Brawler (Alternate Art) - Origins.jpg"
+    "name": "Sett - Brawler (Alternate Art)",
+    "price_cents": 2300,
+    "stock": 4,
+    "images/": "Sett - Brawler (Alternate Art) - Origins.jpg"
   },
   "Set_Kin_rt)": {
-    "Name": "Sett - Kingpin (Alternate Art)",
-    "Price": 600,
-    "Stock": 10,
-    "IMG": "Sett - Kingpin (Alternate Art) - Origins.jpg"
+    "name": "Sett - Kingpin (Alternate Art)",
+    "price_cents": 600,
+    "stock": 10,
+    "images/": "Sett - Kingpin (Alternate Art) - Origins.jpg"
   },
   "Sha_own": {
-    "Name": "Shakedown",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Shakedown - Origins.jpg"
+    "name": "Shakedown",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Shakedown - Origins.jpg"
   },
   "She_kou": {
-    "Name": "Shen - Kinkou",
-    "Price": 300,
-    "Stock": 3,
-    "IMG": "Shen - Kinkou - Origins.jpg"
+    "name": "Shen - Kinkou",
+    "price_cents": 300,
+    "stock": 3,
+    "images/": "Shen - Kinkou - Origins.jpg"
   },
   "Shi_ker": {
-    "Name": "Shipyard Skulker",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Shipyard Skulker - Origins.jpg"
+    "name": "Shipyard Skulker",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Shipyard Skulker - Origins.jpg"
   },
   "Sho_per": {
-    "Name": "Showstopper",
-    "Price": 4700,
-    "Stock": 10,
-    "IMG": "Showstopper - Origins.jpg"
+    "name": "Showstopper",
+    "price_cents": 4700,
+    "stock": 10,
+    "images/": "Showstopper - Origins.jpg"
   },
   "Sig_orm": {
-    "Name": "Sigil of the Storm",
-    "Price": 100,
-    "Stock": 8,
-    "IMG": "Sigil of the Storm - Origins.jpg"
+    "name": "Sigil of the Storm",
+    "price_cents": 100,
+    "stock": 8,
+    "images/": "Sigil of the Storm - Origins.jpg"
   },
   "Sin_ity": {
-    "Name": "Singularity",
-    "Price": 200,
-    "Stock": 6,
-    "IMG": "Singularity - Origins.jpg"
+    "name": "Singularity",
+    "price_cents": 200,
+    "stock": 6,
+    "images/": "Singularity - Origins.jpg"
   },
   "Sip_wer": {
-    "Name": "Siphon Power",
-    "Price": 1100,
-    "Stock": 5,
-    "IMG": "Siphon Power - Origins.jpg"
+    "name": "Siphon Power",
+    "price_cents": 1100,
+    "stock": 5,
+    "images/": "Siphon Power - Origins.jpg"
   },
   "Sky_ter": {
-    "Name": "Sky Splitter",
-    "Price": 100,
-    "Stock": 8,
-    "IMG": "Sky Splitter - Origins.jpg"
+    "name": "Sky Splitter",
+    "price_cents": 100,
+    "stock": 8,
+    "images/": "Sky Splitter - Origins.jpg"
   },
   "Smo_een": {
-    "Name": "Smoke Screen",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Smoke Screen - Origins.jpg"
+    "name": "Smoke Screen",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Smoke Screen - Origins.jpg"
   },
   "Sne_and": {
-    "Name": "Sneaky Deckhand",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "Sneaky Deckhand - Origins.jpg"
+    "name": "Sneaky Deckhand",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "Sneaky Deckhand - Origins.jpg"
   },
   "Soa_out": {
-    "Name": "Soaring Scout",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Soaring Scout - Origins.jpg"
+    "name": "Soaring Scout",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Soaring Scout - Origins.jpg"
   },
   "Sol_ief": {
-    "Name": "Solari Chief",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Solari Chief - Origins.jpg"
+    "name": "Solari Chief",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Solari Chief - Origins.jpg"
   },
   "Sol_ine": {
-    "Name": "Solari Shrine",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Solari Shrine - Origins.jpg"
+    "name": "Solari Shrine",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Solari Shrine - Origins.jpg"
   },
   "Sol_rer": {
-    "Name": "Solari Shieldbearer",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Solari Shieldbearer - Origins.jpg"
+    "name": "Solari Shieldbearer",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Solari Shieldbearer - Origins.jpg"
   },
   "Son_ous": {
-    "Name": "Sona - Harmonious",
-    "Price": 300,
-    "Stock": 10,
-    "IMG": "Sona - Harmonious - Origins.jpg"
+    "name": "Sona - Harmonious",
+    "price_cents": 300,
+    "stock": 10,
+    "images/": "Sona - Harmonious - Origins.jpg"
   },
   "Sou_ger": {
-    "Name": "Soulgorger",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Soulgorger - Origins.jpg"
+    "name": "Soulgorger",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Soulgorger - Origins.jpg"
   },
   "Spe_ron": {
-    "Name": "Spectral Matron",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "Spectral Matron - Origins.jpg"
+    "name": "Spectral Matron",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "Spectral Matron - Origins.jpg"
   },
   "Spi_uge": {
-    "Name": "Spirit's Refuge",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Spirit's Refuge - Origins.jpg"
+    "name": "Spirit's Refuge",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Spirit's Refuge - Origins.jpg"
   },
   "Spo_War": {
-    "Name": "Spoils of War",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Spoils of War - Origins.jpg"
+    "name": "Spoils of War",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Spoils of War - Origins.jpg"
   },
   "Spr_all": {
-    "Name": "Sprite Call",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Sprite Call - Origins.jpg"
+    "name": "Sprite Call",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Sprite Call - Origins.jpg"
   },
   "Spr_her": {
-    "Name": "Sprite Mother",
-    "Price": 400,
-    "Stock": 8,
-    "IMG": "Sprite Mother - Origins.jpg"
+    "name": "Sprite Mother",
+    "price_cents": 400,
+    "stock": 8,
+    "images/": "Sprite Mother - Origins.jpg"
   },
   "Spr_uff": {
-    "Name": "Sprite (274) - Buff",
-    "Price": 100,
-    "Stock": 10,
-    "IMG": "Sprite (274) - Buff - Origins.jpg"
+    "name": "Sprite (274) - Buff",
+    "price_cents": 100,
+    "stock": 10,
+    "images/": "Sprite (274) - Buff - Origins.jpg"
   },
   "Sta_eak": {
-    "Name": "Startipped Peak",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Startipped Peak - Origins.jpg"
+    "name": "Startipped Peak",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Startipped Peak - Origins.jpg"
   },
   "Sta_eck": {
-    "Name": "Stacked Deck",
-    "Price": 800,
-    "Stock": 7,
-    "IMG": "Stacked Deck - Origins.jpg"
+    "name": "Stacked Deck",
+    "price_cents": 800,
+    "stock": 7,
+    "images/": "Stacked Deck - Origins.jpg"
   },
   "Sta_ed)": {
-    "Name": "Startipped Peak (Oversized)",
-    "Price": 600,
-    "Stock": 1,
-    "IMG": "Startipped Peak (Oversized) - Origins.jpg"
+    "name": "Startipped Peak (Oversized)",
+    "price_cents": 600,
+    "stock": 1,
+    "images/": "Startipped Peak (Oversized) - Origins.jpg"
   },
   "Sta_oro": {
-    "Name": "Stalwart Poro",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "Stalwart Poro - Origins.jpg"
+    "name": "Stalwart Poro",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "Stalwart Poro - Origins.jpg"
   },
   "Sta_ted": {
-    "Name": "Stand United",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Stand United - Origins.jpg"
+    "name": "Stand United",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Stand United - Origins.jpg"
   },
   "Ste_uer": {
-    "Name": "Stealthy Pursuer",
-    "Price": 100,
-    "Stock": 10,
-    "IMG": "Stealthy Pursuer - Origins.jpg"
+    "name": "Stealthy Pursuer",
+    "price_cents": 100,
+    "stock": 10,
+    "images/": "Stealthy Pursuer - Origins.jpg"
   },
   "Sto_ger": {
-    "Name": "Stormbringer",
-    "Price": 600,
-    "Stock": 6,
-    "IMG": "Stormbringer - Origins.jpg"
+    "name": "Stormbringer",
+    "price_cents": 600,
+    "stock": 6,
+    "images/": "Stormbringer - Origins.jpg"
   },
   "Sto_ine": {
-    "Name": "Stormclaw Ursine",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "Stormclaw Ursine - Origins.jpg"
+    "name": "Stormclaw Ursine",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "Stormclaw Ursine - Origins.jpg"
   },
   "Stu_efy": {
-    "Name": "Stupefy",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Stupefy - Origins.jpg"
+    "name": "Stupefy",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Stupefy - Origins.jpg"
   },
   "Sun_ian": {
-    "Name": "Sunlit Guardian",
-    "Price": 100,
-    "Stock": 8,
-    "IMG": "Sunlit Guardian - Origins.jpg"
+    "name": "Sunlit Guardian",
+    "price_cents": 100,
+    "stock": 8,
+    "images/": "Sunlit Guardian - Origins.jpg"
   },
   "Sun_isc": {
-    "Name": "Sun Disc",
-    "Price": 100,
-    "Stock": 10,
-    "IMG": "Sun Disc - Origins.jpg"
+    "name": "Sun Disc",
+    "price_cents": 100,
+    "stock": 10,
+    "images/": "Sun Disc - Origins.jpg"
   },
   "Sup_et!": {
-    "Name": "Super Mega Death Rocket!",
-    "Price": 1500,
-    "Stock": 7,
-    "IMG": "Super Mega Death Rocket! - Origins.jpg"
+    "name": "Super Mega Death Rocket!",
+    "price_cents": 1500,
+    "stock": 7,
+    "images/": "Super Mega Death Rocket! - Origins.jpg"
   },
   "Sym_ari": {
-    "Name": "Symbol of the Solari",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Symbol of the Solari - Origins.jpg"
+    "name": "Symbol of the Solari",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Symbol of the Solari - Origins.jpg"
   },
   "Tar_eak": {
-    "Name": "Targon's Peak",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Targon's Peak - Origins.jpg"
+    "name": "Targon's Peak",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Targon's Peak - Origins.jpg"
   },
   "Tar_tor": {
-    "Name": "Taric - Protector",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Taric - Protector - Origins.jpg"
+    "name": "Taric - Protector",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Taric - Protector - Origins.jpg"
   },
   "Tas_olk": {
-    "Name": "Tasty Faefolk",
-    "Price": 800,
-    "Stock": 1,
-    "IMG": "Tasty Faefolk - Origins.jpg"
+    "name": "Tasty Faefolk",
+    "price_cents": 800,
+    "stock": 1,
+    "images/": "Tasty Faefolk - Origins.jpg"
   },
   "Tee_ed)": {
-    "Name": "Teemo - Swift Scout (Overnumbered)",
-    "Price": 9598,
-    "Stock": 9,
-    "IMG": "Teemo - Swift Scout (Overnumbered) - Origins.jpg"
+    "name": "Teemo - Swift Scout (Overnumbered)",
+    "price_cents": 9598,
+    "stock": 9,
+    "images/": "Teemo - Swift Scout (Overnumbered) - Origins.jpg"
   },
   "Tee_EZ)": {
-    "Name": "Teemo - Scout (GG EZ)",
-    "Price": 28999,
-    "Stock": 7,
-    "IMG": "Teemo - Scout (GG EZ) - Origins.jpg"
+    "name": "Teemo - Scout (GG EZ)",
+    "price_cents": 28999,
+    "stock": 7,
+    "images/": "Teemo - Scout (GG EZ) - Origins.jpg"
   },
   "Tee_ist": {
-    "Name": "Teemo - Strategist",
-    "Price": 500,
-    "Stock": 6,
-    "IMG": "Teemo - Strategist - Origins.jpg"
+    "name": "Teemo - Strategist",
+    "price_cents": 500,
+    "stock": 6,
+    "images/": "Teemo - Strategist - Origins.jpg"
   },
   "Tee_out": {
-    "Name": "Teemo - Scout",
-    "Price": 200,
-    "Stock": 9,
-    "IMG": "Teemo - Scout - Origins.jpg"
+    "name": "Teemo - Scout",
+    "price_cents": 200,
+    "stock": 9,
+    "images/": "Teemo - Scout - Origins.jpg"
   },
   "Tee_out_S": {
-    "Name": "Teemo - Swift Scout",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Teemo - Swift Scout - Origins.jpg"
+    "name": "Teemo - Swift Scout",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Teemo - Swift Scout - Origins.jpg"
   },
   "Tee_re)": {
-    "Name": "Teemo - Swift Scout (Signature)",
-    "Price": 59999,
-    "Stock": 8,
-    "IMG": "Teemo - Swift Scout (Signature) - Origins.jpg"
+    "name": "Teemo - Swift Scout (Signature)",
+    "price_cents": 59999,
+    "stock": 8,
+    "images/": "Teemo - Swift Scout (Signature) - Origins.jpg"
   },
   "Tee_Sco_rt)": {
-    "Name": "Teemo - Scout (Alternate Art)",
-    "Price": 1100,
-    "Stock": 8,
-    "IMG": "Teemo - Scout (Alternate Art) - Origins.jpg"
+    "name": "Teemo - Scout (Alternate Art)",
+    "price_cents": 1100,
+    "stock": 8,
+    "images/": "Teemo - Scout (Alternate Art) - Origins.jpg"
   },
   "Tee_Str_rt)": {
-    "Name": "Teemo - Strategist (Alternate Art)",
-    "Price": 700,
-    "Stock": 5,
-    "IMG": "Teemo - Strategist (Alternate Art) - Origins.jpg"
+    "name": "Teemo - Strategist (Alternate Art)",
+    "price_cents": 700,
+    "stock": 5,
+    "images/": "Teemo - Strategist (Alternate Art) - Origins.jpg"
   },
   "The_aza": {
-    "Name": "The Grand Plaza",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "The Grand Plaza - Origins.jpg"
+    "name": "The Grand Plaza",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "The Grand Plaza - Origins.jpg"
   },
   "The_eam": {
-    "Name": "Thermo Beam",
-    "Price": 100,
-    "Stock": 7,
-    "IMG": "Thermo Beam - Origins.jpg"
+    "name": "Thermo Beam",
+    "price_cents": 100,
+    "stock": 7,
+    "images/": "Thermo Beam - Origins.jpg"
   },
   "The_est": {
-    "Name": "The Arena's Greatest",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "The Arena's Greatest - Origins.jpg"
+    "name": "The Arena's Greatest",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "The Arena's Greatest - Origins.jpg"
   },
   "The_ing": {
-    "Name": "The Harrowing",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "The Harrowing - Origins.jpg"
+    "name": "The Harrowing",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "The Harrowing - Origins.jpg"
   },
   "The_ree": {
-    "Name": "The Dreaming Tree",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "The Dreaming Tree - Origins.jpg"
+    "name": "The Dreaming Tree",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "The Dreaming Tree - Origins.jpg"
   },
   "The_ren": {
-    "Name": "The Syren",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "The Syren - Origins.jpg"
+    "name": "The Syren",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "The Syren - Origins.jpg"
   },
   "The_tum": {
-    "Name": "The Candlelit Sanctum",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "The Candlelit Sanctum - Origins.jpg"
+    "name": "The Candlelit Sanctum",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "The Candlelit Sanctum - Origins.jpg"
   },
   "Tho_her": {
-    "Name": "Thousand-Tailed Watcher",
-    "Price": 3800,
-    "Stock": 6,
-    "IMG": "Thousand-Tailed Watcher - Origins.jpg"
+    "name": "Thousand-Tailed Watcher",
+    "price_cents": 3800,
+    "stock": 6,
+    "images/": "Thousand-Tailed Watcher - Origins.jpg"
   },
   "Tib_ers": {
-    "Name": "Tibbers",
-    "Price": 200,
-    "Stock": 3,
-    "IMG": "Tibbers - Origins.jpg"
+    "name": "Tibbers",
+    "price_cents": 200,
+    "stock": 3,
+    "images/": "Tibbers - Origins.jpg"
   },
   "Tid_ner": {
-    "Name": "Tideturner",
-    "Price": 200,
-    "Stock": 2,
-    "IMG": "Tideturner - Origins.jpg"
+    "name": "Tideturner",
+    "price_cents": 200,
+    "stock": 2,
+    "images/": "Tideturner - Origins.jpg"
   },
   "Tim_arp": {
-    "Name": "Time Warp",
-    "Price": 7100,
-    "Stock": 1,
-    "IMG": "Time Warp - Origins.jpg"
+    "name": "Time Warp",
+    "price_cents": 7100,
+    "stock": 1,
+    "images/": "Time Warp - Origins.jpg"
   },
   "Tra_ant": {
-    "Name": "Traveling Merchant",
-    "Price": 100,
-    "Stock": 10,
-    "IMG": "Traveling Merchant - Origins.jpg"
+    "name": "Traveling Merchant",
+    "price_cents": 100,
+    "stock": 10,
+    "images/": "Traveling Merchant - Origins.jpg"
   },
   "Tre_ove": {
-    "Name": "Treasure Trove",
-    "Price": 100,
-    "Stock": 7,
-    "IMG": "Treasure Trove - Origins.jpg"
+    "name": "Treasure Trove",
+    "price_cents": 100,
+    "stock": 7,
+    "images/": "Treasure Trove - Origins.jpg"
   },
   "Tri_amp": {
-    "Name": "Trifarian War Camp",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "Trifarian War Camp - Origins.jpg"
+    "name": "Trifarian War Camp",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "Trifarian War Camp - Origins.jpg"
   },
   "Tri_ed)": {
-    "Name": "Trifarian War Camp (Oversized)",
-    "Price": 500,
-    "Stock": 4,
-    "IMG": "Trifarian War Camp (Oversized) - Origins.jpg"
+    "name": "Trifarian War Camp (Oversized)",
+    "price_cents": 500,
+    "stock": 4,
+    "images/": "Trifarian War Camp (Oversized) - Origins.jpg"
   },
   "Tri_ker": {
-    "Name": "Trifarian Gloryseeker",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Trifarian Gloryseeker - Origins.jpg"
+    "name": "Trifarian Gloryseeker",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Trifarian Gloryseeker - Origins.jpg"
   },
   "Try_ian": {
-    "Name": "Tryndamere - Barbarian",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Tryndamere - Barbarian - Origins.jpg"
+    "name": "Tryndamere - Barbarian",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Tryndamere - Barbarian - Origins.jpg"
   },
   "Twi_ler": {
-    "Name": "Twisted Fate - Gambler",
-    "Price": 100,
-    "Stock": 8,
-    "IMG": "Twisted Fate - Gambler - Origins.jpg"
+    "name": "Twisted Fate - Gambler",
+    "price_cents": 100,
+    "stock": 8,
+    "images/": "Twisted Fate - Gambler - Origins.jpg"
   },
   "Udy_man": {
-    "Name": "Udyr - Wildman",
-    "Price": 100,
-    "Stock": 7,
-    "IMG": "Udyr - Wildman - Origins.jpg"
+    "name": "Udyr - Wildman",
+    "price_cents": 100,
+    "stock": 7,
+    "images/": "Udyr - Wildman - Origins.jpg"
   },
   "Unc_wer": {
-    "Name": "Unchecked Power",
-    "Price": 1300,
-    "Stock": 6,
-    "IMG": "Unchecked Power - Origins.jpg"
+    "name": "Unchecked Power",
+    "price_cents": 1300,
+    "stock": 6,
+    "images/": "Unchecked Power - Origins.jpg"
   },
   "Und_ent": {
-    "Name": "Undercover Agent",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "Undercover Agent - Origins.jpg"
+    "name": "Undercover Agent",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "Undercover Agent - Origins.jpg"
   },
   "Unl_ory": {
-    "Name": "Unlicensed Armory",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Unlicensed Armory - Origins.jpg"
+    "name": "Unlicensed Armory",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Unlicensed Armory - Origins.jpg"
   },
   "Uny_rit": {
-    "Name": "Unyielding Spirit",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Unyielding Spirit - Origins.jpg"
+    "name": "Unyielding Spirit",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Unyielding Spirit - Origins.jpg"
   },
   "Van_ain": {
-    "Name": "Vanguard Captain",
-    "Price": 100,
-    "Stock": 8,
-    "IMG": "Vanguard Captain - Origins.jpg"
+    "name": "Vanguard Captain",
+    "price_cents": 100,
+    "stock": 8,
+    "images/": "Vanguard Captain - Origins.jpg"
   },
   "Van_ant": {
-    "Name": "Vanguard Attendant",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Vanguard Attendant - Origins.jpg"
+    "name": "Vanguard Attendant",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Vanguard Attendant - Origins.jpg"
   },
   "Van_ant_S": {
-    "Name": "Vanguard Sergeant",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "Vanguard Sergeant - Origins.jpg"
+    "name": "Vanguard Sergeant",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "Vanguard Sergeant - Origins.jpg"
   },
   "Van_elm": {
-    "Name": "Vanguard Helm",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Vanguard Helm - Origins.jpg"
+    "name": "Vanguard Helm",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Vanguard Helm - Origins.jpg"
   },
   "Vay_ter": {
-    "Name": "Vayne - Hunter",
-    "Price": 200,
-    "Stock": 4,
-    "IMG": "Vayne - Hunter - Origins.jpg"
+    "name": "Vayne - Hunter",
+    "price_cents": 200,
+    "stock": 4,
+    "images/": "Vayne - Hunter - Origins.jpg"
   },
   "Ven_nce": {
-    "Name": "Vengeance",
-    "Price": 100,
-    "Stock": 10,
-    "IMG": "Vengeance - Origins.jpg"
+    "name": "Vengeance",
+    "price_cents": 100,
+    "stock": 10,
+    "images/": "Vengeance - Origins.jpg"
   },
   "Vi _ive": {
-    "Name": "Vi - Destructive",
-    "Price": 400,
-    "Stock": 6,
-    "IMG": "Vi - Destructive - Origins.jpg"
+    "name": "Vi - Destructive",
+    "price_cents": 400,
+    "stock": 6,
+    "images/": "Vi - Destructive - Origins.jpg"
   },
   "Vik_ane": {
-    "Name": "Viktor - Herald of the Arcane",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Viktor - Herald of the Arcane - Origins.jpg"
+    "name": "Viktor - Herald of the Arcane",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Viktor - Herald of the Arcane - Origins.jpg"
   },
   "Vik_der": {
-    "Name": "Viktor - Leader",
-    "Price": 900,
-    "Stock": 8,
-    "IMG": "Viktor - Leader - Origins.jpg"
+    "name": "Viktor - Leader",
+    "price_cents": 900,
+    "stock": 8,
+    "images/": "Viktor - Leader - Origins.jpg"
   },
   "Vik_ed)": {
-    "Name": "Viktor - Herald of the Arcane (Overnumbered)",
-    "Price": 9100,
-    "Stock": 2,
-    "IMG": "Viktor - Herald of the Arcane (Overnumbered) - Origins.jpg"
+    "name": "Viktor - Herald of the Arcane (Overnumbered)",
+    "price_cents": 9100,
+    "stock": 2,
+    "images/": "Viktor - Herald of the Arcane (Overnumbered) - Origins.jpg"
   },
   "Vik_re)": {
-    "Name": "Viktor - Herald of the Arcane (Signature)",
-    "Price": 62500,
-    "Stock": 1,
-    "IMG": "Viktor - Herald of the Arcane (Signature) - Origins.jpg"
+    "name": "Viktor - Herald of the Arcane (Signature)",
+    "price_cents": 62500,
+    "stock": 1,
+    "images/": "Viktor - Herald of the Arcane (Signature) - Origins.jpg"
   },
   "Vik_Lea_rt)": {
-    "Name": "Viktor - Leader (Alternate Art)",
-    "Price": 1000,
-    "Stock": 6,
-    "IMG": "Viktor - Leader (Alternate Art) - Origins.jpg"
+    "name": "Viktor - Leader (Alternate Art)",
+    "price_cents": 1000,
+    "stock": 6,
+    "images/": "Viktor - Leader (Alternate Art) - Origins.jpg"
   },
   "Vik_Inn_rt)": {
-    "Name": "Viktor - Innovator (Alternate Art)",
-    "Price": 500,
-    "Stock": 9,
-    "IMG": "Viktor - Innovator (Alternate Art) - Origins.jpg"
+    "name": "Viktor - Innovator (Alternate Art)",
+    "price_cents": 500,
+    "stock": 9,
+    "images/": "Viktor - Innovator (Alternate Art) - Origins.jpg"
   },
   "Vik_tor": {
-    "Name": "Viktor - Innovator",
-    "Price": 100,
-    "Stock": 10,
-    "IMG": "Viktor - Innovator - Origins.jpg"
+    "name": "Viktor - Innovator",
+    "price_cents": 100,
+    "stock": 10,
+    "images/": "Viktor - Innovator - Origins.jpg"
   },
   "Vil_air": {
-    "Name": "Vilemaw's Lair",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "Vilemaw's Lair - Origins.jpg"
+    "name": "Vilemaw's Lair",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "Vilemaw's Lair - Origins.jpg"
   },
   "Voi_ate": {
-    "Name": "Void Gate",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Void Gate - Origins.jpg"
+    "name": "Void Gate",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Void Gate - Origins.jpg"
   },
   "Voi_ed)": {
-    "Name": "Void Gate (Oversized)",
-    "Price": 500,
-    "Stock": 2,
-    "IMG": "Void Gate (Oversized) - Origins.jpg"
+    "name": "Void Gate (Oversized)",
+    "price_cents": 500,
+    "stock": 2,
+    "images/": "Void Gate (Oversized) - Origins.jpg"
   },
   "Voi_ker": {
-    "Name": "Void Seeker",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Void Seeker - Origins.jpg"
+    "name": "Void Seeker",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Void Seeker - Origins.jpg"
   },
   "Vol_ed)": {
-    "Name": "Volibear - Relentless Storm (Overnumbered)",
-    "Price": 7200,
-    "Stock": 10,
-    "IMG": "Volibear - Relentless Storm (Overnumbered) - Origins.jpg"
+    "name": "Volibear - Relentless Storm (Overnumbered)",
+    "price_cents": 7200,
+    "stock": 10,
+    "images/": "Volibear - Relentless Storm (Overnumbered) - Origins.jpg"
   },
   "Vol_ing": {
-    "Name": "Volibear - Imposing",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "Volibear - Imposing - Origins.jpg"
+    "name": "Volibear - Imposing",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "Volibear - Imposing - Origins.jpg"
   },
   "Vol_orm": {
-    "Name": "Volibear - Relentless Storm",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Volibear - Relentless Storm - Origins.jpg"
+    "name": "Volibear - Relentless Storm",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Volibear - Relentless Storm - Origins.jpg"
   },
   "Vol_ous": {
-    "Name": "Volibear - Furious",
-    "Price": 500,
-    "Stock": 7,
-    "IMG": "Volibear - Furious - Origins.jpg"
+    "name": "Volibear - Furious",
+    "price_cents": 500,
+    "stock": 7,
+    "images/": "Volibear - Furious - Origins.jpg"
   },
   "Vol_re)": {
-    "Name": "Volibear - Relentless Storm (Signature)",
-    "Price": 49192,
-    "Stock": 9,
-    "IMG": "Volibear - Relentless Storm (Signature) - Origins.jpg"
+    "name": "Volibear - Relentless Storm (Signature)",
+    "price_cents": 49192,
+    "stock": 9,
+    "images/": "Volibear - Relentless Storm (Signature) - Origins.jpg"
   },
   "Vol_Fur_rt)": {
-    "Name": "Volibear - Furious (Alternate Art)",
-    "Price": 800,
-    "Stock": 6,
-    "IMG": "Volibear - Furious (Alternate Art) - Origins.jpg"
+    "name": "Volibear - Furious (Alternate Art)",
+    "price_cents": 800,
+    "stock": 6,
+    "images/": "Volibear - Furious (Alternate Art) - Origins.jpg"
   },
   "Vol__Imp_rt)": {
-    "Name": "Volibear - Imposing (Alternate Art)",
-    "Price": 600,
-    "Stock": 4,
-    "IMG": "Volibear - Imposing (Alternate Art) - Origins.jpg"
+    "name": "Volibear - Imposing (Alternate Art)",
+    "price_cents": 600,
+    "stock": 4,
+    "images/": "Volibear - Imposing (Alternate Art) - Origins.jpg"
   },
   "Wal_lop": {
-    "Name": "Wallop",
-    "Price": 100,
-    "Stock": 7,
-    "IMG": "Wallop - Origins.jpg"
+    "name": "Wallop",
+    "price_cents": 100,
+    "stock": 7,
+    "images/": "Wallop - Origins.jpg"
   },
   "War_ter": {
-    "Name": "Warwick - Hunter",
-    "Price": 200,
-    "Stock": 5,
-    "IMG": "Warwick - Hunter - Origins.jpg"
+    "name": "Warwick - Hunter",
+    "price_cents": 200,
+    "stock": 5,
+    "images/": "Warwick - Hunter - Origins.jpg"
   },
   "Wat_try": {
-    "Name": "Watchful Sentry",
-    "Price": 100,
-    "Stock": 4,
-    "IMG": "Watchful Sentry - Origins.jpg"
+    "name": "Watchful Sentry",
+    "price_cents": 100,
+    "stock": 4,
+    "images/": "Watchful Sentry - Origins.jpg"
   },
   "Whi_ind": {
-    "Name": "Whirlwind",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Whirlwind - Origins.jpg"
+    "name": "Whirlwind",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Whirlwind - Origins.jpg"
   },
   "Whi_tor": {
-    "Name": "Whiteflame Protector",
-    "Price": 5900,
-    "Stock": 2,
-    "IMG": "Whiteflame Protector - Origins.jpg"
+    "name": "Whiteflame Protector",
+    "price_cents": 5900,
+    "stock": 2,
+    "images/": "Whiteflame Protector - Origins.jpg"
   },
   "Wie_ter": {
-    "Name": "Wielder of Water",
-    "Price": 100,
-    "Stock": 1,
-    "IMG": "Wielder of Water - Origins.jpg"
+    "name": "Wielder of Water",
+    "price_cents": 100,
+    "stock": 1,
+    "images/": "Wielder of Water - Origins.jpg"
   },
   "Wil_man": {
-    "Name": "Wildclaw Shaman",
-    "Price": 100,
-    "Stock": 9,
-    "IMG": "Wildclaw Shaman - Origins.jpg"
+    "name": "Wildclaw Shaman",
+    "price_cents": 100,
+    "stock": 9,
+    "images/": "Wildclaw Shaman - Origins.jpg"
   },
   "Win_all": {
-    "Name": "Wind Wall",
-    "Price": 200,
-    "Stock": 8,
-    "IMG": "Wind Wall - Origins.jpg"
+    "name": "Wind Wall",
+    "price_cents": 200,
+    "stock": 8,
+    "images/": "Wind Wall - Origins.jpg"
   },
   "Win_ock": {
-    "Name": "Windswept Hillock",
-    "Price": 100,
-    "Stock": 6,
-    "IMG": "Windswept Hillock - Origins.jpg"
+    "name": "Windswept Hillock",
+    "price_cents": 100,
+    "stock": 6,
+    "images/": "Windswept Hillock - Origins.jpg"
   },
   "Wiz_der": {
-    "Name": "Wizened Elder",
-    "Price": 100,
-    "Stock": 5,
-    "IMG": "Wizened Elder - Origins.jpg"
+    "name": "Wizened Elder",
+    "price_cents": 100,
+    "stock": 5,
+    "images/": "Wizened Elder - Origins.jpg"
   },
   "Wra_oes": {
-    "Name": "Wraith of Echoes",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Wraith of Echoes - Origins.jpg"
+    "name": "Wraith of Echoes",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Wraith of Echoes - Origins.jpg"
   },
   "Yas_der": {
-    "Name": "Yasuo - Windrider",
-    "Price": 500,
-    "Stock": 4,
-    "IMG": "Yasuo - Windrider - Origins.jpg"
+    "name": "Yasuo - Windrider",
+    "price_cents": 500,
+    "stock": 4,
+    "images/": "Yasuo - Windrider - Origins.jpg"
   },
   "Yas_ed)": {
-    "Name": "Yasuo - Unforgiven (Overnumbered)",
-    "Price": 6900,
-    "Stock": 6,
-    "IMG": "Yasuo - Unforgiven (Overnumbered) - Origins.jpg"
+    "name": "Yasuo - Unforgiven (Overnumbered)",
+    "price_cents": 6900,
+    "stock": 6,
+    "images/": "Yasuo - Unforgiven (Overnumbered) - Origins.jpg"
   },
   "Yas_ful": {
-    "Name": "Yasuo - Remorseful",
-    "Price": 200,
-    "Stock": 1,
-    "IMG": "Yasuo - Remorseful - Origins.jpg"
+    "name": "Yasuo - Remorseful",
+    "price_cents": 200,
+    "stock": 1,
+    "images/": "Yasuo - Remorseful - Origins.jpg"
   },
   "Yas_re)": {
-    "Name": "Yasuo - Unforgiven (Signature)",
-    "Price": 78999,
-    "Stock": 5,
-    "IMG": "Yasuo - Unforgiven (Signature) - Origins.jpg"
+    "name": "Yasuo - Unforgiven (Signature)",
+    "price_cents": 78999,
+    "stock": 5,
+    "images/": "Yasuo - Unforgiven (Signature) - Origins.jpg"
   },
   "Yas_Win_rt)": {
-    "Name": "Yasuo - Windrider (Alternate Art)",
-    "Price": 900,
-    "Stock": 3,
-    "IMG": "Yasuo - Windrider (Alternate Art) - Origins.jpg"
+    "name": "Yasuo - Windrider (Alternate Art)",
+    "price_cents": 900,
+    "stock": 3,
+    "images/": "Yasuo - Windrider (Alternate Art) - Origins.jpg"
   },
   "Yas_Rem_rt)": {
-    "Name": "Yasuo - Remorseful (Alternate Art)",
-    "Price": 700,
-    "Stock": 10,
-    "IMG": "Yasuo - Remorseful (Alternate Art) - Origins.jpg"
+    "name": "Yasuo - Remorseful (Alternate Art)",
+    "price_cents": 700,
+    "stock": 10,
+    "images/": "Yasuo - Remorseful (Alternate Art) - Origins.jpg"
   },
   "Yas_ven": {
-    "Name": "Yasuo - Unforgiven",
-    "Price": 100,
-    "Stock": 8,
-    "IMG": "Yasuo - Unforgiven - Origins.jpg"
+    "name": "Yasuo - Unforgiven",
+    "price_cents": 100,
+    "stock": 8,
+    "images/": "Yasuo - Unforgiven - Origins.jpg"
   },
   "Zau_cer": {
-    "Name": "Zaunite Bouncer",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Zaunite Bouncer - Origins.jpg"
+    "name": "Zaunite Bouncer",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Zaunite Bouncer - Origins.jpg"
   },
   "Zau_ens": {
-    "Name": "Zaun Warrens",
-    "Price": 100,
-    "Stock": 3,
-    "IMG": "Zaun Warrens - Origins.jpg"
+    "name": "Zaun Warrens",
+    "price_cents": 100,
+    "stock": 3,
+    "images/": "Zaun Warrens - Origins.jpg"
   },
   "Zen_ade": {
-    "Name": "Zenith Blade",
-    "Price": 2500,
-    "Stock": 1,
-    "IMG": "Zenith Blade - Origins.jpg"
+    "name": "Zenith Blade",
+    "price_cents": 2500,
+    "stock": 1,
+    "images/": "Zenith Blade - Origins.jpg"
   },
   "Zep_age": {
-    "Name": "Zephyr Sage",
-    "Price": 100,
-    "Stock": 2,
-    "IMG": "Zephyr Sage - Origins.jpg"
+    "name": "Zephyr Sage",
+    "price_cents": 100,
+    "stock": 2,
+    "images/": "Zephyr Sage - Origins.jpg"
   },
   "Zho_ass": {
-    "Name": "Zhonya's Hourglass",
-    "Price": 1300,
-    "Stock": 3,
-    "IMG": "Zhonya's Hourglass - Origins.jpg"
+    "name": "Zhonya's Hourglass",
+    "price_cents": 1300,
+    "stock": 3,
+    "images/": "Zhonya's Hourglass - Origins.jpg"
   }
 }
