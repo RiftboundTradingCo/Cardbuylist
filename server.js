@@ -83,7 +83,12 @@ app.post(
         const session = event.data.object;
         const orderId = session?.metadata?.orderId;
 
-        console.log("Checkout completed. Session:", session.id, "orderId:", orderId);
+        console.log(
+          "Checkout completed. Session:",
+          session.id,
+          "orderId:",
+          orderId
+        );
 
         if (!orderId) throw new Error("Missing orderId in Stripe session metadata");
 
@@ -144,7 +149,11 @@ app.post(
         orders[orderId] = order;
         writeJson("orders.json", orders);
 
-        // Emails
+        console.log("About to send emails. customerEmail:", order.customerEmail);
+        console.log("OWNER_EMAIL env present:", Boolean(process.env.OWNER_EMAIL));
+        console.log("FROM_EMAIL:", process.env.FROM_EMAIL || "(default onboarding@resend.dev)");
+
+        // Emails (receipt + owner notification)
         await sendPaidOrderEmails({ order, catalog });
 
         console.log("Fulfilled order:", orderId);
@@ -249,7 +258,6 @@ app.post("/api/create-checkout-session", async (req, res) => {
       line_items,
       customer_email: orders[orderId].customerEmail || undefined,
 
-      // Collect shipping address (so you can ship)
       shipping_address_collection: { allowed_countries: ["US"] },
       phone_number_collection: { enabled: true },
 
@@ -331,7 +339,7 @@ Total (client): $${Number(total || 0).toFixed(2)}
 });
 
 // -----------------------------
-// Email helpers for paid orders
+// Email helpers for paid orders (WITH PROOF LOGS)
 // -----------------------------
 async function sendPaidOrderEmails({ order, catalog }) {
   const from = process.env.FROM_EMAIL || "Orders <onboarding@resend.dev>";
@@ -365,23 +373,33 @@ We’ll follow up with shipping updates soon.
 
   // Customer receipt
   if (order.customerEmail) {
-    await resend.emails.send({
-      from,
-      to: order.customerEmail,
-      subject: `Your receipt (${order.id})`,
-      text: receiptText
-    });
+    console.log("Attempting customer receipt email to:", order.customerEmail);
+
+    try {
+      const result = await resend.emails.send({
+        from,
+        to: order.customerEmail,
+        subject: `Your receipt (${order.id})`,
+        text: receiptText
+      });
+      console.log("Resend customer email result:", result);
+    } catch (e) {
+      console.error("Resend customer email FAILED:", e);
+    }
   } else {
     console.log("No customer email collected; skipping customer receipt.");
   }
 
-  // Owner notification (this is what you use to ship)
+  // Owner notification (what you use to ship)
   if (owner) {
-    await resend.emails.send({
-      from,
-      to: owner,
-      subject: `PAID ORDER: ${order.id}`,
-      text:
+    console.log("Attempting owner order email to:", owner);
+
+    try {
+      const result = await resend.emails.send({
+        from,
+        to: owner,
+        subject: `PAID ORDER: ${order.id}`,
+        text:
 `PAID ORDER ✅
 
 Order ID: ${order.id}
@@ -395,7 +413,11 @@ ${lines.join("\n")}
 
 Subtotal: $${subtotal}
 `
-    });
+      });
+      console.log("Resend owner email result:", result);
+    } catch (e) {
+      console.error("Resend owner email FAILED:", e);
+    }
   } else {
     console.log("OWNER_EMAIL not set; skipping owner notification email.");
   }
@@ -404,15 +426,3 @@ Subtotal: $${subtotal}
 // -----------------------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log("Server running on port", PORT));
-
-
-
-
-
-
-
-
-
-
-
-
