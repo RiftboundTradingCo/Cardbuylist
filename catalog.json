@@ -1,0 +1,14 @@
+{
+  "JINX_SIG": {
+    "name": "Jinx - Loose Cannon (Signature)",
+    "price_cents": 99999,
+    "image": "images/Jinx - Loose Cannon (Signature).jpg",
+    "stock": 1
+  },
+  "KAISA_ALT_ORIGINS": {
+    "name": "Kai'Sa - Survivor (Alternate Art) - Origins",
+    "price_cents": 10499,
+    "image": "images/Kai'Sa - Survivor (Alternate Art) - Origins.jpg",
+    "stock": 3
+  }
+}
