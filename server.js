@@ -94,6 +94,9 @@ app.post(
           session.customer_email ||
           order.customerEmail ||
           "";
+shipping_address_collection: {
+  allowed_countries: ["US"]
+},
 
         orders[orderId] = order;
         writeJson("orders.json", orders);
@@ -346,6 +349,7 @@ Subtotal: $${subtotal}
 // -----------------------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log("Server running on port", PORT));
+
 
 
 
