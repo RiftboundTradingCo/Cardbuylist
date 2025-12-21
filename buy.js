@@ -34,17 +34,17 @@ document.addEventListener("DOMContentLoaded", function () {
     const card = btn.closest(".store-card");
     if (!card) return;
 
-    const name = (card.dataset.name || "").trim();
-    const price = Number(card.dataset.price); // must be like 999.99 (no $)
-    const image = card.dataset.image || "";
+    // inside click handler:
+const sku = (card.dataset.sku || "").trim();
+if (!sku) return;
 
-    if (!name || !Number.isFinite(price)) return;
+const cartArr = loadBuyCart();
+const idx = cartArr.findIndex(i => i.sku === sku);
 
-    const cartArr = loadBuyCart();
-    const idx = cartArr.findIndex(i => i.name === name);
+if (idx >= 0) cartArr[idx].qty += 1;
+else cartArr.push({ sku, qty: 1 });
 
-    if (idx >= 0) cartArr[idx].qty += 1;
-    else cartArr.push({ name, price, image, qty: 1 });
+saveBuyCart(cartArr);
 
     saveBuyCart(cartArr);
 
