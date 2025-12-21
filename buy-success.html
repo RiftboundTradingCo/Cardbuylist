@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Payment Successful</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark">⚡</span>
+      <span class="brand-name">Riftbound Trading Co</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/buy.html" class="nav-link">Buy Cards</a>
+      <a href="/buy-cart.html" class="nav-link">Buy Cart</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <h1>Payment successful 🎉</h1>
+  <p>Thanks for your order! We’re processing it now.</p>
+
+  <p><a href="/buy.html">Continue shopping</a></p>
+</main>
+
+<script>
+  // Optional: clear cart after successful return
+  localStorage.removeItem("buyCart");
+</script>
+
+</body>
+</html>
