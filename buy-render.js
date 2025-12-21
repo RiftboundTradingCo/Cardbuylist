@@ -54,6 +54,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     console.error("buy-render.js error:", e);
     grid.innerHTML = "<p>Error loading catalog. Check console.</p>";
   }
+  document.getElementById("buySearch")?.dispatchEvent(new Event("input"));
 });
 
 
