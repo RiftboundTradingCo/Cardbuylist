@@ -55,6 +55,39 @@ document.addEventListener("DOMContentLoaded", async function () {
     grid.innerHTML = "<p>Error loading catalog. Check console.</p>";
   }
   document.getElementById("buySearch")?.dispatchEvent(new Event("input"));
+  // IMAGE MODAL LOGIC
+const modal = document.getElementById("imageModal");
+const modalImg = document.getElementById("imageModalImg");
+const modalClose = document.getElementById("imageModalClose");
+
+// Open modal when clicking a card image
+document.addEventListener("click", function (e) {
+  const img = e.target.closest(".store-card img");
+  if (!img) return;
+
+  modalImg.src = img.src;
+  modal.classList.remove("hidden");
+});
+
+// Close modal (X or background)
+modalClose.addEventListener("click", () => {
+  modal.classList.add("hidden");
+  modalImg.src = "";
+});
+
+modal.addEventListener("click", (e) => {
+  if (e.target === modal) {
+    modal.classList.add("hidden");
+    modalImg.src = "";
+  }
+});
+
+// Close on ESC
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    modal.classList.add("hidden");
+    modalImg.src = "";
+  }
 });
 
 
