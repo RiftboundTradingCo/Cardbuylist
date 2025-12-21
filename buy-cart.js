@@ -141,6 +141,40 @@ checkoutBtn.addEventListener("click", async function () {
   } catch (e) {
     checkoutMsg.textContent = "Network error. Please try again.";
     checkoutBtn.disabled = false;
+ 
+    const emailEl = document.getElementById("buyEmail");
+
+checkoutBtn.addEventListener("click", async function () {
+  checkoutMsg.textContent = "";
+  checkoutBtn.disabled = true;
+
+  try {
+    const cart = load(); // [{ sku, qty }]
+    if (!cart.length) {
+      checkoutMsg.textContent = "Your cart is empty.";
+      checkoutBtn.disabled = false;
+      return;
+    }
+
+    const customerEmail = (emailEl?.value || "").trim();
+
+    const res = await fetch("/api/create-checkout-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cart, customerEmail })
+    });
+
+    const data = await res.json();
+    if (!data.ok || !data.url) {
+      checkoutMsg.textContent = "Checkout error: " + (data.error || "Unknown error");
+      checkoutBtn.disabled = false;
+      return;
+    }
+
+    window.location.href = data.url;
+  } catch {
+    checkoutMsg.textContent = "Network error. Please try again.";
+    checkoutBtn.disabled = false;
   }
 });
 
