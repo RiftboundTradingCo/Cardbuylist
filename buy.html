@@ -7,7 +7,7 @@
 </head>
 <body>
 
-<!-- HEADER / NAV -->
+<!-- HEADER -->
 <header class="site-header">
   <div class="header-inner">
     <a class="brand" href="/">
@@ -15,30 +15,29 @@
       <span class="brand-name">Riftbound Trading Co</span>
     </a>
 
-<nav class="nav-links">
-  <a href="/" class="nav-link">Sell Cards</a>
-  <a href="/cart.html" class="nav-cta">View Sell Cart</a>
-  <a href="/buy-cart.html" class="nav-link">
-  Buy Cart
-  <span id="buyCartBadge" class="cart-badge hidden">0</span>
-</a>
-  <a href="/shipping.html" class="nav-link">Shipping</a>
-  <a href="/contact.html" class="nav-link">Contact</a>
-</nav>
+    <nav class="nav-links">
+      <a href="/" class="nav-link">Sell Cards</a>
+      <a href="/buy.html" class="nav-link active">Buy Cards</a>
+      <a href="/buy-cart.html" class="nav-link">
+        Buy Cart
+        <span id="buyCartBadge" class="cart-badge hidden">0</span>
+      </a>
+      <a href="/shipping.html" class="nav-link">Shipping</a>
+      <a href="/contact.html" class="nav-link">Contact</a>
+    </nav>
   </div>
 </header>
 
+<!-- MAIN -->
 <main>
-
   <h1>Buy Cards</h1>
   <p>Browse cards available for purchase.</p>
 
-  <!-- VIEW CART BUTTON -->
   <p>
     <a href="/buy-cart.html" class="nav-cta">View Buy Cart</a>
   </p>
 
-  <!-- SEARCH BAR -->
+  <!-- SEARCH -->
   <input
     type="text"
     id="buySearch"
@@ -46,36 +45,13 @@
     placeholder="Search cards for sale..."
   >
 
-  <!-- STORE GRID -->
-  <div class="store-grid" id="storeGrid">
-
-    <div class="store-card" data-sku="JINX_SIG">
-  ...
-  <button class="buy-add-btn" type="button">Add to Cart</button>
-</div>
-
-
-    <div class="store-card" data-name="deadbloom predator - origins" data-price="114.99" data-image="images/Deadbloom Predator - Origins.jpg"> 
-      <img src="images/Deadbloom Predator - Origins.jpg" alt="Deadbloom Predator - Origins">
-      <h3>Deadbloom Predator - Origins</h3>
-      <p class="price">$114.99</p>
-      <button class="buy-add-btn" type="button">Add to Cart</button>
-    </div>
-
-    <div class="store-card" data-name="kai'sa - survivor (alternate art) - origins" data-price="104.99" data-image="images/Kai'Sa - Survivor (Alternate Art) - Origins.jpg"> 
-      <img src="images/Kai'Sa - Survivor (Alternate Art) - Origins.jpg" alt="Kai'Sa - Survivor (Alternate Art) - Origins">
-      <h3>Kai'Sa - Survivor (Alternate Art) - Origins</h3>
-      <p class="price">$104.99</p>
-      <button class="buy-add-btn" type="button">Add to Cart</button>
-     </div>
-    
-  </div>
-
+  <!-- STORE GRID (AUTO-RENDERED) -->
+  <div class="store-grid" id="storeGrid"></div>
 </main>
 
-<!-- IMPORTANT: LOAD JS LAST -->
-
-  <script src="buy.js?v=3"></script>
+<!-- SCRIPTS (ORDER MATTERS) -->
+<script src="buy-render.js?v=1"></script>
+<script src="buy.js?v=99"></script>
 <script src="cart-badge.js?v=1"></script>
 
 </body>
