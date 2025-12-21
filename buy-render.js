@@ -39,7 +39,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       card.innerHTML = `
         <img src="${encodeURI(p.image)}" alt="${p.name}">
-        ${imageSrc ? `<img src="${imageSrc}" alt="${name}">` : ""}
         <h3>${name}</h3>
         <p class="price">$${(priceCents / 100).toFixed(2)}</p>
         <button class="buy-add-btn" type="button">Add to Cart</button>
