@@ -430,8 +430,45 @@ p {
   display: none;
 }
 
+/* IMAGE MODAL */
+.image-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.image-modal.hidden {
+  display: none;
+}
+
+.image-modal img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+
+.image-modal-close {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  font-size: 36px;
+  color: white;
+  cursor: pointer;
+  user-select: none;
+}
+
+.store-card img {
+  cursor: zoom-in;
+}
+
 
 </main>
+
 
 
 
