@@ -70,6 +70,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Server running on port " + PORT);
 });
+
 app.post("/api/create-checkout-session", async (req, res) => {
   try {
     const { cart } = req.body; // [{ name, price, qty, image }]
@@ -120,6 +121,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
     res.status(500).json({ ok: false, error: "Could not create checkout session." });
   }
 });
+
 
 
 
