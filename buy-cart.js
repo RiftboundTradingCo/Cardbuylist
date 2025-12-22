@@ -7,17 +7,24 @@ document.addEventListener("DOMContentLoaded", async function () {
   const checkoutBtn = document.getElementById("checkoutBtn");
   const checkoutMsg = document.getElementById("checkoutMsg");
   const emailEl = document.getElementById("buyEmail");
+
+  // Same multipliers as server.js
   const CONDITION_MULT = {
-  "Near Mint": 1.0,
-  "Lightly Played": 0.9,
-  "Moderately Played": 0.8,
-  "Heavily Played": 0.65
-};
+    "Near Mint": 1.0,
+    "Lightly Played": 0.9,
+    "Moderately Played": 0.8,
+    "Heavily Played": 0.65
+  };
+
+  function normalizeCondition(c) {
+    const s = String(c || "Near Mint").trim();
+    return CONDITION_MULT[s] ? s : "Near Mint";
+  }
 
   function centsForCondition(baseCents, condition) {
-  const m = CONDITION_MULT[condition] ?? 1.0;
-  return Math.round(Number(baseCents || 0) * m);
-}
+    const mult = CONDITION_MULT[normalizeCondition(condition)] ?? 1.0;
+    return Math.round(Number(baseCents || 0) * mult);
+  }
 
   function moneyFromCents(cents) {
     return (Number(cents || 0) / 100).toFixed(2);
@@ -53,63 +60,77 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   }
 
-  // Enforce stock limits by capping cart quantities to stock
+  // Total qty for SKU across all conditions (stock is shared per SKU)
+  function totalQtyForSku(cart, sku) {
+    return cart
+      .filter((i) => i.sku === sku)
+      .reduce((sum, i) => sum + (Number(i.qty) || 0), 0);
+  }
+
+  // If cart has more than stock for a SKU, cap lines down until total matches stock
   function enforceStockCaps(cart) {
     let changed = false;
 
+    // group by sku
+    const bySku = {};
     for (const item of cart) {
-      const p = catalog[item.sku];
+      bySku[item.sku] = bySku[item.sku] || [];
+      bySku[item.sku].push(item);
+    }
+
+    for (const [sku, items] of Object.entries(bySku)) {
+      const p = catalog[sku];
       if (!p) continue;
 
       const stock = Number(p.stock ?? 0);
-      if (stock <= 0) {
-        // If you prefer, you can remove out-of-stock items instead of capping:
-        // item.qty = 0;
-        continue;
-      }
+      if (stock <= 0) continue;
 
-      const qty = Math.max(1, Math.min(999, Number(item.qty) || 1));
-      const capped = Math.min(qty, stock);
+      let total = items.reduce((s, i) => s + (Number(i.qty) || 0), 0);
+      if (total <= stock) continue;
 
-      if (capped !== qty) {
-        item.qty = capped;
+      // Reduce from the end until within stock
+      for (let i = items.length - 1; i >= 0 && total > stock; i--) {
+        const q = Number(items[i].qty) || 0;
+        const extra = total - stock;
+        const reduceBy = Math.min(q, extra);
+        items[i].qty = q - reduceBy;
+        total -= reduceBy;
         changed = true;
-      } else {
-        item.qty = qty;
       }
     }
 
-    // Optional: remove any items with qty <= 0 (if you used removal logic above)
-    const filtered = cart.filter(i => (Number(i.qty) || 0) > 0);
-
+    // Remove any line with qty <= 0
+    const filtered = cart.filter((i) => (Number(i.qty) || 0) > 0);
     if (filtered.length !== cart.length) changed = true;
 
     return { cart: filtered, changed };
   }
 
-function computeTotalCents(cart) {
-  let total = 0;
-  for (const item of cart) {
-    const p = catalog[item.sku];
-    if (!p) continue;
-    const unit = centsForCondition(p.price_cents, item.condition || "Near Mint");
-    total += unit * (Number(item.qty) || 0);
-  }
-  return total;
-}
+  function computeTotalCents(cart) {
+    let total = 0;
+    for (const item of cart) {
+      const p = catalog[item.sku];
+      if (!p) continue;
 
+      const cond = normalizeCondition(item.condition);
+      const unit = centsForCondition(p.price_cents, cond);
+      total += unit * (Number(item.qty) || 0);
+    }
+    return total;
+  }
 
   function render() {
-    let cart = loadCart();
+    let cart = loadCart()
+      .map((i) => ({
+        sku: String(i?.sku || "").trim(),
+        qty: Math.max(1, Math.min(999, Number(i?.qty) || 1)),
+        condition: normalizeCondition(i?.condition)
+      }))
+      .filter((i) => i.sku);
 
-    // Ensure cart is valid objects
-    cart = cart
-      .map(i => ({ sku: String(i?.sku || "").trim(), qty: Number(i?.qty) || 1 }))
-      .filter(i => i.sku);
-
-    // Cap to stock
     const capped = enforceStockCaps(cart);
     cart = capped.cart;
+
     if (capped.changed) {
       saveCart(cart);
       if (msg) {
@@ -130,15 +151,13 @@ function computeTotalCents(cart) {
 
     for (const item of cart) {
       const sku = item.sku;
-      const qty = Math.max(1, Math.min(999, Number(item.qty) || 1));
+      const qty = Number(item.qty) || 1;
+      const condition = normalizeCondition(item.condition);
+
       const p = catalog[sku];
-
       const name = p ? p.name : `(Unknown item: ${sku})`;
-      const basePriceCents = p ? Number(p.price_cents) || 0 : 0;
-      const condition = item.condition || "Near Mint";
-      const unitCents = p ? centsForCondition(basePriceCents, condition) : 0;
-      const lineTotalCents = unitCents * qty;
-
+      const baseCents = p ? Number(p.price_cents) || 0 : 0;
+      const unitCents = p ? centsForCondition(baseCents, condition) : 0;
       const stock = p ? Number(p.stock ?? 0) : 0;
       const image = p ? String(p.image || "") : "";
 
@@ -146,13 +165,17 @@ function computeTotalCents(cart) {
         ? encodeURI(image.startsWith("/") ? image : "/" + image)
         : "";
 
-      const lineTotalCents = priceCents * qty;
-      const plusDisabled = p && stock > 0 && qty >= stock;
+      // plus button disabled if total for sku already at stock
+      const currentTotalSku = totalQtyForSku(cart, sku);
+      const plusDisabled = p && stock > 0 && currentTotalSku >= stock;
+
+      const lineTotalCents = unitCents * qty;
 
       const li = document.createElement("li");
       li.style.listStyle = "none";
       li.style.marginBottom = "10px";
       li.dataset.sku = sku;
+      li.dataset.condition = condition;
 
       li.innerHTML = `
         <div class="order-row">
@@ -162,11 +185,8 @@ function computeTotalCents(cart) {
               <div><strong>${name}</strong></div>
               <div class="condition-line">Condition: <strong>${condition}</strong></div>
               <div>$${moneyFromCents(unitCents)} each = $${moneyFromCents(lineTotalCents)}</div>
-
-
-              <div>$${moneyFromCents(priceCents)} each = $${moneyFromCents(lineTotalCents)}</div>
               ${p ? `<div class="stock-line">In stock: <strong>${stock}</strong></div>` : `<div style="font-size:12px;color:#b91c1c;">This SKU isn't in catalog.json</div>`}
-              ${p && stock > 0 && qty >= stock ? `<div class="stock-warning">Max quantity reached for available stock.</div>` : ""}
+              ${p && stock > 0 && currentTotalSku >= stock ? `<div class="stock-warning">Max quantity reached for available stock.</div>` : ""}
             </div>
           </div>
 
@@ -186,27 +206,33 @@ function computeTotalCents(cart) {
     totalEl.textContent = moneyFromCents(computeTotalCents(cart));
   }
 
-  // Handle +/-/remove with stock restriction
+  // +/-/remove with stock restriction and condition-aware line selection
   list.addEventListener("click", function (e) {
     const li = e.target.closest("li");
     if (!li) return;
 
     const sku = li.dataset.sku;
-    let cart = loadCart();
-    const idx = cart.findIndex(
-  i => i.sku === sku && i.condition === item.condition
-);
+    const condition = li.dataset.condition;
 
+    let cart = loadCart().map((i) => ({
+      sku: String(i?.sku || "").trim(),
+      qty: Number(i?.qty) || 1,
+      condition: normalizeCondition(i?.condition)
+    })).filter(i => i.sku);
+
+    const idx = cart.findIndex(
+      (i) => i.sku === sku && normalizeCondition(i.condition) === condition
+    );
     if (idx === -1) return;
 
     const p = catalog[sku];
     const stock = p ? Number(p.stock ?? 0) : null;
 
-    // PLUS
+    // PLUS: enforce total for SKU across all conditions
     if (e.target.classList.contains("plus")) {
-      const current = Number(cart[idx].qty) || 0;
+      const totalForSku = totalQtyForSku(cart, sku);
 
-      if (stock !== null && stock > 0 && current >= stock) {
+      if (stock !== null && stock > 0 && totalForSku >= stock) {
         if (msg) {
           msg.textContent = "You can’t add more than what’s in stock.";
           msg.style.color = "#b45309";
@@ -215,9 +241,7 @@ function computeTotalCents(cart) {
         return;
       }
 
-      cart[idx].qty = Math.min(999, current + 1);
-      if (stock !== null && stock > 0) cart[idx].qty = Math.min(cart[idx].qty, stock);
-
+      cart[idx].qty = Math.min(999, (Number(cart[idx].qty) || 0) + 1);
       saveCart(cart);
       render();
       return;
@@ -251,13 +275,20 @@ function computeTotalCents(cart) {
     render();
   });
 
-  // Checkout (server re-checks stock too)
+  // Checkout (server re-checks stock + condition pricing)
   checkoutBtn?.addEventListener("click", async function () {
     if (checkoutMsg) checkoutMsg.textContent = "";
     checkoutBtn.disabled = true;
 
     try {
-      const cart = loadCart();
+      const cart = loadCart()
+        .map((i) => ({
+          sku: String(i?.sku || "").trim(),
+          qty: Math.max(1, Math.min(999, Number(i?.qty) || 1)),
+          condition: normalizeCondition(i?.condition)
+        }))
+        .filter((i) => i.sku);
+
       if (!cart.length) {
         if (checkoutMsg) checkoutMsg.textContent = "Your cart is empty.";
         checkoutBtn.disabled = false;
