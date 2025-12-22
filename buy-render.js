@@ -12,6 +12,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     "Heavily Played": 0.65
   };
 
+  const CONDITIONS = [
+    "Near Mint",
+    "Lightly Played",
+    "Moderately Played",
+    "Heavily Played"
+  ];
+
   function normalizeCondition(c) {
     const s = String(c || "Near Mint").trim();
     return CONDITION_MULT[s] ? s : "Near Mint";
@@ -26,20 +33,47 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Stock helpers (NO NaN)
   // -----------------------------
   function getStockObj(p) {
-    // New format: stock is an object
-    if (p && p.stock && typeof p.stock === "object") {
-      return p.stock;
-    }
-    // Back-compat: old numeric stock → Near Mint only
+    if (p && p.stock && typeof p.stock === "object") return p.stock;
     return { "Near Mint": Number(p?.stock ?? 0) };
   }
 
-  function stockFor(card, condition) {
+  function stockFromCard(card, condition) {
     const c = normalizeCondition(condition);
     if (c === "Near Mint") return Number(card.dataset.stockNm || 0);
     if (c === "Lightly Played") return Number(card.dataset.stockLp || 0);
     if (c === "Moderately Played") return Number(card.dataset.stockMp || 0);
     return Number(card.dataset.stockHp || 0);
+  }
+
+  function setSelectDisabledOptions(card) {
+    const select = card.querySelector(".condition-select");
+    if (!select) return;
+
+    for (const opt of Array.from(select.options)) {
+      const stock = stockFromCard(card, opt.value);
+      opt.disabled = stock <= 0;
+    }
+  }
+
+  function firstAvailableCondition(card) {
+    for (const cond of CONDITIONS) {
+      if (stockFromCard(card, cond) > 0) return cond;
+    }
+    return "Near Mint";
+  }
+
+  function updateCardPriceAndStock(card, condition) {
+    const baseCents = Number(card.dataset.basecents || 0);
+    const cond = normalizeCondition(condition);
+
+    const priceCents = centsForCondition(baseCents, cond);
+    card.dataset.pricecents = String(priceCents);
+
+    const priceEl = card.querySelector(".price");
+    if (priceEl) priceEl.textContent = `$${(priceCents / 100).toFixed(2)}`;
+
+    const stockEl = card.querySelector(".in-stock");
+    if (stockEl) stockEl.textContent = `In stock: ${stockFromCard(card, cond)}`;
   }
 
   grid.innerHTML = "<p>Loading catalog...</p>";
@@ -66,13 +100,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     for (const [sku, p] of entries) {
       const stockObj = getStockObj(p);
 
-      // Read per-condition stock (exact keys)
       const nm = Number(stockObj["Near Mint"] ?? 0);
       const lp = Number(stockObj["Lightly Played"] ?? 0);
       const mp = Number(stockObj["Moderately Played"] ?? 0);
       const hp = Number(stockObj["Heavily Played"] ?? 0);
 
-      // Hide card only if ALL conditions are out of stock
       if ((nm + lp + mp + hp) <= 0) continue;
 
       const name = String(p.name || sku);
@@ -83,30 +115,29 @@ document.addEventListener("DOMContentLoaded", async function () {
         ? encodeURI(imagePath.startsWith("/") ? imagePath : "/" + imagePath)
         : "";
 
-      const defaultCondition = "Near Mint";
-      const defaultPriceCents = centsForCondition(baseCents, defaultCondition);
-
       const card = document.createElement("div");
       card.className = "store-card";
 
-      // Used by other scripts
+      // used by search + other scripts
       card.dataset.sku = sku;
       card.dataset.name = name.toLowerCase();
-      card.dataset.basecents = String(baseCents);
-      card.dataset.pricecents = String(defaultPriceCents);
 
-      // Store per-condition stock on dataset (IMPORTANT)
+      // pricing base
+      card.dataset.basecents = String(baseCents);
+
+      // per-condition stock on dataset
       card.dataset.stockNm = String(nm);
       card.dataset.stockLp = String(lp);
       card.dataset.stockMp = String(mp);
       card.dataset.stockHp = String(hp);
 
+      // Build select with all options present (we’ll disable 0-stock after append)
       card.innerHTML = `
         ${imageSrc ? `<img class="zoomable" src="${imageSrc}" alt="${name}">` : ""}
         <h3>${name}</h3>
 
-        <p class="price">$${(defaultPriceCents / 100).toFixed(2)}</p>
-        <p class="in-stock">In stock: ${nm}</p>
+        <p class="price">$0.00</p>
+        <p class="in-stock">In stock: 0</p>
 
         <select class="condition-select">
           <option value="Near Mint">Near Mint</option>
@@ -119,6 +150,17 @@ document.addEventListener("DOMContentLoaded", async function () {
       `;
 
       grid.appendChild(card);
+
+      // Disable any 0-stock conditions
+      setSelectDisabledOptions(card);
+
+      // Choose first available condition by stock
+      const select = card.querySelector(".condition-select");
+      const initialCond = firstAvailableCondition(card);
+      if (select) select.value = initialCond;
+
+      // Update display based on initial condition
+      updateCardPriceAndStock(card, initialCond);
     }
 
     if (!grid.children.length) {
@@ -130,7 +172,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   // -----------------------------
-  // Condition change → update price + stock display
+  // Condition change handler
   // -----------------------------
   document.addEventListener("change", function (e) {
     const sel = e.target.closest(".condition-select");
@@ -139,25 +181,18 @@ document.addEventListener("DOMContentLoaded", async function () {
     const card = sel.closest(".store-card");
     if (!card) return;
 
-    const condition = sel.value;
-    const baseCents = Number(card.dataset.basecents || 0);
-
-    const newCents = centsForCondition(baseCents, condition);
-    card.dataset.pricecents = String(newCents);
-
-    const priceEl = card.querySelector(".price");
-    if (priceEl) {
-      priceEl.textContent = `$${(newCents / 100).toFixed(2)}`;
+    // If selected has 0 stock (shouldn’t happen because it’s disabled),
+    // snap to first available.
+    const chosen = sel.value;
+    if (stockFromCard(card, chosen) <= 0) {
+      sel.value = firstAvailableCondition(card);
     }
 
-    const stockEl = card.querySelector(".in-stock");
-    if (stockEl) {
-      stockEl.textContent = `In stock: ${stockFor(card, condition)}`;
-    }
+    updateCardPriceAndStock(card, sel.value);
   });
 
   // -----------------------------
-  // Image zoom modal (click image)
+  // Image zoom modal
   // -----------------------------
   const modal = document.getElementById("imageModal");
   const modalImg = document.getElementById("imageModalImg");
