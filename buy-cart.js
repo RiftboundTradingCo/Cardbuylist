@@ -143,6 +143,10 @@ document.addEventListener("DOMContentLoaded", async function () {
             ${imageSrc ? `<img src="${imageSrc}" alt="${name}" style="width:52px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #ddd;">` : ""}
             <div>
               <div><strong>${name}</strong></div>
+              <div class="condition-line">
+  Condition: <strong>${item.condition}</strong>
+</div>
+
               <div>$${moneyFromCents(priceCents)} each = $${moneyFromCents(lineTotalCents)}</div>
               ${p ? `<div class="stock-line">In stock: <strong>${stock}</strong></div>` : `<div style="font-size:12px;color:#b91c1c;">This SKU isn't in catalog.json</div>`}
               ${p && stock > 0 && qty >= stock ? `<div class="stock-warning">Max quantity reached for available stock.</div>` : ""}
@@ -172,7 +176,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const sku = li.dataset.sku;
     let cart = loadCart();
-    const idx = cart.findIndex(i => i.sku === sku);
+    const idx = cart.findIndex(
+  i => i.sku === sku && i.condition === item.condition
+);
+
     if (idx === -1) return;
 
     const p = catalog[sku];
