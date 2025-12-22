@@ -5,9 +5,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const TAB_TO_COND = {
     NM: "Near Mint",
-    EX: "Lightly Played",
-    VG: "Moderately Played",
-    G: "Heavily Played"
+    LP: "Lightly Played",
+    MP: "Moderately Played",
+    HP: "Heavily Played"
   };
 
   function loadCart() {
