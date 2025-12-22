@@ -1,7 +1,12 @@
 document.addEventListener("DOMContentLoaded", function () {
   const buySearch = document.getElementById("buySearch");
   const grid = document.getElementById("storeGrid");
-  if (!grid) return;
+
+  // If the page doesn't have the store grid, don't run.
+  if (!grid) {
+    console.warn("buy.js: #storeGrid not found");
+    return;
+  }
 
   const TAB_TO_COND = {
     NM: "Near Mint",
@@ -13,6 +18,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function loadCart() {
     try { return JSON.parse(localStorage.getItem("buyCart")) || []; } catch { return []; }
   }
+
   function saveCart(cart) {
     localStorage.setItem("buyCart", JSON.stringify(cart));
   }
@@ -33,24 +39,31 @@ document.addEventListener("DOMContentLoaded", function () {
   function stockForCard(card, tab) {
     const t = String(tab || "NM").toUpperCase();
     if (t === "NM") return Number(card.dataset.stockNm || 0);
-    if (t === "LP") return Number(card.dataset.stockEx || 0);
-    if (t === "MP") return Number(card.dataset.stockVg || 0);
-    return Number(card.dataset.stockG || 0);
+    if (t === "LP") return Number(card.dataset.stockLp || 0);
+    if (t === "MP") return Number(card.dataset.stockMp || 0);
+    return Number(card.dataset.stockHp || 0);
+  }
+
+  function multiplierFor(cond) {
+    if (cond === "Near Mint") return 1.0;
+    if (cond === "Lightly Played") return 0.9;
+    if (cond === "Moderately Played") return 0.8;
+    return 0.65; // Heavily Played
   }
 
   function setActiveTab(card, tab) {
-    const t = String(tab).toUpperCase();
+    const t = String(tab || "NM").toUpperCase();
     const cond = TAB_TO_COND[t];
     if (!cond) return;
 
-    // If disabled (stock 0), ignore
+    // Don’t allow selecting conditions with 0 stock
     if (stockForCard(card, t) <= 0) return;
 
     card.dataset.activeTab = t;
     card.dataset.activeCond = cond;
 
-    // Update button classes
-    card.querySelectorAll(".cond-tab").forEach(b => {
+    // Update tab UI
+    card.querySelectorAll(".cond-tab").forEach((b) => {
       b.classList.toggle("active", b.dataset.tab === t);
     });
 
@@ -58,27 +71,25 @@ document.addEventListener("DOMContentLoaded", function () {
     const stockNum = card.querySelector(".stock-num");
     if (stockNum) stockNum.textContent = String(stockForCard(card, t));
 
-    // Update displayed unit price from buy-render’s stored unitCents (recompute safely)
-    // We can recompute from basecents + multiplier logic by reading buy-render values,
-    // but simplest: keep buy-render’s unitCents updated here too:
+    // Update displayed price
     const base = Number(card.dataset.basecents || 0);
-    const mult = (cond === "Near Mint") ? 1.0 :
-                 (cond === "Lightly Played") ? 0.9 :
-                 (cond === "Moderately Played") ? 0.8 : 0.65;
-    const unitCents = Math.round(base * mult);
+    const unitCents = Math.round(base * multiplierFor(cond));
     card.dataset.unitCents = String(unitCents);
 
     const unitPriceEl = card.querySelector(".unit-price");
     if (unitPriceEl) unitPriceEl.textContent = `$${(unitCents / 100).toFixed(2)}`;
 
-    // Clamp qty to available remaining
+    // Clamp qty after switching condition
     clampQtyToAvailable(card);
   }
 
   function clampQtyToAvailable(card) {
-    const sku = card.dataset.sku;
-    const tab = card.dataset.activeTab || "NM";
-    const condition = card.dataset.activeCond || "Near Mint";
+    const sku = String(card.dataset.sku || "").trim();
+    if (!sku) return;
+
+    const tab = String(card.dataset.activeTab || "NM").toUpperCase();
+    const condition = normalizeCondition(card.dataset.activeCond || TAB_TO_COND[tab] || "Near Mint");
+
     const stock = stockForCard(card, tab);
 
     const cart = loadCart();
@@ -91,18 +102,19 @@ document.addEventListener("DOMContentLoaded", function () {
     const minusBtn = card.querySelector(".qty-minus");
     const addBtn = card.querySelector(".add-to-cart-btn");
 
-    let qty = Math.max(1, Number(qtyInput?.value || 1));
+    let qty = Math.max(1, Number(qtyInput?.value || 1) || 1);
 
     if (available <= 0) {
-      // Can’t add any more of this condition
-      if (qtyInput) qtyInput.value = 1;
+      if (qtyInput) qtyInput.value = "1";
       if (qtyNum) qtyNum.textContent = "1";
       if (plusBtn) plusBtn.disabled = true;
+      if (minusBtn) minusBtn.disabled = true;
       if (addBtn) { addBtn.disabled = true; addBtn.textContent = "Max in Cart"; }
       return;
     }
 
     qty = Math.min(qty, available);
+
     if (qtyInput) qtyInput.value = String(qty);
     if (qtyNum) qtyNum.textContent = String(qty);
 
@@ -111,7 +123,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (addBtn) { addBtn.disabled = false; addBtn.textContent = "Add to Cart"; }
   }
 
-  // SEARCH
+  // SEARCH (works even as cards render later)
   if (buySearch) {
     buySearch.addEventListener("input", function () {
       const q = buySearch.value.toLowerCase().trim();
@@ -122,20 +134,21 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // CLICK HANDLING
-  grid.addEventListener("click", function (e) {
+  // ✅ Event delegation: works for cards rendered later
+  document.addEventListener("click", function (e) {
     const card = e.target.closest(".store-card");
     if (!card) return;
 
-    // Condition tab click
+    // Tabs
     const tabBtn = e.target.closest(".cond-tab");
     if (tabBtn) {
+      if (tabBtn.classList.contains("disabled")) return;
       if (tabBtn.getAttribute("aria-disabled") === "true") return;
       setActiveTab(card, tabBtn.dataset.tab);
       return;
     }
 
-    // Qty plus/minus
+    // Qty +
     if (e.target.closest(".qty-plus")) {
       const input = card.querySelector(".qty-input");
       input.value = String((Number(input.value || 1) || 1) + 1);
@@ -143,6 +156,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
+    // Qty -
     if (e.target.closest(".qty-minus")) {
       const input = card.querySelector(".qty-input");
       input.value = String(Math.max(1, (Number(input.value || 1) || 1) - 1));
@@ -155,17 +169,18 @@ document.addEventListener("DOMContentLoaded", function () {
     if (addBtn) {
       if (addBtn.disabled) return;
 
-      const sku = card.dataset.sku;
-      const condition = normalizeCondition(card.dataset.activeCond || "Near Mint");
-      const tab = card.dataset.activeTab || "NM";
+      const sku = String(card.dataset.sku || "").trim();
+      const tab = String(card.dataset.activeTab || "NM").toUpperCase();
+      const condition = normalizeCondition(card.dataset.activeCond || TAB_TO_COND[tab] || "Near Mint");
+
       const stock = stockForCard(card, tab);
 
-      const qty = Math.max(1, Number(card.querySelector(".qty-input")?.value || 1));
+      const qtyWanted = Math.max(1, Number(card.querySelector(".qty-input")?.value || 1) || 1);
 
       let cart = loadCart();
       const already = cartQtyFor(cart, sku, condition);
       const available = Math.max(0, stock - already);
-      const toAdd = Math.min(qty, available);
+      const toAdd = Math.min(qtyWanted, available);
 
       if (toAdd <= 0) {
         clampQtyToAvailable(card);
@@ -183,29 +198,57 @@ document.addEventListener("DOMContentLoaded", function () {
         addBtn.textContent = "Add to Cart";
         clampQtyToAvailable(card);
       }, 600);
-
       return;
     }
   });
 
-  // Input typing clamp
-  grid.addEventListener("input", function (e) {
+  // Clamp qty when user types
+  document.addEventListener("input", function (e) {
     const qtyInput = e.target.closest(".qty-input");
     if (!qtyInput) return;
     const card = qtyInput.closest(".store-card");
     if (!card) return;
+
     qtyInput.value = qtyInput.value.replace(/[^\d]/g, "");
     if (!qtyInput.value) qtyInput.value = "1";
-    clampQtyToAvailable(card);
-  });
-
-  // Initial clamp on all cards
-  grid.querySelectorAll(".store-card").forEach((card) => {
-    // ensure active tab is set to current DOM active button
-    const activeBtn = card.querySelector(".cond-tab.active");
-    if (activeBtn) setActiveTab(card, activeBtn.dataset.tab);
-    else setActiveTab(card, card.dataset.activeTab || "NM");
 
     clampQtyToAvailable(card);
   });
+
+  // ✅ Initialize cards when they appear (buy-render renders later)
+  const initCard = (card) => {
+    if (!card || card.dataset._inited === "1") return;
+    card.dataset._inited = "1";
+
+    // Pick an active tab: first enabled tab or NM
+    const enabledBtn =
+      card.querySelector('.cond-tab:not(.disabled)[aria-disabled="false"]') ||
+      card.querySelector('.cond-tab:not(.disabled):not([aria-disabled="true"])') ||
+      card.querySelector(".cond-tab");
+
+    if (enabledBtn) setActiveTab(card, enabledBtn.dataset.tab || "NM");
+    else {
+      card.dataset.activeTab = "NM";
+      card.dataset.activeCond = "Near Mint";
+    }
+
+    // Keep qty label synced
+    const qtyInput = card.querySelector(".qty-input");
+    const qtyNum = card.querySelector(".qty-num");
+    if (qtyInput && qtyNum) qtyNum.textContent = String(qtyInput.value || 1);
+
+    clampQtyToAvailable(card);
+  };
+
+  // Run once for any cards already on page
+  grid.querySelectorAll(".store-card").forEach(initCard);
+
+  // Watch for new cards appended by buy-render.js
+  const obs = new MutationObserver(() => {
+    grid.querySelectorAll(".store-card").forEach(initCard);
+  });
+  obs.observe(grid, { childList: true, subtree: true });
+
+  console.log("buy.js loaded ✅");
 });
+
