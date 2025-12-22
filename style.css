@@ -504,8 +504,23 @@ p {
   opacity: 0.85;
   margin: 2px 0;
 }
+.condition-select {
+  width: 100%;
+  margin: 6px 0;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.condition-line {
+  font-size: 13px;
+  opacity: 0.85;
+  margin: 2px 0;
+}
 
 </main>
+
 
 
 
