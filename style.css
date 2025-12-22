@@ -518,8 +518,13 @@ p {
   opacity: 0.85;
   margin: 2px 0;
 }
+.qty-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.stock-line { font-size: 12px; opacity: 0.8; margin-top: 4px; }
+.stock-warning { font-size: 12px; color: #b45309; margin-top: 4px; }
+.condition-line { font-size: 13px; opacity: 0.85; margin: 2px 0; }
 
 </main>
+
 
 
 
