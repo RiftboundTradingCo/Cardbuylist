@@ -87,9 +87,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       // Store condition stocks (so buy.js can read)
       card.dataset.stockNm = String(stockByCond["Near Mint"]);
-      card.dataset.stockEx = String(stockByCond["Lightly Played"]);
-      card.dataset.stockVg = String(stockByCond["Moderately Played"]);
-      card.dataset.stockG = String(stockByCond["Heavily Played"]);
+      card.dataset.stockLp = String(stockByCond["Lightly Played"]);
+      card.dataset.stockMp = String(stockByCond["Moderately Played"]);
+      card.dataset.stockHp = String(stockByCond["Heavily Played"]);
+
 
       // Current state
       card.dataset.activeTab = activeTab;      // NM/EX/VG/G
