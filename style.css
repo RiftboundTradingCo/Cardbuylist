@@ -523,7 +523,91 @@ p {
 .stock-warning { font-size: 12px; color: #b45309; margin-top: 4px; }
 .condition-line { font-size: 13px; opacity: 0.85; margin: 2px 0; }
 
+.cond-tabs {
+  display: inline-flex;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 8px 0 10px;
+}
+
+.cond-tab {
+  border: none;
+  background: #fff;
+  padding: 6px 10px;
+  font-weight: 700;
+  cursor: pointer;
+  border-right: 1px solid #ddd;
+}
+
+.cond-tab:last-child { border-right: none; }
+
+.cond-tab.active {
+  background: #111827;
+  color: white;
+}
+
+.cond-tab.disabled,
+.cond-tab[aria-disabled="true"] {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.buyline {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 8px;
+  opacity: 0.9;
+}
+
+.qty-stepper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.qty-stepper button {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid #ddd;
+  background: #f8f8f8;
+  cursor: pointer;
+}
+
+.qty-stepper button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.qty-input {
+  width: 52px;
+  height: 28px;
+  text-align: center;
+  border-radius: 7px;
+  border: 1px solid #ddd;
+}
+
+.add-to-cart-btn {
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 10px;
+  background: #2563eb;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.add-to-cart-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 </main>
+
 
 
 
