@@ -7,6 +7,17 @@ document.addEventListener("DOMContentLoaded", async function () {
   const checkoutBtn = document.getElementById("checkoutBtn");
   const checkoutMsg = document.getElementById("checkoutMsg");
   const emailEl = document.getElementById("buyEmail");
+  const CONDITION_MULT = {
+  "Near Mint": 1.0,
+  "Lightly Played": 0.9,
+  "Moderately Played": 0.8,
+  "Heavily Played": 0.65
+};
+
+  function centsForCondition(baseCents, condition) {
+  const m = CONDITION_MULT[condition] ?? 1.0;
+  return Math.round(Number(baseCents || 0) * m);
+}
 
   function moneyFromCents(cents) {
     return (Number(cents || 0) / 100).toFixed(2);
@@ -76,15 +87,17 @@ document.addEventListener("DOMContentLoaded", async function () {
     return { cart: filtered, changed };
   }
 
-  function computeTotalCents(cart) {
-    let total = 0;
-    for (const item of cart) {
-      const p = catalog[item.sku];
-      if (!p) continue;
-      total += (Number(p.price_cents) || 0) * (Number(item.qty) || 0);
-    }
-    return total;
+function computeTotalCents(cart) {
+  let total = 0;
+  for (const item of cart) {
+    const p = catalog[item.sku];
+    if (!p) continue;
+    const unit = centsForCondition(p.price_cents, item.condition || "Near Mint");
+    total += unit * (Number(item.qty) || 0);
   }
+  return total;
+}
+
 
   function render() {
     let cart = loadCart();
@@ -121,7 +134,11 @@ document.addEventListener("DOMContentLoaded", async function () {
       const p = catalog[sku];
 
       const name = p ? p.name : `(Unknown item: ${sku})`;
-      const priceCents = p ? Number(p.price_cents) || 0 : 0;
+      const basePriceCents = p ? Number(p.price_cents) || 0 : 0;
+      const condition = item.condition || "Near Mint";
+      const unitCents = p ? centsForCondition(basePriceCents, condition) : 0;
+      const lineTotalCents = unitCents * qty;
+
       const stock = p ? Number(p.stock ?? 0) : 0;
       const image = p ? String(p.image || "") : "";
 
@@ -143,9 +160,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             ${imageSrc ? `<img src="${imageSrc}" alt="${name}" style="width:52px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #ddd;">` : ""}
             <div>
               <div><strong>${name}</strong></div>
-              <div class="condition-line">
-  Condition: <strong>${item.condition}</strong>
-</div>
+              <div class="condition-line">Condition: <strong>${condition}</strong></div>
+              <div>$${moneyFromCents(unitCents)} each = $${moneyFromCents(lineTotalCents)}</div>
+
 
               <div>$${moneyFromCents(priceCents)} each = $${moneyFromCents(lineTotalCents)}</div>
               ${p ? `<div class="stock-line">In stock: <strong>${stock}</strong></div>` : `<div style="font-size:12px;color:#b91c1c;">This SKU isn't in catalog.json</div>`}
