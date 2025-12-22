@@ -5,47 +5,85 @@ document.addEventListener("DOMContentLoaded", function () {
   if (!storeGrid) return;
 
   function loadBuyCart() {
-    const raw = localStorage.getItem("buyCart");
-    if (!raw) return [];
-    try { return JSON.parse(raw); } catch { return []; }
+    try {
+      return JSON.parse(localStorage.getItem("buyCart")) || [];
+    } catch {
+      return [];
+    }
   }
 
   function saveBuyCart(cart) {
     localStorage.setItem("buyCart", JSON.stringify(cart));
   }
 
-  // SEARCH (uses data-name that buy-render.js adds)
+  function getQtyInCart(sku) {
+    const cart = loadBuyCart();
+    const item = cart.find(i => i.sku === sku);
+    return item ? Number(item.qty) || 0 : 0;
+  }
+
+  function updateButtonState(card) {
+    const sku = card.dataset.sku;
+    const stock = Number(card.dataset.stock || 0);
+    const btn = card.querySelector(".buy-add-btn");
+    if (!btn) return;
+
+    const inCart = getQtyInCart(sku);
+
+    if (inCart >= stock) {
+      btn.disabled = true;
+      btn.textContent = "Max in Cart";
+      btn.classList.add("disabled");
+    } else {
+      btn.disabled = false;
+      btn.textContent = "Add to Cart";
+      btn.classList.remove("disabled");
+    }
+  }
+
+  // SEARCH
   if (buySearch) {
     buySearch.addEventListener("input", function () {
       const q = buySearch.value.toLowerCase().trim();
       storeGrid.querySelectorAll(".store-card").forEach(card => {
-        const name = (card.dataset.name || "");
-        card.style.display = name.includes(q) ? "" : "none";
+        card.style.display = card.dataset.name.includes(q) ? "" : "none";
       });
     });
   }
 
-  // ADD TO CART (uses sku ONLY)
+  // ADD TO CART
   storeGrid.addEventListener("click", function (e) {
     const btn = e.target.closest(".buy-add-btn");
-    if (!btn) return;
+    if (!btn || btn.disabled) return;
 
     const card = btn.closest(".store-card");
     if (!card) return;
 
-    const sku = (card.dataset.sku || "").trim();
-    if (!sku) return;
+    const sku = card.dataset.sku;
+    const stock = Number(card.dataset.stock || 0);
 
     const cart = loadBuyCart();
     const idx = cart.findIndex(i => i.sku === sku);
 
-    if (idx >= 0) cart[idx].qty = Math.min(999, (Number(cart[idx].qty) || 0) + 1);
-    else cart.push({ sku, qty: 1 });
+    if (idx >= 0) {
+      if (cart[idx].qty >= stock) {
+        updateButtonState(card);
+        return;
+      }
+      cart[idx].qty += 1;
+    } else {
+      if (stock < 1) return;
+      cart.push({ sku, qty: 1 });
+    }
 
     saveBuyCart(cart);
+    updateButtonState(card);
 
     btn.textContent = "Added ✓";
-    setTimeout(() => (btn.textContent = "Add to Cart"), 700);
+    setTimeout(() => updateButtonState(card), 600);
   });
+
+  // INITIAL BUTTON STATE (important on page load)
+  storeGrid.querySelectorAll(".store-card").forEach(updateButtonState);
 });
 
