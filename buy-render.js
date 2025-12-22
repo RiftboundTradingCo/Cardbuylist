@@ -46,7 +46,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         <h3>${name}</h3>
         <p class="price">$${(priceCents / 100).toFixed(2)}</p>
         <p class="in-stock">In stock: ${stock}</p>
-        <button class="buy-add-btn" type="button">Add to Cart</button>
+        <select class="condition-select">
+  <option value="Near Mint">Near Mint</option>
+  <option value="Lightly Played">Lightly Played</option>
+  <option value="Moderately Played">Moderately Played</option>
+  <option value="Heavily Played">Heavily Played</option>
+</select>
+
+<button class="buy-add-btn" type="button">Add to Cart</button>
+
       `;
 
       grid.appendChild(card);
