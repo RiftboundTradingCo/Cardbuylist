@@ -156,6 +156,44 @@ document.addEventListener("DOMContentLoaded", async () => {
   } catch (err) {
     console.error("buy-render.js error:", err);
   }
+    // -----------------------------
+  // Image zoom modal (click image)
+  // -----------------------------
+  const modal = document.getElementById("imageModal");
+  const modalImg = document.getElementById("imageModalImg");
+  const modalClose = document.getElementById("imageModalClose");
+
+  if (modal && modalImg && modalClose) {
+    // Open on click (event delegation so it works for all cards)
+    document.addEventListener("click", (e) => {
+      const img = e.target.closest(".store-card img.zoomable");
+      if (!img) return;
+
+      modalImg.src = img.src;
+      modal.classList.remove("hidden");
+    });
+
+    function closeModal() {
+      modal.classList.add("hidden");
+      modalImg.src = "";
+    }
+
+    // Close button
+    modalClose.addEventListener("click", closeModal);
+
+    // Click outside image closes
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    // ESC closes
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeModal();
+    });
+  } else {
+    console.warn("Zoom modal elements missing.");
+  }
+
 });
 
 
