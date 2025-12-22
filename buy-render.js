@@ -25,39 +25,47 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     for (const [sku, p] of entries) {
       const stock = Number(p.stock ?? 0);
-      if (stock <= 0) continue; // hide sold-out items
+if (stock <= 0) continue;
 
-      const name = String(p.name || sku);
-      const priceCents = Number(p.price_cents || 0);
-      const imagePath = String(p.image || "");
+const name = String(p.name || sku);
+const baseCents = Number(p.price_cents || 0);
+const imagePath = String(p.image || "");
 
-      const imageSrc = imagePath
-        ? encodeURI(imagePath.startsWith("/") ? imagePath : "/" + imagePath)
-        : "";
+const imageSrc = imagePath
+  ? encodeURI(imagePath.startsWith("/") ? imagePath : "/" + imagePath)
+  : "";
 
-      const card = document.createElement("div");
-      card.className = "store-card";
-      card.dataset.stock = stock; // expose stock to cart logic
-      card.dataset.sku = sku;
-      card.dataset.name = name.toLowerCase(); // used by search
+const card = document.createElement("div");
+card.className = "store-card";
+card.dataset.sku = sku;
+card.dataset.name = name.toLowerCase();
+card.dataset.stock = stock;
 
-      card.innerHTML = `
-        ${imageSrc ? `<img class="zoomable" src="${imageSrc}" alt="${name}">` : ""}
-        <h3>${name}</h3>
-        <p class="price">$${(priceCents / 100).toFixed(2)}</p>
-        <p class="in-stock">In stock: ${stock}</p>
-        <select class="condition-select">
-  <option value="Near Mint">Near Mint</option>
-  <option value="Lightly Played">Lightly Played</option>
-  <option value="Moderately Played">Moderately Played</option>
-  <option value="Heavily Played">Heavily Played</option>
-</select>
+// ✅ store base price (NM) for live UI updates
+card.dataset.basecents = String(baseCents);
 
-<button class="buy-add-btn" type="button">Add to Cart</button>
+// default to Near Mint at render time
+card.dataset.pricecents = String(baseCents);
 
-      `;
+card.innerHTML = `
+  ${imageSrc ? `<img class="zoomable" src="${imageSrc}" alt="${name}">` : ""}
+  <h3>${name}</h3>
 
-      grid.appendChild(card);
+  <p class="price">$${(baseCents / 100).toFixed(2)}</p>
+  <p class="in-stock">In stock: ${stock}</p>
+
+  <select class="condition-select">
+    <option value="Near Mint">Near Mint</option>
+    <option value="Lightly Played">Lightly Played</option>
+    <option value="Moderately Played">Moderately Played</option>
+    <option value="Heavily Played">Heavily Played</option>
+  </select>
+
+  <button class="buy-add-btn" type="button">Add to Cart</button>
+`;
+
+grid.appendChild(card);
+
     }
 
     if (grid.children.length === 0) {
@@ -67,6 +75,34 @@ document.addEventListener("DOMContentLoaded", async function () {
     console.error("buy-render.js error:", err);
     grid.innerHTML = "<p>Error loading catalog.</p>";
   }
+const CONDITION_MULT = {
+  "Near Mint": 1.0,
+  "Lightly Played": 0.9,
+  "Moderately Played": 0.8,
+  "Heavily Played": 0.65
+};
+
+function centsForCondition(baseCents, condition) {
+  const m = CONDITION_MULT[condition] ?? 1.0;
+  return Math.round(Number(baseCents || 0) * m);
+}
+
+// Update displayed price when condition changes
+document.addEventListener("change", (e) => {
+  const sel = e.target.closest(".condition-select");
+  if (!sel) return;
+
+  const card = sel.closest(".store-card");
+  if (!card) return;
+
+  const baseCents = Number(card.dataset.basecents || 0);
+  const newCents = centsForCondition(baseCents, sel.value);
+
+  card.dataset.pricecents = String(newCents);
+
+  const priceEl = card.querySelector(".price");
+  if (priceEl) priceEl.textContent = `$${(newCents / 100).toFixed(2)}`;
+});
 
   // -------------------------
   // Image modal (click to zoom)
