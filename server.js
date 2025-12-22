@@ -5,9 +5,15 @@ const path = require("path");
 const express = require("express");
 const Stripe = require("stripe");
 const { Resend } = require("resend");
+
 const app = express();
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+// -----------------------------
+// Condition pricing (edit these)
+// -----------------------------
 const CONDITION_MULT = {
   "Near Mint": 1.0,
   "Lightly Played": 0.9,
@@ -15,9 +21,14 @@ const CONDITION_MULT = {
   "Heavily Played": 0.65
 };
 
+function normalizeCondition(c) {
+  const s = String(c || "Near Mint").trim();
+  return CONDITION_MULT[s] ? s : "Near Mint";
+}
+
 function centsForCondition(baseCents, condition) {
-  const m = CONDITION_MULT[condition] ?? 1.0;
-  return Math.round(Number(baseCents || 0) * m);
+  const mult = CONDITION_MULT[normalizeCondition(condition)] ?? 1.0;
+  return Math.round(Number(baseCents || 0) * mult);
 }
 
 // -----------------------------
@@ -132,18 +143,23 @@ app.post(
           fullSession.customer_details?.address ||
           null;
 
-        // Verify stock
+        // Verify stock by SKU across all conditions (sum quantities)
+        const qtyBySku = {};
         for (const item of order.items) {
-          const p = catalog[item.sku];
-          if (!p) throw new Error("Unknown SKU in order: " + item.sku);
-          if ((p.stock ?? 0) < item.qty) {
+          qtyBySku[item.sku] = (qtyBySku[item.sku] || 0) + item.qty;
+        }
+
+        for (const [sku, totalQty] of Object.entries(qtyBySku)) {
+          const p = catalog[sku];
+          if (!p) throw new Error("Unknown SKU in order: " + sku);
+          if ((p.stock ?? 0) < totalQty) {
             throw new Error(`Insufficient stock for ${p.name}`);
           }
         }
 
-        // Decrement stock
-        for (const item of order.items) {
-          catalog[item.sku].stock -= item.qty;
+        // Decrement stock by SKU totals
+        for (const [sku, totalQty] of Object.entries(qtyBySku)) {
+          catalog[sku].stock -= totalQty;
         }
         writeJson("catalog.json", catalog);
 
@@ -162,7 +178,6 @@ app.post(
         console.log("OWNER_EMAIL env present:", Boolean(process.env.OWNER_EMAIL));
         console.log("FROM_EMAIL:", process.env.FROM_EMAIL || "(default onboarding@resend.dev)");
 
-        // Emails (receipt + owner notification)
         await sendPaidOrderEmails({ order, catalog });
 
         console.log("Fulfilled order:", orderId);
@@ -195,7 +210,7 @@ app.get("/api/catalog", (req, res) => {
 
 // ----------------------------------------------------
 // API: Create Stripe Checkout Session (server-side prices)
-// Body: { cart: [{ sku, qty }], customerEmail? }
+// Body: { cart: [{ sku, qty, condition }], customerEmail? }
 // ----------------------------------------------------
 app.post("/api/create-checkout-session", async (req, res) => {
   try {
@@ -208,44 +223,44 @@ app.post("/api/create-checkout-session", async (req, res) => {
     const catalog = readJson("catalog.json", {});
 
     const normalized = cart
-        .map((i) => ({
+      .map((i) => ({
         sku: String(i.sku || "").trim(),
         qty: Math.max(1, Math.min(999, Number(i.qty) || 1)),
-        condition: String(i.condition || "Near Mint")
-       }))
+        condition: normalizeCondition(i.condition)
+      }))
       .filter((i) => i.sku);
-
 
     if (normalized.length === 0) {
       return res.status(400).json({ ok: false, error: "Invalid cart." });
     }
 
-    // Validate SKUs + stock + price
+    // Stock check by SKU totals (across all conditions)
     const qtyBySku = {};
-for (const item of normalized) {
-  qtyBySku[item.sku] = (qtyBySku[item.sku] || 0) + item.qty;
-}
+    for (const item of normalized) {
+      qtyBySku[item.sku] = (qtyBySku[item.sku] || 0) + item.qty;
+    }
 
-for (const [sku, totalQty] of Object.entries(qtyBySku)) {
-  const p = catalog[sku];
-  if (!p) return res.status(400).json({ ok: false, error: `Unknown SKU: ${sku}` });
-  if ((p.stock ?? 0) < totalQty) return res.status(400).json({ ok: false, error: `Out of stock: ${p.name}` });
-}
-
+    for (const [sku, totalQty] of Object.entries(qtyBySku)) {
+      const p = catalog[sku];
+      if (!p) return res.status(400).json({ ok: false, error: `Unknown SKU: ${sku}` });
+      if ((p.stock ?? 0) < totalQty) return res.status(400).json({ ok: false, error: `Out of stock: ${p.name}` });
+      if (!Number.isFinite(p.price_cents) || p.price_cents < 0) return res.status(500).json({ ok: false, error: `Invalid price for: ${p.name}` });
+    }
 
     // Create internal order (pending)
     const orders = readJson("orders.json", {});
     const orderId = "ord_" + Date.now() + "_" + Math.random().toString(16).slice(2, 8);
 
-    const subtotalCents = normalized.reduce(
-      (sum, i) => sum + (catalog[i.sku].price_cents * i.qty),
-      0
-    );
+    const subtotalCents = normalized.reduce((sum, i) => {
+      const p = catalog[i.sku];
+      const unit = centsForCondition(p.price_cents, i.condition);
+      return sum + unit * i.qty;
+    }, 0);
 
     orders[orderId] = {
       id: orderId,
       status: "pending",
-      items: normalized,
+      items: normalized, // [{sku, qty, condition}]
       subtotal_cents: subtotalCents,
       createdAt: new Date().toISOString(),
       customerEmail: String(customerEmail || "").trim()
@@ -254,23 +269,23 @@ for (const [sku, totalQty] of Object.entries(qtyBySku)) {
 
     const baseUrl = process.env.PUBLIC_BASE_URL || "http://localhost:3000";
 
+    // Stripe line items (LOCKED server-side amounts)
     const line_items = normalized.map((item) => {
-  const p = catalog[item.sku];
-  const unitAmount = centsForCondition(p.price_cents, item.condition);
+      const p = catalog[item.sku];
+      const unitAmount = centsForCondition(p.price_cents, item.condition);
 
-  return {
-    quantity: item.qty,
-    price_data: {
-      currency: "usd",
-      unit_amount: unitAmount,
-      product_data: {
-        name: `${p.name} (${item.condition})`,
-        images: p.image ? [new URL(p.image, baseUrl).toString()] : undefined
-      }
-    }
-  };
-});
-
+      return {
+        quantity: item.qty,
+        price_data: {
+          currency: "usd",
+          unit_amount: unitAmount,
+          product_data: {
+            name: `${p.name} (${item.condition})`,
+            images: p.image ? [new URL(p.image, baseUrl).toString()] : undefined
+          }
+        }
+      };
+    });
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -358,23 +373,21 @@ Total (client): $${Number(total || 0).toFixed(2)}
 });
 
 // -----------------------------
-// Email helpers for paid orders (WITH PROOF LOGS)
+// Email helpers for paid orders
 // -----------------------------
 async function sendPaidOrderEmails({ order, catalog }) {
   const from = process.env.FROM_EMAIL || "Orders <onboarding@resend.dev>";
   const owner = process.env.OWNER_EMAIL;
 
   const lines = order.items.map((i) => {
-    const unit = centsForCondition(p.price_cents, i.condition || "Near Mint");
-const lineCents = unit * i.qty;
-return `${i.qty}x ${p.name} (${i.condition || "Near Mint"}) — $${moneyFromCents(unit)} = $${moneyFromCents(lineCents)}`;
+    const p = catalog[i.sku];
+    const cond = normalizeCondition(i.condition);
+    const unit = centsForCondition(p.price_cents, cond);
+    const lineCents = unit * i.qty;
+    return `${i.qty}x ${p.name} (${cond}) — $${moneyFromCents(unit)} = $${moneyFromCents(lineCents)}`;
+  });
 
-
-  const subtotalCents = normalized.reduce((sum, i) => {
-  const p = catalog[i.sku];
-  return sum + centsForCondition(p.price_cents, i.condition) * i.qty;
-}, 0);
-
+  const subtotal = moneyFromCents(order.subtotal_cents);
   const shipTo = formatAddress(order.shippingAddress);
   const phoneLine = order.customerPhone ? `Phone: ${order.customerPhone}\n\n` : "";
 
@@ -397,7 +410,6 @@ We’ll follow up with shipping updates soon.
   // Customer receipt
   if (order.customerEmail) {
     console.log("Attempting customer receipt email to:", order.customerEmail);
-
     try {
       const result = await resend.emails.send({
         from,
@@ -405,7 +417,7 @@ We’ll follow up with shipping updates soon.
         subject: `Your receipt (${order.id})`,
         text: receiptText
       });
-      console.log("Resend customer email result:", result);
+      console.log("Customer receipt sent ✅ Resend id:", result?.data?.id);
     } catch (e) {
       console.error("Resend customer email FAILED:", e);
     }
@@ -416,7 +428,6 @@ We’ll follow up with shipping updates soon.
   // Owner notification (what you use to ship)
   if (owner) {
     console.log("Attempting owner order email to:", owner);
-
     try {
       const result = await resend.emails.send({
         from,
@@ -437,7 +448,7 @@ ${lines.join("\n")}
 Subtotal: $${subtotal}
 `
       });
-      console.log("Resend owner email result:", result);
+      console.log("Owner order email sent ✅ Resend id:", result?.data?.id);
     } catch (e) {
       console.error("Resend owner email FAILED:", e);
     }
@@ -449,5 +460,7 @@ Subtotal: $${subtotal}
 // -----------------------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log("Server running on port", PORT));
+
+
 
 
