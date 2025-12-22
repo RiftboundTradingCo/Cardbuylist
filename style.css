@@ -470,8 +470,13 @@ p {
   font-size: 14px;
   opacity: 0.8;
 }
+.buy-add-btn.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 </main>
+
 
 
 
