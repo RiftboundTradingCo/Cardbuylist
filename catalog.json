@@ -4,9 +4,9 @@
     "price_cents": 100,
     "stock": {
       "Near Mint": 10,
-      "Lightly Played": 10,
-      "Moderately Played": 10,
-      "Heavily Played": 10
+      "Lightly Played": 0,
+      "Moderately Played": 3,
+      "Heavily Played": 0
     },
     "image": "/images/Acceptable Losses - Origins.jpg"
   },
