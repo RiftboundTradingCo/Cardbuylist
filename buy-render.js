@@ -41,32 +41,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     return "NM";
   }
 
-  // On-page debug panel (temporary but helpful)
-  const debug = document.createElement("div");
-  debug.style.cssText =
-    "margin:12px 0;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:13px;background:#fafafa;";
-  debug.textContent = "Loading catalog…";
-  grid.before(debug);
-
   grid.innerHTML = "";
 
   try {
     const res = await fetch("/api/catalog", { cache: "no-store" });
 
     if (!res.ok) {
-      debug.textContent = `Catalog request failed: HTTP ${res.status}`;
       return;
     }
 
     const data = await res.json();
 
     if (!data || data.ok !== true || !data.catalog) {
-      debug.textContent = "Catalog JSON invalid (expected { ok: true, catalog: {...} })";
       return;
     }
 
     const entries = Object.entries(data.catalog);
-    debug.textContent = `Catalog loaded: ${entries.length} items`;
 
     if (!entries.length) {
       grid.innerHTML = "<p>No products found.</p>";
@@ -159,14 +149,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       rendered++;
     }
 
-    debug.textContent += ` • Rendered: ${rendered}`;
 
     if (rendered === 0) {
       grid.innerHTML = "<p>No in-stock items to display.</p>";
     }
   } catch (err) {
     console.error("buy-render.js error:", err);
-    debug.textContent = `Catalog error: ${err?.message || err}`;
   }
 });
 
