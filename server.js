@@ -365,10 +365,10 @@ async function sendPaidOrderEmails({ order, catalog }) {
   const owner = process.env.OWNER_EMAIL;
 
   const lines = order.items.map((i) => {
-    const p = catalog[i.sku];
-    const lineCents = (p.price_cents || 0) * i.qty;
-    return `${i.qty}x ${p.name} — $${moneyFromCents(p.price_cents)} = $${moneyFromCents(lineCents)}`;
-  });
+    const unit = centsForCondition(p.price_cents, i.condition || "Near Mint");
+const lineCents = unit * i.qty;
+return `${i.qty}x ${p.name} (${i.condition || "Near Mint"}) — $${moneyFromCents(unit)} = $${moneyFromCents(lineCents)}`;
+
 
   const subtotalCents = normalized.reduce((sum, i) => {
   const p = catalog[i.sku];
@@ -449,4 +449,5 @@ Subtotal: $${subtotal}
 // -----------------------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log("Server running on port", PORT));
+
 
