@@ -142,11 +142,16 @@ document.addEventListener("DOMContentLoaded", function () {
     // Tabs
     const tabBtn = e.target.closest(".cond-tab");
     if (tabBtn) {
-      if (tabBtn.classList.contains("disabled")) return;
-      if (tabBtn.getAttribute("aria-disabled") === "true") return;
-      setActiveTab(card, tabBtn.dataset.tab);
-      return;
-    }
+      const tab = String(tabBtn.dataset.tab || "").toUpperCase();
+const isDisabled =
+  tabBtn.classList.contains("disabled") ||
+  tabBtn.getAttribute("aria-disabled") === "true";
+
+if (!tab) return;
+if (isDisabled) return;
+
+setActiveTab(card, tab);
+
 
     // Qty +
     if (e.target.closest(".qty-plus")) {
