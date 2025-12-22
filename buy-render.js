@@ -1,7 +1,4 @@
 document.addEventListener("DOMContentLoaded", async function () {
-  // -------------------------
-  // Render catalog into grid
-  // -------------------------
   const grid = document.getElementById("storeGrid");
   if (!grid) return;
 
@@ -28,7 +25,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     for (const [sku, p] of entries) {
       const stock = Number(p.stock ?? 0);
-      if (stock <= 0) continue;
+      if (stock <= 0) continue; // hide sold-out items
 
       const name = String(p.name || sku);
       const priceCents = Number(p.price_cents || 0);
@@ -41,12 +38,13 @@ document.addEventListener("DOMContentLoaded", async function () {
       const card = document.createElement("div");
       card.className = "store-card";
       card.dataset.sku = sku;
-      card.dataset.name = name.toLowerCase(); // for search in buy.js
+      card.dataset.name = name.toLowerCase(); // used by search
 
       card.innerHTML = `
         ${imageSrc ? `<img class="zoomable" src="${imageSrc}" alt="${name}">` : ""}
         <h3>${name}</h3>
         <p class="price">$${(priceCents / 100).toFixed(2)}</p>
+        <p class="in-stock">In stock: ${stock}</p>
         <button class="buy-add-btn" type="button">Add to Cart</button>
       `;
 
@@ -58,7 +56,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   } catch (err) {
     console.error("buy-render.js error:", err);
-    grid.innerHTML = "<p>Error loading catalog. Check console.</p>";
+    grid.innerHTML = "<p>Error loading catalog.</p>";
   }
 
   // -------------------------
@@ -68,13 +66,8 @@ document.addEventListener("DOMContentLoaded", async function () {
   const modalImg = document.getElementById("imageModalImg");
   const modalClose = document.getElementById("imageModalClose");
 
-  // If modal HTML isn't on the page, don't crash — but log so you know why
-  if (!modal || !modalImg || !modalClose) {
-    console.warn("Zoom modal missing. Make sure buy.html has #imageModal, #imageModalImg, #imageModalClose");
-    return;
-  }
+  if (!modal || !modalImg || !modalClose) return;
 
-  // Open modal when clicking any card image
   document.addEventListener("click", function (e) {
     const img = e.target.closest(".store-card img.zoomable");
     if (!img) return;
@@ -83,13 +76,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     modal.classList.remove("hidden");
   });
 
-  // Close modal with X
   modalClose.addEventListener("click", () => {
     modal.classList.add("hidden");
     modalImg.src = "";
   });
 
-  // Close modal by clicking the dark background
   modal.addEventListener("click", (e) => {
     if (e.target === modal) {
       modal.classList.add("hidden");
@@ -97,7 +88,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
   });
 
-  // Close modal with ESC
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       modal.classList.add("hidden");
