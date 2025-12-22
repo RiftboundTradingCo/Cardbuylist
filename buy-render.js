@@ -37,6 +37,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       const card = document.createElement("div");
       card.className = "store-card";
+      card.dataset.stock = stock; // expose stock to cart logic
       card.dataset.sku = sku;
       card.dataset.name = name.toLowerCase(); // used by search
 
