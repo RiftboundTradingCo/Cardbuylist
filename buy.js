@@ -70,10 +70,26 @@ document.addEventListener("DOMContentLoaded", function () {
         updateButtonState(card);
         return;
       }
-      cart[idx].qty += 1;
+      const condition =
+  card.querySelector(".condition-select")?.value || "Near Mint";
+
+if (cart[idx].condition === condition) {
+  cart[idx].qty += 1;
+} else {
+  cart.push({ sku, qty: 1, condition });
+}
+
     } else {
       if (stock < 1) return;
-      cart.push({ sku, qty: 1 });
+      const condition =
+  card.querySelector(".condition-select")?.value || "Near Mint";
+
+cart.push({
+  sku,
+  qty: 1,
+  condition
+});
+
     }
 
     saveBuyCart(cart);
