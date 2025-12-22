@@ -3,12 +3,14 @@ document.addEventListener("DOMContentLoaded", async function () {
   if (!grid) return;
 
   // Display tabs -> internal condition names (must match catalog.json keys)
-  const TAB_TO_COND = {
-    NM: "Near Mint",
-    EX: "Lightly Played",
-    VG: "Moderately Played",
-    G: "Heavily Played"
-  };
+const TAB_TO_COND = {
+  NM: "Near Mint",
+  LP: "Lightly Played",
+  MP: "Moderately Played",
+  HP: "Heavily Played"
+};
+
+const TAB_ORDER = ["NM", "LP", "MP", "HP"];
 
   // Same multipliers as server.js
   const CONDITION_MULT = {
