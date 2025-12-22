@@ -1,18 +1,16 @@
-document.addEventListener("DOMContentLoaded", async function () {
+document.addEventListener("DOMContentLoaded", async () => {
   const grid = document.getElementById("storeGrid");
   if (!grid) return;
 
-  // Display tabs -> internal condition names (must match catalog.json keys)
-const TAB_TO_COND = {
-  NM: "Near Mint",
-  LP: "Lightly Played",
-  MP: "Moderately Played",
-  HP: "Heavily Played"
-};
+  const TAB_TO_COND = {
+    NM: "Near Mint",
+    LP: "Lightly Played",
+    MP: "Moderately Played",
+    HP: "Heavily Played"
+  };
 
-const TAB_ORDER = ["NM", "LP", "MP", "HP"];
+  const TAB_ORDER = ["NM", "LP", "MP", "HP"];
 
-  // Same multipliers as server.js
   const CONDITION_MULT = {
     "Near Mint": 1.0,
     "Lightly Played": 0.9,
@@ -20,53 +18,73 @@ const TAB_ORDER = ["NM", "LP", "MP", "HP"];
     "Heavily Played": 0.65
   };
 
-  const TAB_ORDER = ["NM", "LP", "MP", "HP"];
-
-  function centsForCondition(baseCents, condition) {
-    const mult = CONDITION_MULT[condition] ?? 1.0;
-    return Math.round(Number(baseCents || 0) * mult);
+  function centsForCondition(baseCents, cond) {
+    const m = CONDITION_MULT[cond] ?? 1.0;
+    return Math.round(Number(baseCents || 0) * m);
   }
 
   function getStockObj(p) {
     if (p?.stock && typeof p.stock === "object") return p.stock;
-    return { "Near Mint": Number(p?.stock ?? 0) }; // back-compat
+    return { "Near Mint": Number(p?.stock ?? 0) };
   }
 
-  function firstAvailableTab(stockByCond) {
+  function condStock(stockObj, cond) {
+    // EXACT KEY MATCH with your JSON: "Near Mint", "Lightly Played", etc.
+    return Number(stockObj?.[cond] ?? 0);
+  }
+
+  function firstAvailableTab(stockObj) {
     for (const tab of TAB_ORDER) {
       const cond = TAB_TO_COND[tab];
-      if ((Number(stockByCond[cond]) || 0) > 0) return tab;
+      if (condStock(stockObj, cond) > 0) return tab;
     }
     return "NM";
   }
 
-  grid.innerHTML = "<p>Loading catalog...</p>";
+  // On-page debug panel (temporary but helpful)
+  const debug = document.createElement("div");
+  debug.style.cssText =
+    "margin:12px 0;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:13px;background:#fafafa;";
+  debug.textContent = "Loading catalog…";
+  grid.before(debug);
+
+  grid.innerHTML = "";
 
   try {
     const res = await fetch("/api/catalog", { cache: "no-store" });
-    const data = await res.json();
-    if (!data.ok) throw new Error("Catalog load failed");
 
-    const entries = Object.entries(data.catalog || {});
-    grid.innerHTML = "";
+    if (!res.ok) {
+      debug.textContent = `Catalog request failed: HTTP ${res.status}`;
+      return;
+    }
+
+    const data = await res.json();
+
+    if (!data || data.ok !== true || !data.catalog) {
+      debug.textContent = "Catalog JSON invalid (expected { ok: true, catalog: {...} })";
+      return;
+    }
+
+    const entries = Object.entries(data.catalog);
+    debug.textContent = `Catalog loaded: ${entries.length} items`;
+
+    if (!entries.length) {
+      grid.innerHTML = "<p>No products found.</p>";
+      return;
+    }
+
+    let rendered = 0;
 
     for (const [sku, p] of entries) {
       const stockObj = getStockObj(p);
 
-      // Compute per-condition stock
-      const stockByCond = {
-        "Near Mint": Number(stockObj["Near Mint"] ?? 0),
-        "Lightly Played": Number(stockObj["Lightly Played"] ?? 0),
-        "Moderately Played": Number(stockObj["Moderately Played"] ?? 0),
-        "Heavily Played": Number(stockObj["Heavily Played"] ?? 0)
-      };
+      const nm = condStock(stockObj, "Near Mint");
+      const lp = condStock(stockObj, "Lightly Played");
+      const mp = condStock(stockObj, "Moderately Played");
+      const hp = condStock(stockObj, "Heavily Played");
+      const totalStock = nm + lp + mp + hp;
 
-      const totalStock =
-        stockByCond["Near Mint"] +
-        stockByCond["Lightly Played"] +
-        stockByCond["Moderately Played"] +
-        stockByCond["Heavily Played"];
-
+      // Only skip if ALL conditions are truly 0
       if (totalStock <= 0) continue;
 
       const name = String(p.name || sku);
@@ -77,9 +95,10 @@ const TAB_ORDER = ["NM", "LP", "MP", "HP"];
         ? encodeURI(imagePath.startsWith("/") ? imagePath : "/" + imagePath)
         : "";
 
-      const activeTab = firstAvailableTab(stockByCond);
+      const activeTab = firstAvailableTab(stockObj);
       const activeCond = TAB_TO_COND[activeTab];
       const unitCents = centsForCondition(baseCents, activeCond);
+      const activeStock = condStock(stockObj, activeCond);
 
       const card = document.createElement("div");
       card.className = "store-card";
@@ -87,16 +106,15 @@ const TAB_ORDER = ["NM", "LP", "MP", "HP"];
       card.dataset.name = name.toLowerCase();
       card.dataset.basecents = String(baseCents);
 
-      // Store condition stocks (so buy.js can read)
-      card.dataset.stockNm = String(stockByCond["Near Mint"]);
-      card.dataset.stockLp = String(stockByCond["Lightly Played"]);
-      card.dataset.stockMp = String(stockByCond["Moderately Played"]);
-      card.dataset.stockHp = String(stockByCond["Heavily Played"]);
+      // stock datasets for buy.js
+      card.dataset.stockNm = String(nm);
+      card.dataset.stockLp = String(lp);
+      card.dataset.stockMp = String(mp);
+      card.dataset.stockHp = String(hp);
 
-
-      // Current state
-      card.dataset.activeTab = activeTab;      // NM/EX/VG/G
-      card.dataset.activeCond = activeCond;    // Near Mint / etc
+      // state
+      card.dataset.activeTab = activeTab;
+      card.dataset.activeCond = activeCond;
       card.dataset.unitCents = String(unitCents);
 
       card.innerHTML = `
@@ -104,30 +122,28 @@ const TAB_ORDER = ["NM", "LP", "MP", "HP"];
         <h3 class="store-title">${name}</h3>
 
         <div class="cond-tabs" role="tablist" aria-label="Condition">
-${TAB_ORDER.map(tab => {
-  const cond = TAB_TO_COND[tab];
-  const stock =
-    tab === "NM" ? Number(card.dataset.stockNm || 0) :
-    tab === "LP" ? Number(card.dataset.stockLp || 0) :
-    tab === "MP" ? Number(card.dataset.stockMp || 0) :
-    Number(card.dataset.stockHp || 0);
+          ${TAB_ORDER.map((tab) => {
+            const cond = TAB_TO_COND[tab];
+            const s =
+              tab === "NM" ? nm :
+              tab === "LP" ? lp :
+              tab === "MP" ? mp : hp;
 
-  const isDisabled = stock <= 0;
-  const isActive = tab === activeTab;
+            const disabled = s <= 0;
+            const isActive = tab === activeTab;
 
-  return `<button
-            class="cond-tab${isActive ? " active" : ""}${isDisabled ? " disabled" : ""}"
-            type="button"
-            data-tab="${tab}"
-            aria-disabled="${isDisabled ? "true" : "false"}"
-          >${tab}</button>`;
-}).join("")}
-
+            return `<button
+                      class="cond-tab${isActive ? " active" : ""}${disabled ? " disabled" : ""}"
+                      type="button"
+                      data-tab="${tab}"
+                      aria-disabled="${disabled ? "true" : "false"}"
+                    >${tab}</button>`;
+          }).join("")}
         </div>
 
         <div class="buyline">
           <span class="qty-label"><span class="qty-num">1</span> @ <span class="unit-price">$${(unitCents/100).toFixed(2)}</span></span>
-          <span class="stock-label">Stock: <span class="stock-num">${Number(stockByCond[activeCond] || 0)}</span></span>
+          <span class="stock-label">Stock: <span class="stock-num">${activeStock}</span></span>
         </div>
 
         <div class="qty-stepper">
@@ -140,37 +156,17 @@ ${TAB_ORDER.map(tab => {
       `;
 
       grid.appendChild(card);
+      rendered++;
     }
 
-    if (!grid.children.length) {
-      grid.innerHTML = "<p>All items are out of stock.</p>";
+    debug.textContent += ` • Rendered: ${rendered}`;
+
+    if (rendered === 0) {
+      grid.innerHTML = "<p>No in-stock items to display.</p>";
     }
   } catch (err) {
     console.error("buy-render.js error:", err);
-    grid.innerHTML = "<p>Error loading catalog.</p>";
-  }
-
-  // Image zoom modal (keep your existing modal markup in buy.html)
-  const modal = document.getElementById("imageModal");
-  const modalImg = document.getElementById("imageModalImg");
-  const modalClose = document.getElementById("imageModalClose");
-
-  if (modal && modalImg && modalClose) {
-    document.addEventListener("click", function (e) {
-      const img = e.target.closest(".store-card img.zoomable");
-      if (!img) return;
-      modalImg.src = img.src;
-      modal.classList.remove("hidden");
-    });
-
-    function closeModal() {
-      modal.classList.add("hidden");
-      modalImg.src = "";
-    }
-
-    modalClose.addEventListener("click", closeModal);
-    modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+    debug.textContent = `Catalog error: ${err?.message || err}`;
   }
 });
 
