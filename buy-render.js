@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     "Heavily Played": 0.65
   };
 
-  const TAB_ORDER = ["NM", "EX", "VG", "G"];
+  const TAB_ORDER = ["NM", "LP", "MP", "HP"];
 
   function centsForCondition(baseCents, condition) {
     const mult = CONDITION_MULT[condition] ?? 1.0;
