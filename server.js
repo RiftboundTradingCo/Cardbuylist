@@ -5,11 +5,20 @@ const path = require("path");
 const express = require("express");
 const Stripe = require("stripe");
 const { Resend } = require("resend");
-
 const app = express();
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
+const CONDITION_MULT = {
+  "Near Mint": 1.0,
+  "Lightly Played": 0.9,
+  "Moderately Played": 0.8,
+  "Heavily Played": 0.65
+};
+
+function centsForCondition(baseCents, condition) {
+  const m = CONDITION_MULT[condition] ?? 1.0;
+  return Math.round(Number(baseCents || 0) * m);
+}
 
 // -----------------------------
 // Helpers
@@ -199,23 +208,30 @@ app.post("/api/create-checkout-session", async (req, res) => {
     const catalog = readJson("catalog.json", {});
 
     const normalized = cart
-      .map((i) => ({
+        .map((i) => ({
         sku: String(i.sku || "").trim(),
-        qty: Math.max(1, Math.min(999, Number(i.qty) || 1))
-      }))
+        qty: Math.max(1, Math.min(999, Number(i.qty) || 1)),
+        condition: String(i.condition || "Near Mint")
+       }))
       .filter((i) => i.sku);
+
 
     if (normalized.length === 0) {
       return res.status(400).json({ ok: false, error: "Invalid cart." });
     }
 
     // Validate SKUs + stock + price
-    for (const item of normalized) {
-      const p = catalog[item.sku];
-      if (!p) return res.status(400).json({ ok: false, error: `Unknown SKU: ${item.sku}` });
-      if ((p.stock ?? 0) < item.qty) return res.status(400).json({ ok: false, error: `Out of stock: ${p.name}` });
-      if (!Number.isFinite(p.price_cents) || p.price_cents < 0) return res.status(500).json({ ok: false, error: `Invalid price for: ${p.name}` });
-    }
+    const qtyBySku = {};
+for (const item of normalized) {
+  qtyBySku[item.sku] = (qtyBySku[item.sku] || 0) + item.qty;
+}
+
+for (const [sku, totalQty] of Object.entries(qtyBySku)) {
+  const p = catalog[sku];
+  if (!p) return res.status(400).json({ ok: false, error: `Unknown SKU: ${sku}` });
+  if ((p.stock ?? 0) < totalQty) return res.status(400).json({ ok: false, error: `Out of stock: ${p.name}` });
+}
+
 
     // Create internal order (pending)
     const orders = readJson("orders.json", {});
@@ -239,19 +255,22 @@ app.post("/api/create-checkout-session", async (req, res) => {
     const baseUrl = process.env.PUBLIC_BASE_URL || "http://localhost:3000";
 
     const line_items = normalized.map((item) => {
-      const p = catalog[item.sku];
-      return {
-        quantity: item.qty,
-        price_data: {
-          currency: "usd",
-          unit_amount: p.price_cents,
-          product_data: {
-            name: p.name,
-            images: p.image ? [new URL(p.image, baseUrl).toString()] : undefined
-          }
-        }
-      };
-    });
+  const p = catalog[item.sku];
+  const unitAmount = centsForCondition(p.price_cents, item.condition);
+
+  return {
+    quantity: item.qty,
+    price_data: {
+      currency: "usd",
+      unit_amount: unitAmount,
+      product_data: {
+        name: `${p.name} (${item.condition})`,
+        images: p.image ? [new URL(p.image, baseUrl).toString()] : undefined
+      }
+    }
+  };
+});
+
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -351,7 +370,11 @@ async function sendPaidOrderEmails({ order, catalog }) {
     return `${i.qty}x ${p.name} — $${moneyFromCents(p.price_cents)} = $${moneyFromCents(lineCents)}`;
   });
 
-  const subtotal = moneyFromCents(order.subtotal_cents);
+  const subtotalCents = normalized.reduce((sum, i) => {
+  const p = catalog[i.sku];
+  return sum + centsForCondition(p.price_cents, i.condition) * i.qty;
+}, 0);
+
   const shipTo = formatAddress(order.shippingAddress);
   const phoneLine = order.customerPhone ? `Phone: ${order.customerPhone}\n\n` : "";
 
@@ -426,3 +449,4 @@ Subtotal: $${subtotal}
 // -----------------------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log("Server running on port", PORT));
+
