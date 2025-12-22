@@ -33,8 +33,8 @@ document.addEventListener("DOMContentLoaded", function () {
   function stockForCard(card, tab) {
     const t = String(tab || "NM").toUpperCase();
     if (t === "NM") return Number(card.dataset.stockNm || 0);
-    if (t === "EX") return Number(card.dataset.stockEx || 0);
-    if (t === "VG") return Number(card.dataset.stockVg || 0);
+    if (t === "LP") return Number(card.dataset.stockEx || 0);
+    if (t === "MP") return Number(card.dataset.stockVg || 0);
     return Number(card.dataset.stockG || 0);
   }
 
