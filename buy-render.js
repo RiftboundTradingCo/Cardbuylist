@@ -104,17 +104,25 @@ const TAB_ORDER = ["NM", "LP", "MP", "HP"];
         <h3 class="store-title">${name}</h3>
 
         <div class="cond-tabs" role="tablist" aria-label="Condition">
-          ${TAB_ORDER.map(tab => {
-            const cond = TAB_TO_COND[tab];
-            const stock = Number(stockByCond[cond] || 0);
-            const disabled = stock <= 0 ? "true" : "false";
-            const isActive = tab === activeTab ? " active" : "";
-            const disClass = stock <= 0 ? " disabled" : "";
-            return `<button class="cond-tab${isActive}${disClass}" type="button"
-                      data-tab="${tab}" data-cond="${cond}" aria-disabled="${disabled}">
-                      ${tab}
-                    </button>`;
-          }).join("")}
+${TAB_ORDER.map(tab => {
+  const cond = TAB_TO_COND[tab];
+  const stock =
+    tab === "NM" ? Number(card.dataset.stockNm || 0) :
+    tab === "LP" ? Number(card.dataset.stockLp || 0) :
+    tab === "MP" ? Number(card.dataset.stockMp || 0) :
+    Number(card.dataset.stockHp || 0);
+
+  const isDisabled = stock <= 0;
+  const isActive = tab === activeTab;
+
+  return `<button
+            class="cond-tab${isActive ? " active" : ""}${isDisabled ? " disabled" : ""}"
+            type="button"
+            data-tab="${tab}"
+            aria-disabled="${isDisabled ? "true" : "false"}"
+          >${tab}</button>`;
+}).join("")}
+
         </div>
 
         <div class="buyline">
