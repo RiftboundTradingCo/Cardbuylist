@@ -711,8 +711,8 @@ p {
 
 .buy-cart-row {
   display: grid;
-  grid-template-columns: 92px 1fr 170px;
-  gap: 14px;
+  grid-template-columns: 120px 1fr 220px;
+  gap: 16px;
   align-items: center;
 }
 
@@ -849,8 +849,18 @@ p {
   font-size: 14px;
   opacity: 0.85;
 }
+/* BUY CART thumbnail size fix */
+.buy-cart-row .cart-thumb,
+.buy-cart-img img {
+  width: 92px;
+  height: 128px;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+}
 
 </main>
+
 
 
 
