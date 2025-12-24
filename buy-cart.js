@@ -208,7 +208,7 @@ document.addEventListener("DOMContentLoaded", async () => {
               ${TAB_ORDER.map((tab) => {
                 const x = perTab.find(p => p.tab === tab);
                 // show tab enabled if it's in cart OR has stock
-                const enabled = (x.qty > 0) || (x.stock > 0);
+               const enabled = x.qty > 0;
                 const isActive = tab === active.tab;
 
                 return `<button
@@ -295,6 +295,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Tab switch
     const tabBtn = e.target.closest(".cond-tab");
     if (tabBtn) {
+      if (tabBtn.getAttribute("aria-disabled") === "true") return;
+      if (tabBtn.classList.contains("disabled")) return;
+      
       const tab = String(tabBtn.dataset.tab || "NM").toUpperCase();
       const cond = TAB_TO_COND[tab];
       if (!cond) return;
