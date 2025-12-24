@@ -91,28 +91,27 @@ document.addEventListener("DOMContentLoaded", async () => {
       const lineCents = unitCents * clampedQty;
       totalCents += lineCents;
 
-      const li = document.createElement("li");
-      li.className = "buy-cart-item";
-      li.innerHTML = `
-        <div class="buy-cart-row">
-          <div class="buy-cart-left">
-            <div><strong>${name}</strong></div>
-            <div class="muted">SKU: ${sku}</div>
-            <div class="muted">Condition: ${condition}</div>
-            <div class="muted">In stock: ${Number.isFinite(stock) ? stock : 0}</div>
-            <div class="muted">Unit: ${money(unitCents)}</div>
-          </div>
+const li = document.createElement("li");
+li.className = "buy-cart-item";
 
-          <div class="buy-cart-right">
-            <button class="cart-minus" type="button" data-i="${idx}">−</button>
-            <span class="cart-qty">${clampedQty}</span>
-            <button class="cart-plus" type="button" data-i="${idx}" ${clampedQty >= stock && stock > 0 ? "disabled" : ""}>+</button>
+li.innerHTML = `
+  <strong>${name}</strong><br>
+  <span class="muted">SKU: ${sku}</span><br>
+  <span class="muted">Condition: ${condition}</span><br>
+  <span class="muted">In stock: ${Number.isFinite(stock) ? stock : 0}</span><br>
+  <span class="muted">Unit: ${money(unitCents)}</span><br>
 
-            <div class="buy-cart-line-total">${money(lineCents)}</div>
-            <button class="cart-remove" type="button" data-i="${idx}">Remove</button>
-          </div>
-        </div>
-      `;
+  <div class="cart-controls" style="margin:6px 0;">
+    <button class="cart-minus" type="button" data-i="${idx}">−</button>
+    <span class="cart-qty" style="display:inline-block;min-width:18px;text-align:center;">${clampedQty}</span>
+    <button class="cart-plus" type="button" data-i="${idx}" ${stock > 0 && clampedQty >= stock ? "disabled" : ""}>+</button>
+  </div>
+
+  <div class="cart-line-total">${money(lineCents)}</div>
+
+  <button class="cart-remove" type="button" data-i="${idx}">Remove</button>
+`;
+
 
       listEl.appendChild(li);
     });
