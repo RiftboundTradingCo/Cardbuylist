@@ -3,11 +3,15 @@ document.addEventListener("DOMContentLoaded", function () {
      CONFIG
   =============================== */
 
+  // Sell list is priced as NM base. Apply condition multipliers.
   const CONDITIONS = {
     NM: 1.0,
     LP: 0.9,
     MP: 0.8
+    // (If you want HP later, add: HP: 0.65 and add an <option>)
   };
+
+  const COND_LABEL = { NM: "NM", LP: "LP", MP: "MP" };
 
   /* ===============================
      ELEMENTS
@@ -30,10 +34,10 @@ document.addEventListener("DOMContentLoaded", function () {
      STATE
   =============================== */
 
-  // Catalog items: [{ sku, name, price, image, stockObj }]
-  let catalogItems = [];
+  // Selllist items: [{ sku, name, price, image }]
+  let sellItems = [];
 
-  // Each line: { sku, name, condition, qty, unitPrice }
+  // Cart lines: { sku, name, condition, qty, unitPrice }
   let order = [];
 
   function loadCart() {
@@ -68,54 +72,45 @@ document.addEventListener("DOMContentLoaded", function () {
     return encodeURI(withSlash);
   }
 
-  function unitPriceFor(card, condition) {
-    const mult = CONDITIONS[condition] ?? 1.0;
-    return Number(card.price || 0) * mult;
-  }
-
   function findLineIndex(sku, condition) {
     return order.findIndex(l => l.sku === sku && l.condition === condition);
   }
 
+  function unitPriceFor(item, condition) {
+    const mult = CONDITIONS[condition] ?? 1.0;
+    return Number(item.price || 0) * mult;
+  }
+
   /* ===============================
-     LOAD CATALOG (/api/catalog)
+     LOAD SELL LIST (/api/selllist)
   =============================== */
 
-  async function loadCatalog() {
+  async function loadSellList() {
+    results.innerHTML = "<p>Loading sell list…</p>";
+
     try {
-      const res = await fetch("/api/catalog", { cache: "no-store" });
+      const res = await fetch("/api/selllist", { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
       const data = await res.json();
-      if (!data?.ok || !data.catalog) throw new Error("Bad catalog response");
+      if (!data?.ok || !data.selllist) throw new Error("Bad selllist response");
 
-      // Convert to array format your sell page can use
       const items = [];
-      for (const [sku, p] of Object.entries(data.catalog)) {
+      for (const [sku, p] of Object.entries(data.selllist)) {
         const name = String(p.name || sku);
-
-        // Your buy catalog uses price_cents; convert to dollars
-        const baseCents = Number(p.price_cents || 0);
-        const price = baseCents / 100;
-
+        const price = Number(p.price_cents || 0) / 100; // NM base price (what you pay)
         const image = normalizeImagePath(p.image);
 
-        items.push({
-          sku,
-          name,
-          price,
-          image,
-          stock: (p.stock && typeof p.stock === "object") ? p.stock : null
-        });
+        items.push({ sku, name, price, image });
       }
 
-      // Optional: sort A→Z
       items.sort((a, b) => a.name.localeCompare(b.name));
+      sellItems = items;
 
-      catalogItems = items;
-      renderResults(catalogItems);
+      renderResults(sellItems);
     } catch (err) {
-      console.error("Sell catalog load error:", err);
-      results.innerHTML = "<p>Could not load catalog.</p>";
+      console.error("Sell list load error:", err);
+      results.innerHTML = "<p>Could not load sell list.</p>";
     }
   }
 
@@ -126,21 +121,26 @@ document.addEventListener("DOMContentLoaded", function () {
   function renderResults(cards) {
     results.innerHTML = "";
 
-    cards.forEach(card => {
+    if (!cards.length) {
+      results.innerHTML = "<p>No matches.</p>";
+      return;
+    }
+
+    cards.forEach(item => {
       const row = document.createElement("div");
       row.className = "result-row";
-      row.dataset.sku = card.sku;
+      row.dataset.sku = item.sku;
 
       row.innerHTML = `
         <img
           class="card-img clickable-img"
-          src="${card.image}"
-          alt="${card.name}"
-          data-full="${card.image}"
+          src="${item.image}"
+          alt="${item.name}"
+          data-full="${item.image}"
         >
 
         <div class="card-title">
-          ${card.name} — $${money(card.price)} (NM base)
+          ${item.name} — $${money(item.price)} (NM base)
         </div>
 
         <select class="cond">
@@ -159,11 +159,11 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   /* ===============================
-     ADD TO ORDER (from results)
+     RESULTS CLICK: Add + Image Zoom
   =============================== */
 
   results.addEventListener("click", function (e) {
-    // Image modal
+    // Image click → open modal
     if (e.target.classList.contains("clickable-img")) {
       modalImage.src = e.target.dataset.full;
       imageModal.classList.remove("hidden");
@@ -174,20 +174,21 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!e.target.classList.contains("add-btn")) return;
 
     const row = e.target.closest(".result-row");
-    const sku = row.dataset.sku;
+    if (!row) return;
 
-    const condition = row.querySelector(".cond").value;
-    const qty = clampQty(parseInt(row.querySelector(".qty").value, 10));
+    const sku = String(row.dataset.sku || "").trim();
+    const condition = row.querySelector(".cond")?.value || "NM";
+    const qty = clampQty(parseInt(row.querySelector(".qty")?.value || "1", 10));
 
     if (!CONDITIONS[condition]) {
       alert("Invalid condition.");
       return;
     }
 
-    const card = catalogItems.find(c => c.sku === sku);
-    if (!card) return;
+    const item = sellItems.find(x => x.sku === sku);
+    if (!item) return;
 
-    const unitPrice = unitPriceFor(card, condition);
+    const unitPrice = unitPriceFor(item, condition);
 
     const idx = findLineIndex(sku, condition);
     if (idx >= 0) {
@@ -195,7 +196,7 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
       order.push({
         sku,
-        name: card.name,
+        name: item.name,
         condition,
         qty,
         unitPrice
@@ -225,7 +226,7 @@ document.addEventListener("DOMContentLoaded", function () {
       li.innerHTML = `
         <div class="order-row">
           <div>
-            ${line.name} (${line.condition}) —
+            ${line.name} (${COND_LABEL[line.condition] || line.condition}) —
             $${money(line.unitPrice)} each = $${money(lineTotal)}
           </div>
 
@@ -244,6 +245,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     totalEl.textContent = money(total);
 
+    // keep textarea summary for email/debug
     cardsTextarea.value = order
       .map(l => `${l.qty}x ${l.name} (${l.condition})`)
       .join(", ");
@@ -291,7 +293,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   searchInput.addEventListener("input", function () {
     const q = searchInput.value.toLowerCase().trim();
-    const filtered = catalogItems.filter(c => c.name.toLowerCase().includes(q));
+    const filtered = sellItems.filter(c => c.name.toLowerCase().includes(q));
     renderResults(filtered);
   });
 
@@ -312,7 +314,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const email = document.getElementById("email").value;
 
     let computedTotal = 0;
-    order.forEach(l => { computedTotal += (Number(l.qty) || 0) * (Number(l.unitPrice) || 0); });
+    order.forEach(l => {
+      computedTotal += (Number(l.qty) || 0) * (Number(l.unitPrice) || 0);
+    });
 
     try {
       const res = await fetch("/api/submit", {
@@ -352,17 +356,21 @@ document.addEventListener("DOMContentLoaded", function () {
      MODAL CLOSE
   =============================== */
 
-  modalClose.addEventListener("click", function () {
-    imageModal.classList.add("hidden");
-    modalImage.src = "";
-  });
-
-  imageModal.addEventListener("click", function (e) {
-    if (e.target === imageModal) {
+  if (modalClose) {
+    modalClose.addEventListener("click", function () {
       imageModal.classList.add("hidden");
       modalImage.src = "";
-    }
-  });
+    });
+  }
+
+  if (imageModal) {
+    imageModal.addEventListener("click", function (e) {
+      if (e.target === imageModal) {
+        imageModal.classList.add("hidden");
+        modalImage.src = "";
+      }
+    });
+  }
 
   /* ===============================
      INITIAL LOAD
@@ -370,8 +378,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   order = loadCart();
   renderOrder();
-  loadCatalog(); // 🔥 load catalog instead of hardcoded array
+  loadSellList(); // ✅ separate sell pricing list
 });
+
+
 
 
 
