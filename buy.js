@@ -7,6 +7,42 @@
     MP: "Moderately Played",
     HP: "Heavily Played"
   };
+function qtyKeyForTab(tab) {
+  const t = String(tab || "NM").toUpperCase();
+  if (t === "NM") return "qtyNm";
+  if (t === "LP") return "qtyLp";
+  if (t === "MP") return "qtyMp";
+  return "qtyHp";
+}
+
+function getStoredQty(card) {
+  const tab = String(card.dataset.activeTab || "NM").toUpperCase();
+  const key = qtyKeyForTab(tab);
+  const n = Number(card.dataset[key] || 1);
+  return Math.max(1, Number.isFinite(n) ? n : 1);
+}
+
+function setStoredQty(card, qty) {
+  const tab = String(card.dataset.activeTab || "NM").toUpperCase();
+  const key = qtyKeyForTab(tab);
+  const clean = Math.max(1, Number(qty) || 1);
+  card.dataset[key] = String(clean);
+
+  const qtyInput = card.querySelector(".qty-input");
+  
+  const card = qtyInput.closest(".store-card");
+  if (!card) return;
+  
+  let v = qtyInput.value.replace(/[^\d]/g, "");
+  if (!v) v = "1";
+
+// save qty to the ACTIVE CONDITION (NM / LP / MP / HP)
+setStoredQty(card, Number(v));
+
+// clamp against stock & cart
+clampQtyToAvailable(card);
+
+}
 
   function normalizeCondition(c) {
     const allowed = ["Near Mint", "Lightly Played", "Moderately Played", "Heavily Played"];
@@ -53,6 +89,10 @@
 
     card.dataset.activeTab = t;
     card.dataset.activeCond = cond;
+    
+    // Load the qty that belongs to THIS condition tab
+setStoredQty(card, getStoredQty(card));
+
 
     // Update tab UI
     card.querySelectorAll(".cond-tab").forEach((b) => {
@@ -92,15 +132,20 @@
     const minusBtn = card.querySelector(".qty-minus");
     const addBtn = card.querySelector(".add-to-cart-btn");
 
-    let qty = Math.max(1, Number(qtyInput?.value || 1) || 1);
+let qty = getStoredQty(card);
 
-    if (available <= 0) {
-      if (qtyInput) qtyInput.value = "1";
-      if (qtyNum) qtyNum.textContent = "1";
-      if (plusBtn) plusBtn.disabled = true;
-      if (minusBtn) minusBtn.disabled = true;
-      if (addBtn) { addBtn.disabled = true; addBtn.textContent = "Max in Cart"; }
-      return;
+if (available <= 0) {
+  setStoredQty(card, 1);
+  if (plusBtn) plusBtn.disabled = true;
+  if (minusBtn) minusBtn.disabled = true;
+  if (addBtn) { addBtn.disabled = true; addBtn.textContent = "Max in Cart"; }
+  return;
+}
+
+// Clamp to available and save back to THIS condition
+qty = Math.min(qty, available);
+setStoredQty(card, qty);
+
     }
 
     qty = Math.min(qty, available);
@@ -178,18 +223,18 @@
     // Qty +
     if (e.target.closest(".qty-plus")) {
       console.log("plus click");
-      const input = card.querySelector(".qty-input");
-      input.value = String((Number(input.value || 1) || 1) + 1);
+      setStoredQty(card, getStoredQty(card) + 1);
       clampQtyToAvailable(card);
+
       return;
     }
 
     // Qty -
     if (e.target.closest(".qty-minus")) {
       console.log("minus click");
-      const input = card.querySelector(".qty-input");
-      input.value = String(Math.max(1, (Number(input.value || 1) || 1) - 1));
+      setStoredQty(card, Math.max(1, getStoredQty(card) - 1));
       clampQtyToAvailable(card);
+
       return;
     }
 
