@@ -1,14 +1,21 @@
-document.addEventListener("DOMContentLoaded", async function () {
-  const list = document.getElementById("buyCartList");
+document.addEventListener("DOMContentLoaded", async () => {
+  const listEl = document.getElementById("buyCartList");
   const totalEl = document.getElementById("buyCartTotal");
+  const msgEl = document.getElementById("buyCartMessage");
   const clearBtn = document.getElementById("buyClearCartBtn");
-  const msg = document.getElementById("buyCartMessage");
 
-  const checkoutBtn = document.getElementById("checkoutBtn");
-  const checkoutMsg = document.getElementById("checkoutMsg");
-  const emailEl = document.getElementById("buyEmail");
+  function loadCart() {
+    try { return JSON.parse(localStorage.getItem("buyCart")) || []; } catch { return []; }
+  }
+  function saveCart(cart) {
+    localStorage.setItem("buyCart", JSON.stringify(cart));
+  }
 
-  // Same multipliers as server.js
+  function money(cents) {
+    return `$${(Number(cents || 0) / 100).toFixed(2)}`;
+  }
+
+  // Must match your catalog.json keys
   const CONDITION_MULT = {
     "Near Mint": 1.0,
     "Lightly Played": 0.9,
@@ -17,305 +24,165 @@ document.addEventListener("DOMContentLoaded", async function () {
   };
 
   function normalizeCondition(c) {
+    const allowed = Object.keys(CONDITION_MULT);
     const s = String(c || "Near Mint").trim();
-    return CONDITION_MULT[s] ? s : "Near Mint";
+    return allowed.includes(s) ? s : "Near Mint";
   }
 
-  function centsForCondition(baseCents, condition) {
+  function calcUnitCents(baseCents, condition) {
     const mult = CONDITION_MULT[normalizeCondition(condition)] ?? 1.0;
     return Math.round(Number(baseCents || 0) * mult);
   }
 
-  function moneyFromCents(cents) {
-    return (Number(cents || 0) / 100).toFixed(2);
-  }
+  function getStockForCondition(item, condition) {
+    // item is catalog[sku]
+    const cond = normalizeCondition(condition);
 
-  function loadCart() {
-    try {
-      return JSON.parse(localStorage.getItem("buyCart")) || [];
-    } catch {
-      return [];
+    // New format: item.stock is an object
+    if (item && item.stock && typeof item.stock === "object") {
+      return Number(item.stock[cond] ?? 0);
     }
-  }
 
-  function saveCart(cart) {
-    localStorage.setItem("buyCart", JSON.stringify(cart));
+    // Old format fallback: item.stock is a number
+    return Number(item?.stock ?? 0);
   }
 
   async function fetchCatalog() {
     const res = await fetch("/api/catalog", { cache: "no-store" });
+    if (!res.ok) throw new Error(`Catalog HTTP ${res.status}`);
     const data = await res.json();
-    if (!data.ok) throw new Error("Catalog load failed");
-    return data.catalog || {};
+    if (!data?.ok || !data.catalog) throw new Error("Bad catalog JSON");
+    return data.catalog;
   }
 
-  let catalog = {};
-  try {
-    catalog = await fetchCatalog();
-  } catch (e) {
-    console.error(e);
-    if (msg) {
-      msg.textContent = "Could not load catalog from server.";
-      msg.style.color = "red";
-    }
-  }
+  function render(cart, catalog) {
+    if (!listEl) return;
 
-  // Total qty for SKU across all conditions (stock is shared per SKU)
-  function totalQtyForSku(cart, sku) {
-    return cart
-      .filter((i) => i.sku === sku)
-      .reduce((sum, i) => sum + (Number(i.qty) || 0), 0);
-  }
-
-  // If cart has more than stock for a SKU, cap lines down until total matches stock
-  function enforceStockCaps(cart) {
-    let changed = false;
-
-    // group by sku
-    const bySku = {};
-    for (const item of cart) {
-      bySku[item.sku] = bySku[item.sku] || [];
-      bySku[item.sku].push(item);
-    }
-
-    for (const [sku, items] of Object.entries(bySku)) {
-      const p = catalog[sku];
-      if (!p) continue;
-
-      const stock = Number(p.stock ?? 0);
-      if (stock <= 0) continue;
-
-      let total = items.reduce((s, i) => s + (Number(i.qty) || 0), 0);
-      if (total <= stock) continue;
-
-      // Reduce from the end until within stock
-      for (let i = items.length - 1; i >= 0 && total > stock; i--) {
-        const q = Number(items[i].qty) || 0;
-        const extra = total - stock;
-        const reduceBy = Math.min(q, extra);
-        items[i].qty = q - reduceBy;
-        total -= reduceBy;
-        changed = true;
-      }
-    }
-
-    // Remove any line with qty <= 0
-    const filtered = cart.filter((i) => (Number(i.qty) || 0) > 0);
-    if (filtered.length !== cart.length) changed = true;
-
-    return { cart: filtered, changed };
-  }
-
-  function computeTotalCents(cart) {
-    let total = 0;
-    for (const item of cart) {
-      const p = catalog[item.sku];
-      if (!p) continue;
-
-      const cond = normalizeCondition(item.condition);
-      const unit = centsForCondition(p.price_cents, cond);
-      total += unit * (Number(item.qty) || 0);
-    }
-    return total;
-  }
-
-  function render() {
-    let cart = loadCart()
-      .map((i) => ({
-        sku: String(i?.sku || "").trim(),
-        qty: Math.max(1, Math.min(999, Number(i?.qty) || 1)),
-        condition: normalizeCondition(i?.condition)
-      }))
-      .filter((i) => i.sku);
-
-    const capped = enforceStockCaps(cart);
-    cart = capped.cart;
-
-    if (capped.changed) {
-      saveCart(cart);
-      if (msg) {
-        msg.textContent = "Some quantities were adjusted to match available stock.";
-        msg.style.color = "#b45309";
-      }
-    }
-
-    list.innerHTML = "";
+    listEl.innerHTML = "";
+    if (msgEl) msgEl.textContent = "";
 
     if (!cart.length) {
-      list.innerHTML =
-        "<li style='list-style:none;background:white;padding:12px;border-radius:8px;'>Your buy cart is empty.</li>";
-      totalEl.textContent = "0.00";
-      if (checkoutMsg) checkoutMsg.textContent = "";
+      listEl.innerHTML = "<li>Your cart is empty.</li>";
+      if (totalEl) totalEl.textContent = "0.00";
       return;
     }
 
-    for (const item of cart) {
-      const sku = item.sku;
-      const qty = Number(item.qty) || 1;
-      const condition = normalizeCondition(item.condition);
+    let totalCents = 0;
 
-      const p = catalog[sku];
-      const name = p ? p.name : `(Unknown item: ${sku})`;
-      const baseCents = p ? Number(p.price_cents) || 0 : 0;
-      const unitCents = p ? centsForCondition(baseCents, condition) : 0;
-      const stock = p ? Number(p.stock ?? 0) : 0;
-      const image = p ? String(p.image || "") : "";
+    cart.forEach((ci, idx) => {
+      const sku = String(ci.sku || "").trim();
+      const condition = normalizeCondition(ci.condition);
+      const qty = Math.max(1, Number(ci.qty || 1));
 
-      const imageSrc = image
-        ? encodeURI(image.startsWith("/") ? image : "/" + image)
-        : "";
+      const product = catalog[sku];
+      const name = product ? String(product.name || sku) : sku;
 
-      // plus button disabled if total for sku already at stock
-      const currentTotalSku = totalQtyForSku(cart, sku);
-      const plusDisabled = p && stock > 0 && currentTotalSku >= stock;
+      const baseCents = product ? Number(product.price_cents || 0) : 0;
+      const unitCents = calcUnitCents(baseCents, condition);
 
-      const lineTotalCents = unitCents * qty;
+      const stock = product ? getStockForCondition(product, condition) : 0;
+
+      // Clamp cart qty to stock (optional but recommended)
+      const clampedQty = Math.min(qty, stock > 0 ? stock : qty);
+      if (clampedQty !== qty) {
+        cart[idx].qty = clampedQty;
+      }
+
+      const lineCents = unitCents * clampedQty;
+      totalCents += lineCents;
 
       const li = document.createElement("li");
-      li.style.listStyle = "none";
-      li.style.marginBottom = "10px";
-      li.dataset.sku = sku;
-      li.dataset.condition = condition;
-
+      li.className = "buy-cart-item";
       li.innerHTML = `
-        <div class="order-row">
-          <div style="display:flex;gap:10px;align-items:center;">
-            ${imageSrc ? `<img src="${imageSrc}" alt="${name}" style="width:52px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #ddd;">` : ""}
-            <div>
-              <div><strong>${name}</strong></div>
-              <div class="condition-line">Condition: <strong>${condition}</strong></div>
-              <div>$${moneyFromCents(unitCents)} each = $${moneyFromCents(lineTotalCents)}</div>
-              ${p ? `<div class="stock-line">In stock: <strong>${stock}</strong></div>` : `<div style="font-size:12px;color:#b91c1c;">This SKU isn't in catalog.json</div>`}
-              ${p && stock > 0 && currentTotalSku >= stock ? `<div class="stock-warning">Max quantity reached for available stock.</div>` : ""}
-            </div>
+        <div class="buy-cart-row">
+          <div class="buy-cart-left">
+            <div><strong>${name}</strong></div>
+            <div class="muted">SKU: ${sku}</div>
+            <div class="muted">Condition: ${condition}</div>
+            <div class="muted">In stock: ${Number.isFinite(stock) ? stock : 0}</div>
+            <div class="muted">Unit: ${money(unitCents)}</div>
           </div>
 
-          <div class="qty-controls">
-            <button class="qty-btn minus" type="button">−</button>
-            <span class="qty-value">${qty}</span>
-            <button class="qty-btn plus" type="button" ${plusDisabled ? "disabled" : ""}>+</button>
-          </div>
+          <div class="buy-cart-right">
+            <button class="cart-minus" type="button" data-i="${idx}">−</button>
+            <span class="cart-qty">${clampedQty}</span>
+            <button class="cart-plus" type="button" data-i="${idx}" ${clampedQty >= stock && stock > 0 ? "disabled" : ""}>+</button>
 
-          <button class="remove-btn" type="button">Remove</button>
+            <div class="buy-cart-line-total">${money(lineCents)}</div>
+            <button class="cart-remove" type="button" data-i="${idx}">Remove</button>
+          </div>
         </div>
       `;
 
-      list.appendChild(li);
-    }
+      listEl.appendChild(li);
+    });
 
-    totalEl.textContent = moneyFromCents(computeTotalCents(cart));
+    // Save any clamping changes
+    saveCart(cart);
+
+    if (totalEl) totalEl.textContent = (totalCents / 100).toFixed(2);
   }
 
-  // +/-/remove with stock restriction and condition-aware line selection
-  list.addEventListener("click", function (e) {
-    const li = e.target.closest("li");
-    if (!li) return;
+  let cart = loadCart();
+  let catalog = {};
 
-    const sku = li.dataset.sku;
-    const condition = li.dataset.condition;
+  try {
+    catalog = await fetchCatalog();
+  } catch (e) {
+    console.error("buy-cart.js catalog error:", e);
+    if (msgEl) msgEl.textContent = "Could not load inventory right now.";
+  }
 
-    let cart = loadCart().map((i) => ({
-      sku: String(i?.sku || "").trim(),
-      qty: Number(i?.qty) || 1,
-      condition: normalizeCondition(i?.condition)
-    })).filter(i => i.sku);
+  render(cart, catalog);
 
-    const idx = cart.findIndex(
-      (i) => i.sku === sku && normalizeCondition(i.condition) === condition
-    );
-    if (idx === -1) return;
+  // Buttons: + / − / remove
+  document.addEventListener("click", (e) => {
+    const minus = e.target.closest(".cart-minus");
+    const plus = e.target.closest(".cart-plus");
+    const remove = e.target.closest(".cart-remove");
 
-    const p = catalog[sku];
-    const stock = p ? Number(p.stock ?? 0) : null;
+    if (!minus && !plus && !remove) return;
 
-    // PLUS: enforce total for SKU across all conditions
-    if (e.target.classList.contains("plus")) {
-      const totalForSku = totalQtyForSku(cart, sku);
+    cart = loadCart();
 
-      if (stock !== null && stock > 0 && totalForSku >= stock) {
-        if (msg) {
-          msg.textContent = "You can’t add more than what’s in stock.";
-          msg.style.color = "#b45309";
-        }
-        render();
-        return;
-      }
+    const i = Number((minus || plus || remove).dataset.i);
+    if (!Number.isFinite(i) || i < 0 || i >= cart.length) return;
 
-      cart[idx].qty = Math.min(999, (Number(cart[idx].qty) || 0) + 1);
+    const sku = String(cart[i].sku || "").trim();
+    const condition = normalizeCondition(cart[i].condition);
+
+    const product = catalog[sku];
+    const stock = product ? getStockForCondition(product, condition) : 0;
+
+    if (remove) {
+      cart.splice(i, 1);
       saveCart(cart);
-      render();
+      render(cart, catalog);
       return;
     }
 
-    // MINUS
-    if (e.target.classList.contains("minus")) {
-      cart[idx].qty = (Number(cart[idx].qty) || 0) - 1;
-      if (cart[idx].qty <= 0) cart.splice(idx, 1);
-      saveCart(cart);
-      render();
-      return;
+    let qty = Math.max(1, Number(cart[i].qty || 1));
+
+    if (minus) qty = Math.max(1, qty - 1);
+
+    if (plus) {
+      // If we know stock, enforce it
+      if (stock > 0) qty = Math.min(stock, qty + 1);
+      else qty = qty + 1;
     }
 
-    // REMOVE
-    if (e.target.classList.contains("remove-btn")) {
-      cart.splice(idx, 1);
-      saveCart(cart);
-      render();
-    }
+    cart[i].qty = qty;
+    saveCart(cart);
+    render(cart, catalog);
   });
 
   // Clear cart
-  clearBtn?.addEventListener("click", function () {
-    if (!confirm("Clear your buy cart?")) return;
-    localStorage.removeItem("buyCart");
-    if (msg) {
-      msg.textContent = "Cart cleared.";
-      msg.style.color = "green";
-    }
-    render();
-  });
-
-  // Checkout (server re-checks stock + condition pricing)
-  checkoutBtn?.addEventListener("click", async function () {
-    if (checkoutMsg) checkoutMsg.textContent = "";
-    checkoutBtn.disabled = true;
-
-    try {
-      const cart = loadCart()
-        .map((i) => ({
-          sku: String(i?.sku || "").trim(),
-          qty: Math.max(1, Math.min(999, Number(i?.qty) || 1)),
-          condition: normalizeCondition(i?.condition)
-        }))
-        .filter((i) => i.sku);
-
-      if (!cart.length) {
-        if (checkoutMsg) checkoutMsg.textContent = "Your cart is empty.";
-        checkoutBtn.disabled = false;
-        return;
-      }
-
-      const customerEmail = (emailEl?.value || "").trim();
-
-      const res = await fetch("/api/create-checkout-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cart, customerEmail })
-      });
-
-      const data = await res.json();
-      if (!data.ok || !data.url) {
-        if (checkoutMsg) checkoutMsg.textContent = "Checkout error: " + (data.error || "Unknown error");
-        checkoutBtn.disabled = false;
-        return;
-      }
-
-      window.location.href = data.url;
-    } catch (err) {
-      if (checkoutMsg) checkoutMsg.textContent = "Network error. Please try again.";
-      checkoutBtn.disabled = false;
-    }
-  });
-
-  render();
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      localStorage.setItem("buyCart", JSON.stringify([]));
+      cart = [];
+      render(cart, catalog);
+    });
+  }
 });
+
