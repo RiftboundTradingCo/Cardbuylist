@@ -887,8 +887,83 @@ p {
   opacity: 0.45;
   cursor: not-allowed;
 }
+/* =========================
+   Unified +/- stepper style
+   (Buy page + Buy cart)
+   ========================= */
+
+/* Buy page uses .qty-stepper + .qty-minus/.qty-plus + .qty-input
+   Buy cart uses .cart-controls + .cart-minus/.cart-plus + .cart-qty
+   We'll style both to look identical.
+*/
+
+.qty-stepper,
+.cart-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Buttons */
+.qty-stepper button,
+.cart-controls button,
+.qty-minus,
+.qty-plus,
+.cart-minus,
+.cart-plus {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,.20);
+  background: #f5f5f5;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qty-stepper button:disabled,
+.cart-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Middle value */
+.cart-qty {
+  min-width: 22px;
+  text-align: center;
+  font-weight: 700;
+}
+
+/* Buy page middle input */
+.qty-input {
+  width: 48px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,.20);
+  text-align: center;
+  font-weight: 700;
+  outline: none;
+  background: #fff;
+  padding: 0;
+}
+
+/* Remove number spinners (Chrome/Edge/Safari) */
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Remove number spinners (Firefox) */
+.qty-input[type="number"] {
+  -moz-appearance: textfield;
+}
 
 </main>
+
 
 
 
