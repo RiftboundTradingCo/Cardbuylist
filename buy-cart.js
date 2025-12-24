@@ -102,7 +102,6 @@
 
         <div class="buy-cart-info">
           <strong>${product.name}</strong>
-          <div>SKU: ${group.sku}</div>
 
           <div class="cond-tabs">
             ${TAB_ORDER.map(t => {
