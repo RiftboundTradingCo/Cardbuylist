@@ -213,11 +213,6 @@ document.addEventListener("DOMContentLoaded", async () => {
               <div class="buy-cart-meta">Unit: <span class="cart-unit-text">${money(active.unitCents)}</span></div>
             </div>
 
-            <div class="buy-cart-meta cart-group-summary">
-              In cart (all conditions): <span>${groupQty}</span> • Subtotal: <span>${money(groupTotalCents)}</span>
-            </div>
-          </div>
-
           <div class="buy-cart-actions">
             <div class="cart-controls">
               <button class="cart-minus" type="button">−</button>
@@ -225,9 +220,14 @@ document.addEventListener("DOMContentLoaded", async () => {
               <button class="cart-plus" type="button" ${canPlus ? "" : "disabled"}>+</button>
             </div>
 
-            <div class="cart-line-total">${money(active.qty * active.unitCents)}</div>
+         <div class="cart-line-total">${money(active.qty * active.unitCents)}</div>
+
+          <div class="cart-group-summary">
+            In cart (all conditions): <span>${groupQty}</span> • Subtotal: <span>${money(groupTotalCents)}</span>
+          </div>
 
             <button class="cart-remove" type="button">Remove condition</button>
+
           </div>
         </div>
       `;
