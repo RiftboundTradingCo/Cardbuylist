@@ -5,8 +5,44 @@ document.addEventListener("DOMContentLoaded", async () => {
   const clearBtn = document.getElementById("buyClearCartBtn");
 
   function loadCart() {
-    try { return JSON.parse(localStorage.getItem("buyCart")) || []; } catch { return []; }
+  const keysToTry = [
+    "buyCart",        // new
+    "buy_cart",       // common alt
+    "buyCartItems",   // common alt
+    "cart",           // common alt
+    "buycart"         // common typo
+  ];
+
+  for (const k of keysToTry) {
+    try {
+      const raw = localStorage.getItem(k);
+      if (!raw) continue;
+
+      const parsed = JSON.parse(raw);
+
+      // Accept array format: [{sku, condition, qty}, ...]
+      if (Array.isArray(parsed)) {
+        if (k !== "buyCart") localStorage.setItem("buyCart", JSON.stringify(parsed)); // migrate
+        return parsed;
+      }
+
+      // Accept object format: { "SKU|Condition": qty, ... } (just in case)
+      if (parsed && typeof parsed === "object") {
+        const arr = Object.entries(parsed).map(([key, qty]) => {
+          const [sku, condition] = key.split("|");
+          return { sku, condition: condition || "Near Mint", qty: Number(qty) || 1 };
+        });
+        localStorage.setItem("buyCart", JSON.stringify(arr));
+        return arr;
+      }
+    } catch {
+      // keep trying other keys
+    }
   }
+
+  return [];
+}
+
   function saveCart(cart) {
     localStorage.setItem("buyCart", JSON.stringify(cart));
   }
@@ -136,6 +172,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   let cart = loadCart();
+  console.log("buy-cart loaded items:", cart.length, cart);
   let catalog = {};
 
   try {
