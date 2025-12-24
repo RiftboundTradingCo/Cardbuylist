@@ -816,8 +816,15 @@ p {
   margin-top: 10px;
   font-weight: 600;
 }
+.cart-group-summary {
+  margin: 6px 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(0,0,0,.75);
+}
 
 </main>
+
 
 
 
