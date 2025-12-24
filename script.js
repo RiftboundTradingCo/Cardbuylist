@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", function () {
-
   /* ===============================
      CONFIG
   =============================== */
@@ -9,14 +8,6 @@ document.addEventListener("DOMContentLoaded", function () {
     LP: 0.9,
     MP: 0.8
   };
-
-  // Update these image paths to match your /images folder
-  const buylist = [
-  { name: "Jinx - Loose Cannon (Signature)", price: 540.00, image: "images/Jinx - Loose Cannon (Signature).jpg" },
-  { name: "Deadbloom Predator - Origins", price: 82.50, image: "images/Deadbloom Predator - Origins.jpg" },
-  { name: "Kai'Sa - Survivor (Alternate Art) - Origins", price: 72.00, image: "images/Kai'Sa - Survivor (Alternate Art) - Origins.jpg" },
-  { name: "Time Warp - Origins", price: 52.50, image: "images/Time Warp - Origins.jpg" }
-  ];
 
   /* ===============================
      ELEMENTS
@@ -39,30 +30,28 @@ document.addEventListener("DOMContentLoaded", function () {
      STATE
   =============================== */
 
-  // Each line: { name, condition, qty, unitPrice }
+  // Catalog items: [{ sku, name, price, image, stockObj }]
+  let catalogItems = [];
+
+  // Each line: { sku, name, condition, qty, unitPrice }
   let order = [];
+
   function loadCart() {
-  const raw = localStorage.getItem("sellCart");
-  if (!raw) return [];
-  try { return JSON.parse(raw); } catch { return []; }
-}
+    const raw = localStorage.getItem("sellCart");
+    if (!raw) return [];
+    try { return JSON.parse(raw); } catch { return []; }
+  }
 
-function saveCart(cart) {
-  localStorage.setItem("sellCart", JSON.stringify(cart));
-}
-
+  function saveCart(cart) {
+    localStorage.setItem("sellCart", JSON.stringify(cart));
+  }
 
   /* ===============================
      HELPERS
   =============================== */
-order = loadCart();
-renderOrder();
+
   function money(n) {
     return Number(n).toFixed(2);
-  }
-
-  function findLineIndex(name, condition) {
-    return order.findIndex(l => l.name === name && l.condition === condition);
   }
 
   function clampQty(n) {
@@ -72,6 +61,63 @@ renderOrder();
     return n;
   }
 
+  function normalizeImagePath(p) {
+    const s = String(p || "").trim();
+    if (!s) return "";
+    const withSlash = s.startsWith("/") ? s : `/${s}`;
+    return encodeURI(withSlash);
+  }
+
+  function unitPriceFor(card, condition) {
+    const mult = CONDITIONS[condition] ?? 1.0;
+    return Number(card.price || 0) * mult;
+  }
+
+  function findLineIndex(sku, condition) {
+    return order.findIndex(l => l.sku === sku && l.condition === condition);
+  }
+
+  /* ===============================
+     LOAD CATALOG (/api/catalog)
+  =============================== */
+
+  async function loadCatalog() {
+    try {
+      const res = await fetch("/api/catalog", { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (!data?.ok || !data.catalog) throw new Error("Bad catalog response");
+
+      // Convert to array format your sell page can use
+      const items = [];
+      for (const [sku, p] of Object.entries(data.catalog)) {
+        const name = String(p.name || sku);
+
+        // Your buy catalog uses price_cents; convert to dollars
+        const baseCents = Number(p.price_cents || 0);
+        const price = baseCents / 100;
+
+        const image = normalizeImagePath(p.image);
+
+        items.push({
+          sku,
+          name,
+          price,
+          image,
+          stock: (p.stock && typeof p.stock === "object") ? p.stock : null
+        });
+      }
+
+      // Optional: sort A→Z
+      items.sort((a, b) => a.name.localeCompare(b.name));
+
+      catalogItems = items;
+      renderResults(catalogItems);
+    } catch (err) {
+      console.error("Sell catalog load error:", err);
+      results.innerHTML = "<p>Could not load catalog.</p>";
+    }
+  }
 
   /* ===============================
      RENDER SEARCH RESULTS
@@ -83,15 +129,15 @@ renderOrder();
     cards.forEach(card => {
       const row = document.createElement("div");
       row.className = "result-row";
-      row.dataset.cardName = card.name;
+      row.dataset.sku = card.sku;
 
       row.innerHTML = `
         <img
-  class="card-img clickable-img"
-  src="${card.image}"
-  alt="${card.name}"
-  data-full="${card.image}"
->
+          class="card-img clickable-img"
+          src="${card.image}"
+          alt="${card.name}"
+          data-full="${card.image}"
+        >
 
         <div class="card-title">
           ${card.name} — $${money(card.price)} (NM base)
@@ -103,17 +149,9 @@ renderOrder();
           <option value="MP">MP</option>
         </select>
 
-        <input
-          class="qty"
-          type="number"
-          min="1"
-          max="999"
-          value="1"
-        >
+        <input class="qty" type="number" min="1" max="999" value="1">
 
-        <button class="add-btn" type="button">
-          Add
-        </button>
+        <button class="add-btn" type="button">Add</button>
       `;
 
       results.appendChild(row);
@@ -125,10 +163,18 @@ renderOrder();
   =============================== */
 
   results.addEventListener("click", function (e) {
+    // Image modal
+    if (e.target.classList.contains("clickable-img")) {
+      modalImage.src = e.target.dataset.full;
+      imageModal.classList.remove("hidden");
+      return;
+    }
+
+    // Add button
     if (!e.target.classList.contains("add-btn")) return;
 
     const row = e.target.closest(".result-row");
-    const cardName = row.dataset.cardName;
+    const sku = row.dataset.sku;
 
     const condition = row.querySelector(".cond").value;
     const qty = clampQty(parseInt(row.querySelector(".qty").value, 10));
@@ -138,22 +184,24 @@ renderOrder();
       return;
     }
 
-    const card = buylist.find(c => c.name === cardName);
+    const card = catalogItems.find(c => c.sku === sku);
     if (!card) return;
 
-    const unitPrice = card.price * CONDITIONS[condition];
+    const unitPrice = unitPriceFor(card, condition);
 
-    const idx = findLineIndex(card.name, condition);
+    const idx = findLineIndex(sku, condition);
     if (idx >= 0) {
       order[idx].qty = clampQty(order[idx].qty + qty);
     } else {
       order.push({
+        sku,
         name: card.name,
-        condition: condition,
-        qty: qty,
-        unitPrice: unitPrice
+        condition,
+        qty,
+        unitPrice
       });
     }
+
     saveCart(order);
     renderOrder();
   });
@@ -171,7 +219,7 @@ renderOrder();
       total += lineTotal;
 
       const li = document.createElement("li");
-      li.dataset.name = line.name;
+      li.dataset.sku = line.sku;
       li.dataset.condition = line.condition;
 
       li.innerHTML = `
@@ -196,7 +244,6 @@ renderOrder();
 
     totalEl.textContent = money(total);
 
-    // Keep the textarea as a human-readable summary (still useful)
     cardsTextarea.value = order
       .map(l => `${l.qty}x ${l.name} (${l.condition})`)
       .join(", ");
@@ -210,10 +257,10 @@ renderOrder();
     const li = e.target.closest("li");
     if (!li) return;
 
-    const name = li.dataset.name;
+    const sku = li.dataset.sku;
     const condition = li.dataset.condition;
 
-    const idx = findLineIndex(name, condition);
+    const idx = findLineIndex(sku, condition);
     if (idx === -1) return;
 
     if (e.target.classList.contains("plus")) {
@@ -225,9 +272,7 @@ renderOrder();
 
     if (e.target.classList.contains("minus")) {
       order[idx].qty = order[idx].qty - 1;
-      if (order[idx].qty <= 0) {
-        order.splice(idx, 1);
-      }
+      if (order[idx].qty <= 0) order.splice(idx, 1);
       saveCart(order);
       renderOrder();
       return;
@@ -246,7 +291,7 @@ renderOrder();
 
   searchInput.addEventListener("input", function () {
     const q = searchInput.value.toLowerCase().trim();
-    const filtered = buylist.filter(c => c.name.toLowerCase().includes(q));
+    const filtered = catalogItems.filter(c => c.name.toLowerCase().includes(q));
     renderResults(filtered);
   });
 
@@ -254,91 +299,80 @@ renderOrder();
      FORM SUBMIT (send structured order)
   =============================== */
 
-form.addEventListener("submit", async function (event) {
-  event.preventDefault();
+  form.addEventListener("submit", async function (event) {
+    event.preventDefault();
 
-  if (!order.length) {
-    message.textContent = "Please add at least one card to your sell order.";
-    message.style.color = "red";
-    return;
-  }
-
-  const name = document.getElementById("name").value;
-  const email = document.getElementById("email").value;
-
-  // Compute total on client to match email breakdown
-  let computedTotal = 0;
-  order.forEach(l => {
-    computedTotal += (Number(l.qty) || 0) * (Number(l.unitPrice) || 0);
-  });
-
-  try {
-    const res = await fetch("/api/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name,
-        email,
-        total: computedTotal.toFixed(2),
-        order
-      })
-    });
-
-    const data = await res.json();
-
-    if (!data.ok) {
-      message.textContent = "Error: " + (data.error || "Could not send email.");
+    if (!order.length) {
+      message.textContent = "Please add at least one card to your sell order.";
       message.style.color = "red";
       return;
     }
 
-    // Store recap data for the next page
-    sessionStorage.setItem("sellOrderRecap", JSON.stringify({
-      name,
-      email,
-      order,
-      computedTotal: computedTotal.toFixed(2)
-    }));
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
 
-    // Go to recap page
-    window.location.href = "/recap.html";
+    let computedTotal = 0;
+    order.forEach(l => { computedTotal += (Number(l.qty) || 0) * (Number(l.unitPrice) || 0); });
 
-  } catch (e) {
-    message.textContent = "Network error. Could not submit.";
-    message.style.color = "red";
-  }
-});
+    try {
+      const res = await fetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          total: computedTotal.toFixed(2),
+          order
+        })
+      });
 
-// Image click → open modal
-results.addEventListener("click", function (e) {
-  if (!e.target.classList.contains("clickable-img")) return;
+      const data = await res.json();
 
-  modalImage.src = e.target.dataset.full;
-  imageModal.classList.remove("hidden");
-});
+      if (!data.ok) {
+        message.textContent = "Error: " + (data.error || "Could not send email.");
+        message.style.color = "red";
+        return;
+      }
 
-// Close modal
-modalClose.addEventListener("click", function () {
-  imageModal.classList.add("hidden");
-  modalImage.src = "";
-});
+      sessionStorage.setItem("sellOrderRecap", JSON.stringify({
+        name,
+        email,
+        order,
+        computedTotal: computedTotal.toFixed(2)
+      }));
 
-// Click outside image closes modal
-imageModal.addEventListener("click", function (e) {
-  if (e.target === imageModal) {
+      window.location.href = "/recap.html";
+    } catch (e) {
+      message.textContent = "Network error. Could not submit.";
+      message.style.color = "red";
+    }
+  });
+
+  /* ===============================
+     MODAL CLOSE
+  =============================== */
+
+  modalClose.addEventListener("click", function () {
     imageModal.classList.add("hidden");
     modalImage.src = "";
-  }
-});
+  });
 
-  
+  imageModal.addEventListener("click", function (e) {
+    if (e.target === imageModal) {
+      imageModal.classList.add("hidden");
+      modalImage.src = "";
+    }
+  });
+
   /* ===============================
      INITIAL LOAD
   =============================== */
 
-  renderResults(buylist);
-
+  order = loadCart();
+  renderOrder();
+  loadCatalog(); // 🔥 load catalog instead of hardcoded array
 });
+
 
 
 
