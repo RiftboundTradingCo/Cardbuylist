@@ -11,6 +11,22 @@ const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+
+function loadJsonSafe(filePath) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch (e) {
+    console.error("Failed to read JSON:", filePath, e);
+    return {};
+  }
+}
+
+app.get("/api/selllist", (req, res) => {
+  const sellPath = path.join(__dirname, "selllist.json");
+  const selllist = loadJsonSafe(sellPath);
+  res.json({ ok: true, selllist });
+});
+
 // -----------------------------
 // Condition pricing (edit these)
 // -----------------------------
@@ -460,6 +476,7 @@ Subtotal: $${subtotal}
 // -----------------------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log("Server running on port", PORT));
+
 
 
 
