@@ -684,8 +684,133 @@ p {
 .cart-remove:hover {
   background: rgba(255,0,0,.10);
 }
+/* =========================
+   BUY CART (REAL CART LAYOUT)
+   ========================= */
+
+#buyCartList {
+  list-style: none;
+  padding: 0;
+  margin: 18px 0 0;
+  max-width: 980px;
+}
+
+.buy-cart-empty {
+  padding: 14px 0;
+  color: rgba(0,0,0,.65);
+}
+
+.buy-cart-item {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.10);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin: 12px 0;
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+}
+
+.buy-cart-row {
+  display: grid;
+  grid-template-columns: 92px 1fr 170px;
+  gap: 14px;
+  align-items: center;
+}
+
+.buy-cart-img img,
+.buy-cart-img-placeholder {
+  width: 92px;
+  height: 128px;
+  border-radius: 12px;
+  object-fit: cover;
+  display: block;
+  background: #f2f2f2;
+  border: 1px solid rgba(0,0,0,.08);
+  cursor: pointer;
+}
+
+.buy-cart-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.buy-cart-meta {
+  font-size: 13px;
+  color: rgba(0,0,0,.65);
+  margin: 2px 0;
+}
+
+.buy-cart-meta span {
+  color: rgba(0,0,0,.85);
+}
+
+.buy-cart-actions {
+  text-align: right;
+}
+
+.cart-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.cart-controls button {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,.2);
+  background: #f5f5f5;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.cart-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cart-qty {
+  display: inline-block;
+  min-width: 22px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.cart-line-total {
+  font-weight: 800;
+  margin: 4px 0 10px;
+}
+
+.cart-remove {
+  border: 1px solid rgba(255,0,0,.35);
+  background: rgba(255,0,0,.06);
+  color: #b00020;
+  padding: 7px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.cart-remove:hover {
+  background: rgba(255,0,0,.10);
+}
+
+@media (max-width: 720px) {
+  .buy-cart-row {
+    grid-template-columns: 92px 1fr;
+    grid-template-areas:
+      "img info"
+      "actions actions";
+  }
+
+  .buy-cart-img { grid-area: img; }
+  .buy-cart-info { grid-area: info; }
+  .buy-cart-actions { grid-area: actions; text-align: left; }
+}
 
 </main>
+
 
 
 
