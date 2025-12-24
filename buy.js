@@ -7,43 +7,41 @@
     MP: "Moderately Played",
     HP: "Heavily Played"
   };
-function qtyKeyForTab(tab) {
-  const t = String(tab || "NM").toUpperCase();
-  if (t === "NM") return "qtyNm";
-  if (t === "LP") return "qtyLp";
-  if (t === "MP") return "qtyMp";
-  return "qtyHp";
-}
 
-function getStoredQty(card) {
-  const tab = String(card.dataset.activeTab || "NM").toUpperCase();
-  const key = qtyKeyForTab(tab);
-  const n = Number(card.dataset[key] || 1);
-  return Math.max(1, Number.isFinite(n) ? n : 1);
-}
+  // -----------------------------
+  // Per-condition qty storage on each card
+  // -----------------------------
+  function qtyKeyForTab(tab) {
+    const t = String(tab || "NM").toUpperCase();
+    if (t === "NM") return "qtyNm";
+    if (t === "LP") return "qtyLp";
+    if (t === "MP") return "qtyMp";
+    return "qtyHp";
+  }
 
-function setStoredQty(card, qty) {
-  const tab = String(card.dataset.activeTab || "NM").toUpperCase();
-  const key = qtyKeyForTab(tab);
-  const clean = Math.max(1, Number(qty) || 1);
-  card.dataset[key] = String(clean);
+  function getStoredQty(card) {
+    const tab = String(card.dataset.activeTab || "NM").toUpperCase();
+    const key = qtyKeyForTab(tab);
+    const n = Number(card.dataset[key] || 1);
+    return Math.max(1, Number.isFinite(n) ? n : 1);
+  }
 
-  const qtyInput = card.querySelector(".qty-input");
-  
-  const card = qtyInput.closest(".store-card");
-  if (!card) return;
-  
-  let v = qtyInput.value.replace(/[^\d]/g, "");
-  if (!v) v = "1";
+  function setStoredQty(card, qty) {
+    const tab = String(card.dataset.activeTab || "NM").toUpperCase();
+    const key = qtyKeyForTab(tab);
+    const clean = Math.max(1, Number(qty) || 1);
 
-// save qty to the ACTIVE CONDITION (NM / LP / MP / HP)
-setStoredQty(card, Number(v));
+    card.dataset[key] = String(clean);
 
-// clamp against stock & cart
-clampQtyToAvailable(card);
+    const qtyInput = card.querySelector(".qty-input");
+    const qtyNum = card.querySelector(".qty-num");
+    if (qtyInput) qtyInput.value = String(clean);
+    if (qtyNum) qtyNum.textContent = String(clean);
+  }
 
-}
-
+  // -----------------------------
+  // Cart + stock helpers
+  // -----------------------------
   function normalizeCondition(c) {
     const allowed = ["Near Mint", "Lightly Played", "Moderately Played", "Heavily Played"];
     const s = String(c || "Near Mint").trim();
@@ -79,41 +77,6 @@ clampQtyToAvailable(card);
     return 0.65;
   }
 
-  function setActiveTab(card, tab) {
-    const t = String(tab || "NM").toUpperCase();
-    const cond = TAB_TO_COND[t];
-    if (!cond) return;
-
-    // Don’t allow selecting out-of-stock
-    if (stockForCard(card, t) <= 0) return;
-
-    card.dataset.activeTab = t;
-    card.dataset.activeCond = cond;
-    
-    // Load the qty that belongs to THIS condition tab
-setStoredQty(card, getStoredQty(card));
-
-
-    // Update tab UI
-    card.querySelectorAll(".cond-tab").forEach((b) => {
-      b.classList.toggle("active", (b.dataset.tab || "").toUpperCase() === t);
-    });
-
-    // Update stock label
-    const stockNum = card.querySelector(".stock-num");
-    if (stockNum) stockNum.textContent = String(stockForCard(card, t));
-
-    // Update unit price label
-    const base = Number(card.dataset.basecents || 0);
-    const unitCents = Math.round(base * multiplierFor(cond));
-    card.dataset.unitCents = String(unitCents);
-
-    const unitPriceEl = card.querySelector(".unit-price");
-    if (unitPriceEl) unitPriceEl.textContent = `$${(unitCents / 100).toFixed(2)}`;
-
-    clampQtyToAvailable(card);
-  }
-
   function clampQtyToAvailable(card) {
     const sku = String(card.dataset.sku || "").trim();
     if (!sku) return;
@@ -126,46 +89,69 @@ setStoredQty(card, getStoredQty(card));
     const already = cartQtyFor(cart, sku, cond);
     const available = Math.max(0, stock - already);
 
-    const qtyInput = card.querySelector(".qty-input");
-    const qtyNum = card.querySelector(".qty-num");
     const plusBtn = card.querySelector(".qty-plus");
     const minusBtn = card.querySelector(".qty-minus");
     const addBtn = card.querySelector(".add-to-cart-btn");
 
-let qty = getStoredQty(card);
+    let qty = getStoredQty(card);
 
-if (available <= 0) {
-  setStoredQty(card, 1);
-  if (plusBtn) plusBtn.disabled = true;
-  if (minusBtn) minusBtn.disabled = true;
-  if (addBtn) { addBtn.disabled = true; addBtn.textContent = "Max in Cart"; }
-  return;
-}
-
-// Clamp to available and save back to THIS condition
-qty = Math.min(qty, available);
-setStoredQty(card, qty);
-
+    if (available <= 0) {
+      setStoredQty(card, 1);
+      if (plusBtn) plusBtn.disabled = true;
+      if (minusBtn) minusBtn.disabled = true;
+      if (addBtn) { addBtn.disabled = true; addBtn.textContent = "Max in Cart"; }
+      return;
     }
 
     qty = Math.min(qty, available);
-    if (qtyInput) qtyInput.value = String(qty);
-    if (qtyNum) qtyNum.textContent = String(qty);
+    setStoredQty(card, qty);
 
     if (plusBtn) plusBtn.disabled = qty >= available;
     if (minusBtn) minusBtn.disabled = qty <= 1;
     if (addBtn) { addBtn.disabled = false; addBtn.textContent = "Add to Cart"; }
   }
 
-  // Wait until DOM is ready to wire search + init observer
+  function setActiveTab(card, tab) {
+    const t = String(tab || "NM").toUpperCase();
+    const cond = TAB_TO_COND[t];
+    if (!cond) return;
+
+    if (stockForCard(card, t) <= 0) return;
+
+    card.dataset.activeTab = t;
+    card.dataset.activeCond = cond;
+
+    // Update tab UI
+    card.querySelectorAll(".cond-tab").forEach((b) => {
+      b.classList.toggle("active", (b.dataset.tab || "").toUpperCase() === t);
+    });
+
+    // Load per-condition qty for this tab (default 1 if not set)
+    if (!card.dataset[qtyKeyForTab(t)]) card.dataset[qtyKeyForTab(t)] = "1";
+    setStoredQty(card, getStoredQty(card));
+
+    // Update stock label
+    const stockNum = card.querySelector(".stock-num");
+    if (stockNum) stockNum.textContent = String(stockForCard(card, t));
+
+    // Update price label
+    const base = Number(card.dataset.basecents || 0);
+    const unitCents = Math.round(base * multiplierFor(cond));
+    card.dataset.unitCents = String(unitCents);
+
+    const unitPriceEl = card.querySelector(".unit-price");
+    if (unitPriceEl) unitPriceEl.textContent = `$${(unitCents / 100).toFixed(2)}`;
+
+    clampQtyToAvailable(card);
+  }
+
+  // -----------------------------
+  // DOM ready: search + init cards
+  // -----------------------------
   document.addEventListener("DOMContentLoaded", () => {
     const buySearch = document.getElementById("buySearch");
     const grid = document.getElementById("storeGrid");
-
-    if (!grid) {
-      console.warn("buy.js: #storeGrid not found");
-      return;
-    }
+    if (!grid) return;
 
     // Search
     if (buySearch) {
@@ -178,12 +164,11 @@ setStoredQty(card, qty);
       });
     }
 
-    // Init function for cards (runs when cards are rendered)
+    // Initialize new cards (buy-render renders async)
     const initCard = (card) => {
       if (!card || card.dataset._inited === "1") return;
       card.dataset._inited = "1";
 
-      // Choose first enabled tab
       const enabledTab =
         card.querySelector('.cond-tab[aria-disabled="false"]') ||
         card.querySelector(".cond-tab:not(.disabled)") ||
@@ -193,10 +178,8 @@ setStoredQty(card, qty);
       clampQtyToAvailable(card);
     };
 
-    // Init existing
     grid.querySelectorAll(".store-card").forEach(initCard);
 
-    // Init future (buy-render creates cards async)
     const obs = new MutationObserver(() => {
       grid.querySelectorAll(".store-card").forEach(initCard);
     });
@@ -205,7 +188,9 @@ setStoredQty(card, qty);
     console.log("buy.js: listeners ready ✅");
   });
 
-  // CLICK HANDLER (delegation)
+  // -----------------------------
+  // Click handling (delegation)
+  // -----------------------------
   document.addEventListener("click", (e) => {
     const card = e.target.closest(".store-card");
     if (!card) return;
@@ -213,35 +198,29 @@ setStoredQty(card, qty);
     // Tabs
     const tabBtn = e.target.closest(".cond-tab");
     if (tabBtn) {
-      console.log("tab click", tabBtn.dataset.tab);
       if (tabBtn.getAttribute("aria-disabled") === "true") return;
       if (tabBtn.classList.contains("disabled")) return;
       setActiveTab(card, tabBtn.dataset.tab);
       return;
     }
 
-    // Qty +
+    // +
     if (e.target.closest(".qty-plus")) {
-      console.log("plus click");
       setStoredQty(card, getStoredQty(card) + 1);
       clampQtyToAvailable(card);
-
       return;
     }
 
-    // Qty -
+    // -
     if (e.target.closest(".qty-minus")) {
-      console.log("minus click");
       setStoredQty(card, Math.max(1, getStoredQty(card) - 1));
       clampQtyToAvailable(card);
-
       return;
     }
 
-    // Add to cart
+    // Add to Cart
     const addBtn = e.target.closest(".add-to-cart-btn");
     if (addBtn) {
-      console.log("add click");
       if (addBtn.disabled) return;
 
       const sku = String(card.dataset.sku || "").trim();
@@ -249,7 +228,7 @@ setStoredQty(card, qty);
       const cond = normalizeCondition(card.dataset.activeCond || TAB_TO_COND[tab] || "Near Mint");
       const stock = stockForCard(card, tab);
 
-      const qtyWanted = Math.max(1, Number(card.querySelector(".qty-input")?.value || 1) || 1);
+      const qtyWanted = getStoredQty(card);
 
       let cart = loadCart();
       const already = cartQtyFor(cart, sku, cond);
@@ -277,7 +256,9 @@ setStoredQty(card, qty);
     }
   });
 
-  // Clamp qty when typing
+  // -----------------------------
+  // Typing qty should update ONLY current condition
+  // -----------------------------
   document.addEventListener("input", (e) => {
     const qtyInput = e.target.closest(".qty-input");
     if (!qtyInput) return;
@@ -285,12 +266,10 @@ setStoredQty(card, qty);
     const card = qtyInput.closest(".store-card");
     if (!card) return;
 
-    qtyInput.value = qtyInput.value.replace(/[^\d]/g, "");
-    if (!qtyInput.value) qtyInput.value = "1";
+    let v = qtyInput.value.replace(/[^\d]/g, "");
+    if (!v) v = "1";
 
-    const qtyNum = card.querySelector(".qty-num");
-    if (qtyNum) qtyNum.textContent = qtyInput.value;
-
+    setStoredQty(card, Number(v));
     clampQtyToAvailable(card);
   });
 })();
