@@ -961,8 +961,35 @@ p {
 .qty-input[type="number"] {
   -moz-appearance: textfield;
 }
+/* Black +/- buttons (Buy page + Buy cart) */
+.qty-stepper button,
+.cart-controls button,
+.qty-minus,
+.qty-plus,
+.cart-minus,
+.cart-plus {
+  background: #111;
+  color: #fff;
+  border: 1px solid #111;
+}
+
+/* Hover state */
+.qty-stepper button:hover:not(:disabled),
+.cart-controls button:hover:not(:disabled) {
+  background: #000;
+}
+
+/* Disabled state */
+.qty-stepper button:disabled,
+.cart-controls button:disabled {
+  background: #666;
+  border-color: #666;
+  color: #ddd;
+  cursor: not-allowed;
+}
 
 </main>
+
 
 
 
