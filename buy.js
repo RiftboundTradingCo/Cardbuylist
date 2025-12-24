@@ -246,11 +246,15 @@
 
       saveCart(cart);
 
-      addBtn.textContent = "Added ✓";
-      setTimeout(() => {
-        addBtn.textContent = "Add to Cart";
-        clampQtyToAvailable(card);
-      }, 600);
+addBtn.textContent = "Added ✓";
+
+// ✅ reset qty for THIS condition back to 1
+setStoredQty(card, 1);
+
+setTimeout(() => {
+  addBtn.textContent = "Add to Cart";
+  clampQtyToAvailable(card);
+}, 600);
 
       return;
     }
