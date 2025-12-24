@@ -1018,8 +1018,24 @@ p {
     height: 40px;
   }
 }
+.sell-add-btn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: none;
+  background: #1f5cff;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sell-add-btn:hover {
+  filter: brightness(0.95);
+}
 
 </main>
+
 
 
 
