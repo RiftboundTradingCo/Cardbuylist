@@ -7,6 +7,7 @@
     HP: "Heavily Played"
   };
 
+  
   const CONDITION_MULT = {
     "Near Mint": 1.0,
     "Lightly Played": 0.9,
