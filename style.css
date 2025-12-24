@@ -995,7 +995,7 @@ p {
 }
 
 .site-logo {
-  height: 48px;      /* perfect header size */
+  height: 120px;      /* perfect header size */
   width: auto;
   display: block;
 }
@@ -1020,6 +1020,7 @@ p {
 }
 
 </main>
+
 
 
 
