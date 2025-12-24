@@ -808,8 +808,17 @@ p {
   .buy-cart-info { grid-area: info; }
   .buy-cart-actions { grid-area: actions; text-align: left; }
 }
+.cart-cond-tabs {
+  margin: 10px 0 6px;
+}
+
+.cart-group-summary {
+  margin-top: 10px;
+  font-weight: 600;
+}
 
 </main>
+
 
 
 
