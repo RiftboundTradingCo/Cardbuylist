@@ -858,8 +858,38 @@ p {
   border-radius: 12px;
   display: block;
 }
+/* Buy cart condition tabs cleanup */
+.buy-cart-row .cond-tabs {
+  display: inline-flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 10px;
+  background: #f3f3f3;
+  width: fit-content;
+}
+
+.buy-cart-row .cond-tab {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  border: none;
+  background: #e6e6e6;
+  cursor: pointer;
+}
+
+.buy-cart-row .cond-tab.active {
+  background: #111;
+  color: #fff;
+}
+
+.buy-cart-row .cond-tab:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 
 </main>
+
 
 
 
