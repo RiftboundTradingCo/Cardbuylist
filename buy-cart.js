@@ -15,7 +15,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     return `$${(Number(cents || 0) / 100).toFixed(2)}`;
   }
 
-  // Must match your catalog.json keys
   const CONDITION_MULT = {
     "Near Mint": 1.0,
     "Lightly Played": 0.9,
@@ -34,17 +33,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     return Math.round(Number(baseCents || 0) * mult);
   }
 
-  function getStockForCondition(item, condition) {
-    // item is catalog[sku]
+  function getStockForCondition(product, condition) {
     const cond = normalizeCondition(condition);
 
-    // New format: item.stock is an object
-    if (item && item.stock && typeof item.stock === "object") {
-      return Number(item.stock[cond] ?? 0);
+    if (product && product.stock && typeof product.stock === "object") {
+      return Number(product.stock[cond] ?? 0);
     }
+    return Number(product?.stock ?? 0);
+  }
 
-    // Old format fallback: item.stock is a number
-    return Number(item?.stock ?? 0);
+  function normalizeImagePath(p) {
+    const s = String(p || "").trim();
+    if (!s) return "";
+    // ensure starts with /
+    const withSlash = s.startsWith("/") ? s : `/${s}`;
+    // encode spaces etc
+    return encodeURI(withSlash);
   }
 
   async function fetchCatalog() {
@@ -62,7 +66,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (msgEl) msgEl.textContent = "";
 
     if (!cart.length) {
-      listEl.innerHTML = "<li>Your cart is empty.</li>";
+      listEl.innerHTML = `<li class="buy-cart-empty">Your cart is empty.</li>`;
       if (totalEl) totalEl.textContent = "0.00";
       return;
     }
@@ -82,36 +86,45 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const stock = product ? getStockForCondition(product, condition) : 0;
 
-      // Clamp cart qty to stock (optional but recommended)
-      const clampedQty = Math.min(qty, stock > 0 ? stock : qty);
-      if (clampedQty !== qty) {
-        cart[idx].qty = clampedQty;
-      }
+      // clamp qty to stock if stock is known (>0)
+      const clampedQty = stock > 0 ? Math.min(qty, stock) : qty;
+      if (clampedQty !== qty) cart[idx].qty = clampedQty;
 
       const lineCents = unitCents * clampedQty;
       totalCents += lineCents;
 
-const li = document.createElement("li");
-li.className = "buy-cart-item";
+      const imgSrc = product ? normalizeImagePath(product.image) : "";
 
-li.innerHTML = `
-  <strong>${name}</strong><br>
-  <span class="muted">SKU: ${sku}</span><br>
-  <span class="muted">Condition: ${condition}</span><br>
-  <span class="muted">In stock: ${Number.isFinite(stock) ? stock : 0}</span><br>
-  <span class="muted">Unit: ${money(unitCents)}</span><br>
+      const li = document.createElement("li");
+      li.className = "buy-cart-item";
 
-  <div class="cart-controls" style="margin:6px 0;">
-    <button class="cart-minus" type="button" data-i="${idx}">−</button>
-    <span class="cart-qty" style="display:inline-block;min-width:18px;text-align:center;">${clampedQty}</span>
-    <button class="cart-plus" type="button" data-i="${idx}" ${stock > 0 && clampedQty >= stock ? "disabled" : ""}>+</button>
-  </div>
+      li.innerHTML = `
+        <div class="buy-cart-row">
+          <div class="buy-cart-img">
+            ${imgSrc ? `<img class="zoomable" src="${imgSrc}" alt="${name}">` : `<div class="buy-cart-img-placeholder"></div>`}
+          </div>
 
-  <div class="cart-line-total">${money(lineCents)}</div>
+          <div class="buy-cart-info">
+            <div class="buy-cart-title">${name}</div>
+            <div class="buy-cart-meta">SKU: <span>${sku}</span></div>
+            <div class="buy-cart-meta">Condition: <span>${condition}</span></div>
+            <div class="buy-cart-meta">In stock: <span>${Number.isFinite(stock) ? stock : 0}</span></div>
+            <div class="buy-cart-meta">Unit: <span>${money(unitCents)}</span></div>
+          </div>
 
-  <button class="cart-remove" type="button" data-i="${idx}">Remove</button>
-`;
+          <div class="buy-cart-actions">
+            <div class="cart-controls">
+              <button class="cart-minus" type="button" data-i="${idx}">−</button>
+              <span class="cart-qty">${clampedQty}</span>
+              <button class="cart-plus" type="button" data-i="${idx}" ${stock > 0 && clampedQty >= stock ? "disabled" : ""}>+</button>
+            </div>
 
+            <div class="cart-line-total">${money(lineCents)}</div>
+
+            <button class="cart-remove" type="button" data-i="${idx}">Remove</button>
+          </div>
+        </div>
+      `;
 
       listEl.appendChild(li);
     });
@@ -134,12 +147,11 @@ li.innerHTML = `
 
   render(cart, catalog);
 
-  // Buttons: + / − / remove
+  // + / - / remove
   document.addEventListener("click", (e) => {
     const minus = e.target.closest(".cart-minus");
     const plus = e.target.closest(".cart-plus");
     const remove = e.target.closest(".cart-remove");
-
     if (!minus && !plus && !remove) return;
 
     cart = loadCart();
@@ -163,12 +175,7 @@ li.innerHTML = `
     let qty = Math.max(1, Number(cart[i].qty || 1));
 
     if (minus) qty = Math.max(1, qty - 1);
-
-    if (plus) {
-      // If we know stock, enforce it
-      if (stock > 0) qty = Math.min(stock, qty + 1);
-      else qty = qty + 1;
-    }
+    if (plus) qty = stock > 0 ? Math.min(stock, qty + 1) : qty + 1;
 
     cart[i].qty = qty;
     saveCart(cart);
@@ -182,6 +189,32 @@ li.innerHTML = `
       cart = [];
       render(cart, catalog);
     });
+  }
+
+  // Image zoom modal (re-use your modal if present)
+  const modal = document.getElementById("imageModal");
+  const modalImg = document.getElementById("imageModalImg");
+  const modalClose = document.getElementById("imageModalClose");
+
+  if (modal && modalImg && modalClose) {
+    document.addEventListener("click", (e) => {
+      const img = e.target.closest(".buy-cart-item img.zoomable");
+      if (!img) return;
+      modalImg.src = img.src;
+      modal.classList.remove("hidden");
+    });
+
+    function closeModal() {
+      modal.classList.add("hidden");
+      modalImg.src = "";
+    }
+
+    modalClose.addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+  }
+});
+
   }
 });
 
