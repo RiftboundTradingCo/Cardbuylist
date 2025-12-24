@@ -47,11 +47,17 @@
   <!-- BUYLIST SEARCH -->
   <h2>Search Our Buylist</h2>
 
-  <input
-    type="text"
-    id="search"
-    placeholder="Search cards..."
-  >
+<!-- SELL CATALOG -->
+<input
+  type="text"
+  id="sellSearch"
+  class="buy-search"
+  placeholder="Search cards to sell..."
+>
+
+<div class="store-grid" id="sellGrid"></div>
+
+
 
   <!-- SEARCH RESULTS -->
   <div id="results"></div>
@@ -97,11 +103,15 @@
   <p id="message"></p>
 
   <!-- Link JavaScript (must be last) -->
-  <script src="script.js"></script>
+<!-- Load scripts at the bottom (order matters) -->
+<script src="sell-render.js?v=1"></script>
+<script src="script.js?v=999"></script> <!-- your existing sell page logic -->
 <script src="cart-badge.js?v=1"></script>
+
 
 </body>
 </html>
+
 
 
 
