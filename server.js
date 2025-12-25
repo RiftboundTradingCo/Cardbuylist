@@ -8,9 +8,6 @@ const fs = require("fs");
 const crypto = require("crypto");
 const Stripe = require("stripe");
 const { Resend } = require("resend");
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const EMAIL_FROM = process.env.EMAIL_FROM;
-const OWNER_EMAIL = process.env.OWNER_EMAIL;
 
 
 const app = express();
