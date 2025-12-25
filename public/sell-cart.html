@@ -1,80 +1,47 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Sell Your Cards</title>
-
-  <!-- Link CSS -->
+  <title>Your Sell Cart | Riftbound Trading Co</title>
   <link rel="stylesheet" href="style.css">
 </head>
-  <!-- Image Modal -->
-<div id="imageModal" class="modal hidden">
-  <span id="modalClose">&times;</span>
-  <img id="modalImage" alt="Card image large view">
-</div>
-
 <body>
-<header class="site-header">
-  <nav class="nav">
-    <a href="/" class="logo-link">
-      <img
-        src="/images/riftbound-logo.jpg"
-        alt="Riftbound Trading Co"
-        class="site-logo"
-      >
-    </a>
 
-   <nav class="nav-links">
- <a href="/sell-cart.html" class="nav-link">
-  Sell Cart
-  <span id="sellCartBadge" class="cart-badge hidden">0</span>
-</a>
-  <a href="/buy.html" class="nav-link">Buy Cards</a>
-  <a href="/buy-cart.html" class="nav-link">
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark">⚡</span>
+      <span class="brand-name">Riftbound Trading Co</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/" class="nav-link">Sell Cards</a>
+      <a href="/buy.html" class="nav-link">Buy Cards</a>
+      <a href="/buy-cart.html" class="nav-link">
   Buy Cart
   <span id="buyCartBadge" class="cart-badge hidden">0</span>
 </a>
 
-  <a href="/shipping.html" class="nav-link">Shipping</a>
-  <a href="/contact.html" class="nav-link">Contact</a>
-</nav>
-
+      <a href="/shipping.html" class="nav-link">Shipping</a>
+      <a href="/contact.html" class="nav-link">Contact</a>
+    </nav>
   </div>
 </header>
 
+<main>
+  <h1>Your Sell Cart</h1>
+  <p>Review your cards, then submit your sell order.</p>
 
-  <h1>Sell Your Cards</h1>
-  <p>Search our buylist, add your cards, and submit your sell order.</p>
+  <ul id="cartList"></ul>
 
-  <!-- BUYLIST SEARCH -->
-  <h2>Search Our Buylist</h2>
-
-<!-- SELL CATALOG -->
-<input
-  type="text"
-  id="sellSearch"
-  class="buy-search"
-  placeholder="Search cards to sell..."
->
-
-<div class="store-grid" id="sellGrid"></div>
-
-
-
-  <!-- SEARCH RESULTS -->
-  <div id="results"></div>
-
-  <!-- ORDER SUMMARY -->
-  <h3>Your Sell Order</h3>
-
-  <ul id="orderList"></ul>
-
-  <p>
-    Total: $<span id="total">0.00</span>
+  <p class="recap-total">
+    <strong>Total:</strong> $<span id="cartTotal">0.00</span>
   </p>
+  <button id="clearCartBtn" class="clear-cart-btn" type="button">
+  Clear Cart
+</button>
 
-  <!-- SELL FORM -->
-  <form id="sellForm">
 
+  <h2>Seller Info</h2>
+  <form id="cartForm">
     <label>
       Your Name
       <input type="text" id="name" required>
@@ -85,45 +52,19 @@
       <input type="email" id="email" required>
     </label>
 
-    <label>
-      Cards You’re Selling
-      <textarea
-        id="cards"
-        placeholder="Your selected cards will appear here"
-        readonly
-      ></textarea>
-    </label>
-
-    <button type="submit">
-      Submit Sell Order
-    </button>
-
+    <button type="submit">Submit Sell Order</button>
   </form>
 
-  <!-- CONFIRMATION MESSAGE -->
-  <p id="message"></p>
+  <p id="cartMessage"></p>
 
-  <!-- Link JavaScript (must be last) -->
-<!-- Load scripts at the bottom (order matters) -->
-<script src="sell-render.js?v=1"></script>
-<script src="script.js?v=999"></script> <!-- your existing sell page logic -->
-<script src="cart-badge.js?v=1"></script>
+  <p style="margin-top:16px;">
+    <a href="/">← Continue adding cards</a>
+  </p>
+</main>
+
+<script src="cart.js"></script>
+  <script src="cart-badge.js?v=1"></script>
 <script src="/sell-cart-badge.js"></script>
-
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
