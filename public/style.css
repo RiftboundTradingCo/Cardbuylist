@@ -1284,6 +1284,44 @@ p {
   }
 }
 
+.checkout-row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  margin: 12px 0 6px;
+  flex-wrap: wrap;
+}
+
+.checkout-label{ font-weight:700; }
+
+.checkout-email{
+  padding:10px 12px;
+  border:1px solid #ccc;
+  border-radius:10px;
+  min-width:240px;
+}
+
+.checkout-btn{
+  padding:10px 14px;
+  border:0;
+  border-radius:10px;
+  background:#111;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.checkout-btn:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
+.checkout-message{
+  margin-top:6px;
+  color:#b00020;
+  font-weight:600;
+}
+
 </main>
 
 

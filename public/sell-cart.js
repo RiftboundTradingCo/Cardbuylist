@@ -341,6 +341,66 @@
     });
   }
 
+const submitBtn = document.getElementById("sellSubmitBtn");
+const emailInput = document.getElementById("sellEmail");
+const checkoutMsg = document.getElementById("sellCheckoutMessage");
+
+if (submitBtn) {
+  submitBtn.addEventListener("click", async () => {
+    const cart = loadCart();
+
+    if (!cart.length) {
+      if (checkoutMsg) checkoutMsg.textContent = "Your sell cart is empty.";
+      return;
+    }
+
+    const email = String(emailInput?.value || "").trim();
+    if (!email || !email.includes("@")) {
+      if (checkoutMsg) checkoutMsg.textContent = "Please enter a valid email.";
+      return;
+    }
+
+    // total
+    const total = calcTotals(cart);
+
+    try {
+      submitBtn.disabled = true;
+      if (checkoutMsg) checkoutMsg.textContent = "Submitting…";
+
+      const res = await fetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          total: total.toFixed(2),
+          order: cart
+        })
+      });
+
+      const data = await res.json();
+
+      if (!data.ok) {
+        if (checkoutMsg) checkoutMsg.textContent = "Error: " + (data.error || "Could not submit.");
+        submitBtn.disabled = false;
+        return;
+      }
+
+      // optional: save recap + go to recap page if you have it
+      sessionStorage.setItem("sellOrderRecap", JSON.stringify({
+        email,
+        order: cart,
+        computedTotal: total.toFixed(2)
+      }));
+
+      window.location.href = "/recap.html"; // change if your sell recap page is different
+    } catch (err) {
+      console.error(err);
+      if (checkoutMsg) checkoutMsg.textContent = "Network error. Could not submit.";
+      submitBtn.disabled = false;
+    }
+  });
+}
+
   // ---------- INIT ----------
   (async () => {
     try {

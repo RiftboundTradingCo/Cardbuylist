@@ -1,10 +1,9 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Your Sell Cart</title>
-  <link rel="stylesheet" href="/style.css" />
+  <meta charset="UTF-8">
+  <title>Buy Cards | Riftbound Trading Co</title>
+  <link rel="stylesheet" href="/style.css?v=205">
 </head>
 <body>
 
@@ -43,6 +42,14 @@
     <p class="recap-total">
       <strong>Total:</strong> $<span id="sellCartTotal">0.00</span>
     </p>
+
+<div class="checkout-row">
+  <label for="sellEmail" class="checkout-label">Email for confirmation</label>
+  <input id="sellEmail" type="email" placeholder="you@example.com" class="checkout-email" />
+  <button id="sellSubmitBtn" class="checkout-btn" type="button">Submit Sell Order</button>
+</div>
+
+<p id="sellCheckoutMessage" class="checkout-message"></p>
 
     <div class="cart-actions">
       <button id="sellClearCartBtn" class="clear-cart-btn" type="button">Clear Sell Cart</button>
