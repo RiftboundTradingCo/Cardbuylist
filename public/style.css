@@ -1125,6 +1125,164 @@ p {
   display: flex;
   align-items: flex-start;
 }
+/* ===== SELL CART LAYOUT (match screenshot) ===== */
+
+.cart-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 18px 22px;
+  margin: 18px 0;
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+  border: 1px solid rgba(0,0,0,.06);
+}
+
+/* 3 columns: image | details | controls */
+.cart-card-inner {
+  display: grid;
+  grid-template-columns: 120px 1fr 240px;
+  gap: 22px;
+  align-items: start;
+}
+
+/* image column */
+.cart-left {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.cart-thumb {
+  width: 90px;
+  height: auto;
+  max-height: 130px;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 2px solid #1a1a1a;
+}
+
+/* middle column */
+.cart-mid .cart-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 10px;
+}
+
+/* tabs “pill” like screenshot (compact, not stretching) */
+.cond-tabs.cart-tabs {
+  display: inline-flex;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  width: fit-content;     /* key: prevents stretching */
+}
+
+.cond-tab {
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 0;
+  background: #e5e7eb;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.cond-tab.active {
+  background: #111827;
+  color: #fff;
+}
+
+.cond-tab.disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+/* meta lines */
+.cart-meta {
+  margin-top: 12px;
+  line-height: 1.55;
+  color: #111;
+}
+
+.cart-meta .cart-unit strong,
+.cart-meta .cart-cond strong,
+.cart-meta .cart-cap strong {
+  font-weight: 800;
+}
+
+/* right column — everything aligned to the right like screenshot */
+.cart-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  gap: 10px;
+}
+
+/* qty stepper style like screenshot */
+.qty-stepper.cart-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.qty-stepper.cart-stepper button {
+  width: 38px;
+  height: 34px;
+  border-radius: 10px;
+  border: 0;
+  background: #111;
+  color: #fff;
+  cursor: pointer;
+}
+
+.qty-stepper.cart-stepper .qty-num {
+  min-width: 22px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 16px;
+}
+
+/* price under stepper */
+.cart-line-total {
+  font-size: 18px;
+  font-weight: 900;
+  margin-top: 2px;
+}
+
+/* summary under price */
+.cart-summary-under {
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.35;
+}
+
+/* remove button sits right under summary */
+.remove-cond-btn {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid #ff6b6b;
+  background: #fff;
+  color: #c62828;
+  cursor: pointer;
+}
+
+.remove-cond-btn:hover {
+  background: #ffecec;
+}
+
+/* responsive */
+@media (max-width: 900px) {
+  .cart-card-inner {
+    grid-template-columns: 100px 1fr;
+  }
+  .cart-right {
+    grid-column: 1 / -1;
+    align-items: flex-start;
+    text-align: left;
+    margin-top: 10px;
+  }
+}
 
 </main>
 
