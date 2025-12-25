@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sell Your Cards</title>
+
+  <!-- Link CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+  <!-- Image Modal -->
+<div id="imageModal" class="modal hidden">
+  <span id="modalClose">&times;</span>
+  <img id="modalImage" alt="Card image large view">
+</div>
+
+<body>
+<header class="site-header">
+  <nav class="nav">
+    <a href="/" class="logo-link">
+      <img
+        src="/images/riftbound-logo.jpg"
+        alt="Riftbound Trading Co"
+        class="site-logo"
+      >
+    </a>
+
+   <nav class="nav-links">
+ <a href="/sell-cart.html" class="nav-link">
+  Sell Cart
+  <span id="sellCartBadge" class="cart-badge hidden">0</span>
+</a>
+  <a href="/buy.html" class="nav-link">Buy Cards</a>
+  <a href="/buy-cart.html" class="nav-link">
+  Buy Cart
+  <span id="buyCartBadge" class="cart-badge hidden">0</span>
+</a>
+
+  <a href="/shipping.html" class="nav-link">Shipping</a>
+  <a href="/contact.html" class="nav-link">Contact</a>
+</nav>
+
+  </div>
+</header>
+
+
+  <h1>Sell Your Cards</h1>
+  <p>Search our buylist, add your cards, and submit your sell order.</p>
+
+  <!-- BUYLIST SEARCH -->
+  <h2>Search Our Buylist</h2>
+
+<!-- SELL CATALOG -->
+<input
+  type="text"
+  id="sellSearch"
+  class="buy-search"
+  placeholder="Search cards to sell..."
+>
+
+<div class="store-grid" id="sellGrid"></div>
+
+
+
+  <!-- SEARCH RESULTS -->
+  <div id="results"></div>
+
+  <!-- ORDER SUMMARY -->
+  <h3>Your Sell Order</h3>
+
+  <ul id="orderList"></ul>
+
+  <p>
+    Total: $<span id="total">0.00</span>
+  </p>
+
+  <!-- SELL FORM -->
+  <form id="sellForm">
+
+    <label>
+      Your Name
+      <input type="text" id="name" required>
+    </label>
+
+    <label>
+      Email Address
+      <input type="email" id="email" required>
+    </label>
+
+    <label>
+      Cards You’re Selling
+      <textarea
+        id="cards"
+        placeholder="Your selected cards will appear here"
+        readonly
+      ></textarea>
+    </label>
+
+    <button type="submit">
+      Submit Sell Order
+    </button>
+
+  </form>
+
+  <!-- CONFIRMATION MESSAGE -->
+  <p id="message"></p>
+
+  <!-- Link JavaScript (must be last) -->
+<!-- Load scripts at the bottom (order matters) -->
+<script src="sell-render.js?v=1"></script>
+<script src="script.js?v=999"></script> <!-- your existing sell page logic -->
+<script src="cart-badge.js?v=1"></script>
+<script src="/sell-cart-badge.js"></script>
+
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
