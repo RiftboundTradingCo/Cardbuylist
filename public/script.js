@@ -1,431 +1,375 @@
-document.addEventListener("DOMContentLoaded", function () {
+(() => {
   console.log("SELL script.js loaded ✅");
 
-  /* ===============================
-     ELEMENTS
-  =============================== */
-  const imageModal = document.getElementById("imageModal");
-  const modalImage = document.getElementById("modalImage");
-  const modalClose = document.getElementById("modalClose");
+  const TAB_ORDER = ["NM", "LP", "MP"];
 
-  const searchInput = document.getElementById("search");
-  const results = document.getElementById("results");
-  const orderList = document.getElementById("orderList");
-  const totalEl = document.getElementById("total");
-
-  const form = document.getElementById("sellForm");
-  const message = document.getElementById("message");
-  const cardsTextarea = document.getElementById("cards");
-
-  if (!results) {
-    console.warn("SELL script.js: #results not found");
-    return;
-  }
-
-  /* ===============================
-     STATE
-  =============================== */
-  // Each line: { name, condition, qty, unitPrice }
-  let order = [];
-
-  // Loaded from /api/selllist as array:
-  // { sku, name, image, prices:{NM,LP,MP}, max:{NM,LP,MP} }
-  let sellCards = [];
-
-  function loadCart() {
-    const raw = localStorage.getItem("sellCart");
-    if (!raw) return [];
-    try { return JSON.parse(raw); } catch { return []; }
-  }
-
-  function saveCart(cart) {
-    localStorage.setItem("sellCart", JSON.stringify(cart));
-  }
-
-  /* ===============================
-     HELPERS
-  =============================== */
   function money(n) {
     return Number(n || 0).toFixed(2);
   }
 
-  function clampQty(n) {
-    if (!Number.isInteger(n)) return 1;
-    if (n < 1) return 1;
-    if (n > 999) return 999;
-    return n;
+  function loadSellCart() {
+    try { return JSON.parse(localStorage.getItem("sellCart")) || []; }
+    catch { return []; }
   }
 
-  function findLineIndex(name, condition) {
-    return order.findIndex(l => l.name === name && l.condition === condition);
+  function saveSellCart(cart) {
+    localStorage.setItem("sellCart", JSON.stringify(cart));
   }
 
-  function qtyInOrder(name, cond) {
-    const idx = findLineIndex(name, cond);
-    return idx >= 0 ? Number(order[idx].qty || 0) : 0;
+  // Cart items look like: { sku, name, condition, qty, unitPrice }
+  function cartQtyFor(cart, sku, cond) {
+    return cart
+      .filter(i => i.sku === sku && i.condition === cond)
+      .reduce((sum, i) => sum + (Number(i.qty) || 0), 0);
   }
 
-  function getPriceFor(card, cond) {
-    const n = Number(card?.prices?.[cond]);
-    return Number.isFinite(n) ? n : 0;
+  function qtyKeyForTab(tab) {
+    const t = String(tab || "NM").toUpperCase();
+    if (t === "NM") return "qtyNm";
+    if (t === "LP") return "qtyLp";
+    return "qtyMp";
   }
 
-  function getMaxFor(card, cond) {
-    const n = Number(card?.max?.[cond]);
-    // if max is missing, default to 0 (meaning you don't buy that condition)
-    return Number.isFinite(n) ? n : 0;
+  function getStoredQty(card) {
+    const tab = String(card.dataset.activeTab || "NM").toUpperCase();
+    const key = qtyKeyForTab(tab);
+    const n = Number(card.dataset[key] || 1);
+    return Math.max(1, Number.isFinite(n) ? n : 1);
   }
 
-  /* ===============================
-     LOAD SELLLIST
-  =============================== */
-  async function loadSelllist() {
-    try {
+  function setStoredQty(card, qty) {
+    const tab = String(card.dataset.activeTab || "NM").toUpperCase();
+    const key = qtyKeyForTab(tab);
+    const clean = Math.max(1, Number(qty) || 1);
+    card.dataset[key] = String(clean);
+
+    const qtyInput = card.querySelector(".qty-input");
+    const qtyNum = card.querySelector(".qty-num");
+    if (qtyInput) qtyInput.value = String(clean);
+    if (qtyNum) qtyNum.textContent = String(clean);
+  }
+
+  function getMaxFor(card, tab) {
+    const t = String(tab || "NM").toUpperCase();
+    if (t === "NM") return Number(card.dataset.maxNm || 0);
+    if (t === "LP") return Number(card.dataset.maxLp || 0);
+    return Number(card.dataset.maxMp || 0);
+  }
+
+  function getPriceFor(card, tab) {
+    const t = String(tab || "NM").toUpperCase();
+    if (t === "NM") return Number(card.dataset.priceNm || 0);
+    if (t === "LP") return Number(card.dataset.priceLp || 0);
+    return Number(card.dataset.priceMp || 0);
+  }
+
+  function setActiveTab(card, tab) {
+    const t = String(tab || "NM").toUpperCase();
+    if (!TAB_ORDER.includes(t)) return;
+
+    // Don’t allow selecting a condition with max 0
+    if (getMaxFor(card, t) <= 0) return;
+
+    card.dataset.activeTab = t;
+
+    // Update tab UI
+    card.querySelectorAll(".cond-tab").forEach(btn => {
+      btn.classList.toggle("active", (btn.dataset.tab || "").toUpperCase() === t);
+    });
+
+    // Update price + max labels
+    const unitPrice = getPriceFor(card, t);
+    const max = getMaxFor(card, t);
+
+    const unitEl = card.querySelector(".unit-price");
+    if (unitEl) unitEl.textContent = `$${money(unitPrice)}`;
+
+    const maxEl = card.querySelector(".max-num");
+    if (maxEl) maxEl.textContent = String(max);
+
+    // Load qty for THIS condition
+    setStoredQty(card, getStoredQty(card));
+
+    clampQtyToMaxAndCart(card);
+  }
+
+  function clampQtyToMaxAndCart(card) {
+    const sku = String(card.dataset.sku || "").trim();
+    if (!sku) return;
+
+    const tab = String(card.dataset.activeTab || "NM").toUpperCase();
+    const max = getMaxFor(card, tab);
+
+    const cart = loadSellCart();
+    const already = cartQtyFor(cart, sku, tab);
+    const remaining = Math.max(0, max - already);
+
+    let qty = getStoredQty(card);
+
+    const plusBtn = card.querySelector(".qty-plus");
+    const minusBtn = card.querySelector(".qty-minus");
+    const addBtn = card.querySelector(".add-to-sell-btn");
+
+    // If already at/over cap, disable adding
+    if (remaining <= 0) {
+      setStoredQty(card, 1);
+      if (plusBtn) plusBtn.disabled = true;
+      if (minusBtn) minusBtn.disabled = true;
+      if (addBtn) {
+        addBtn.disabled = true;
+        addBtn.textContent = "Max Reached";
+      }
+      return;
+    }
+
+    qty = Math.min(qty, remaining);
+    setStoredQty(card, qty);
+
+    if (plusBtn) plusBtn.disabled = qty >= remaining;
+    if (minusBtn) minusBtn.disabled = qty <= 1;
+
+    if (addBtn) {
+      addBtn.disabled = false;
+      addBtn.textContent = "Add to Sell Order";
+    }
+
+    // Show “max capacity” and “remaining”
+    const remainingEl = card.querySelector(".remaining-num");
+    if (remainingEl) remainingEl.textContent = String(remaining);
+
+    const inCartEl = card.querySelector(".incart-num");
+    if (inCartEl) inCartEl.textContent = String(already);
+  }
+
+  // ---------- RENDER ----------
+  document.addEventListener("DOMContentLoaded", async () => {
+    const grid = document.getElementById("sellGrid") || document.getElementById("results");
+    const searchInput = document.getElementById("search");
+    if (!grid) {
+      console.warn("Sell: grid container not found (#sellGrid or #results).");
+      return;
+    }
+
+    async function loadSellCatalog() {
       const res = await fetch("/api/selllist", { cache: "no-store" });
-      if (!res.ok) throw new Error("selllist fetch failed");
+      if (!res.ok) throw new Error("Could not load selllist");
       const data = await res.json();
-      if (!data?.ok || !data.selllist) throw new Error("selllist bad payload");
+      if (!data?.ok || !data.selllist) throw new Error("Bad selllist response");
+      return data.selllist;
+    }
 
-      return Object.entries(data.selllist).map(([sku, v]) => ({
-        sku,
-        name: String(v.name || sku),
-        image: String(v.image || ""),
-        prices: v.prices || {},
-        max: v.max || {}
-      }));
+    function buildCard(sku, p) {
+      const name = String(p.name || sku);
+      const image = String(p.image || "");
+      const prices = p.prices || {};
+      const max = p.max || {};
+
+      const nmPrice = Number(prices.NM || 0);
+      const lpPrice = Number(prices.LP || 0);
+      const mpPrice = Number(prices.MP || 0);
+
+      const nmMax = Number(max.NM || 0);
+      const lpMax = Number(max.LP || 0);
+      const mpMax = Number(max.MP || 0);
+
+      // Skip if all max are 0
+      if ((nmMax + lpMax + mpMax) <= 0) return null;
+
+      const card = document.createElement("div");
+      card.className = "store-card sell-card";
+      card.dataset.sku = sku;
+      card.dataset.name = name.toLowerCase();
+
+      card.dataset.priceNm = String(nmPrice);
+      card.dataset.priceLp = String(lpPrice);
+      card.dataset.priceMp = String(mpPrice);
+
+      card.dataset.maxNm = String(nmMax);
+      card.dataset.maxLp = String(lpMax);
+      card.dataset.maxMp = String(mpMax);
+
+      // default tab = first with max>0
+      let activeTab = "NM";
+      if (nmMax > 0) activeTab = "NM";
+      else if (lpMax > 0) activeTab = "LP";
+      else activeTab = "MP";
+
+      card.dataset.activeTab = activeTab;
+
+      const imgSrc = image ? encodeURI(image.startsWith("/") ? image : "/" + image) : "";
+
+      card.innerHTML = `
+        ${imgSrc ? `<img class="zoomable" src="${imgSrc}" alt="${name}">` : ""}
+        <h3 class="store-title">${name}</h3>
+
+        <div class="cond-tabs" role="tablist" aria-label="Condition">
+          ${TAB_ORDER.map(tab => {
+            const tabMax = tab === "NM" ? nmMax : tab === "LP" ? lpMax : mpMax;
+            const disabled = tabMax <= 0;
+            const isActive = tab === activeTab;
+            return `
+              <button
+                class="cond-tab${isActive ? " active" : ""}${disabled ? " disabled" : ""}"
+                type="button"
+                data-tab="${tab}"
+                aria-disabled="${disabled ? "true" : "false"}"
+              >${tab}</button>
+            `;
+          }).join("")}
+        </div>
+
+        <div class="sell-meta">
+          <div class="sell-price">
+            Buy Price: <strong class="unit-price">$${money(getPriceFor(card, activeTab))}</strong>
+          </div>
+
+          <div class="sell-cap">
+            Max capacity: <strong class="max-num">${getMaxFor(card, activeTab)}</strong>
+            • In cart: <strong class="incart-num">0</strong>
+            • Remaining: <strong class="remaining-num">0</strong>
+          </div>
+        </div>
+
+        <div class="qty-stepper">
+          <button class="qty-minus" type="button">−</button>
+          <input class="qty-input" type="number" min="1" value="1" inputmode="numeric">
+          <button class="qty-plus" type="button">+</button>
+        </div>
+
+        <button class="add-to-sell-btn" type="button">Add to Sell Order</button>
+      `;
+
+      // initialize qty storage for all tabs
+      card.dataset.qtyNm = "1";
+      card.dataset.qtyLp = "1";
+      card.dataset.qtyMp = "1";
+
+      // set initial
+      setActiveTab(card, activeTab);
+      return card;
+    }
+
+    function renderGrid(entries) {
+      grid.innerHTML = "";
+      entries.forEach(el => grid.appendChild(el));
+      // clamp everything against cart
+      grid.querySelectorAll(".store-card").forEach(clampQtyToMaxAndCart);
+    }
+
+    let catalog = {};
+    try {
+      catalog = await loadSellCatalog();
     } catch (e) {
-      console.error("Could not load /api/selllist:", e);
-      results.innerHTML = `<p style="color:#c00;">Could not load sell list.</p>`;
-      return [];
+      console.error(e);
+      grid.innerHTML = `<p style="color:#b00;">Could not load sell list.</p>`;
+      return;
     }
-  }
 
-  /* ===============================
-     RENDER SEARCH RESULTS
-  =============================== */
-  function renderResults(cards) {
-    results.innerHTML = "";
+    const allCards = Object.entries(catalog)
+      .map(([sku, p]) => buildCard(sku, p))
+      .filter(Boolean);
 
-    cards.forEach(card => {
-      const row = document.createElement("div");
-      row.className = "result-row";
-      row.dataset.cardName = card.name;
+    renderGrid(allCards);
 
-      // Big left number like screenshot: NM max capacity
-      const nmMax = getMaxFor(card, "NM");
-
-      // Used to disable plus/minus per condition
-      const nmIn = qtyInOrder(card.name, "NM");
-      const lpIn = qtyInOrder(card.name, "LP");
-      const mpIn = qtyInOrder(card.name, "MP");
-
-      const nmPrice = getPriceFor(card, "NM");
-      const lpPrice = getPriceFor(card, "LP");
-      const mpPrice = getPriceFor(card, "MP");
-
-      const nmDisabled = nmMax <= 0 || nmPrice <= 0;
-      const lpDisabled = getMaxFor(card, "LP") <= 0 || lpPrice <= 0;
-      const mpDisabled = getMaxFor(card, "MP") <= 0 || mpPrice <= 0;
-
-      const imgSrc = card.image ? (card.image.startsWith("/") ? card.image : "/" + card.image) : "";
-
-      row.innerHTML = `
-        ${imgSrc ? `
-          <img
-            class="card-img clickable-img"
-            src="${encodeURI(imgSrc)}"
-            alt="${card.name}"
-            data-full="${encodeURI(imgSrc)}"
-          >
-        ` : ""}
-
-        <div class="card-title">
-          ${card.name}
-        </div>
-
-        <!-- Capacity / Condition control block -->
-        <div class="sell-controls">
-          <div class="sell-cap-row">
-            <div class="sell-cap-left">${nmMax}</div>
-
-            <div class="sell-cap-right">
-              <div class="sell-cond-grid" data-sku="${card.sku}">
-                <!-- NM row -->
-                <div class="sell-cond-tag">NM</div>
-                <div class="sell-price">$${money(nmPrice)}</div>
-                <button class="sell-btn sell-minus" type="button" data-cond="NM" ${nmIn <= 0 ? "disabled" : ""}>−</button>
-                <button class="sell-btn sell-plus" type="button" data-cond="NM" ${nmDisabled || nmIn >= nmMax ? "disabled" : ""}>+</button>
-
-                <!-- LP row -->
-                <div class="sell-cond-tag">LP</div>
-                <div class="sell-price">$${money(lpPrice)}</div>
-                <button class="sell-btn sell-minus" type="button" data-cond="LP" ${lpIn <= 0 ? "disabled" : ""}>−</button>
-                <button class="sell-btn sell-plus" type="button" data-cond="LP" ${lpDisabled || lpIn >= getMaxFor(card,"LP") ? "disabled" : ""}>+</button>
-
-                <!-- MP row -->
-                <div class="sell-cond-tag">MP</div>
-                <div class="sell-price">$${money(mpPrice)}</div>
-                <button class="sell-btn sell-minus" type="button" data-cond="MP" ${mpIn <= 0 ? "disabled" : ""}>−</button>
-                <button class="sell-btn sell-plus" type="button" data-cond="MP" ${mpDisabled || mpIn >= getMaxFor(card,"MP") ? "disabled" : ""}>+</button>
-              </div>
-
-              <div class="sell-cap-note">max capacity</div>
-            </div>
-          </div>
-        </div>
-      `;
-
-      results.appendChild(row);
-    });
-
-    if (!cards.length) {
-      results.innerHTML = `<p>No cards found.</p>`;
+    // Search
+    if (searchInput) {
+      searchInput.addEventListener("input", () => {
+        const q = searchInput.value.toLowerCase().trim();
+        grid.querySelectorAll(".store-card").forEach(card => {
+          const name = String(card.dataset.name || "");
+          card.style.display = (!q || name.includes(q)) ? "" : "none";
+        });
+      });
     }
-  }
+  });
 
-  /* ===============================
-     RENDER ORDER (right-side / below list)
-  =============================== */
-  function renderOrder() {
-    orderList.innerHTML = "";
-    let total = 0;
-
-    order.forEach(line => {
-      const lineTotal = Number(line.unitPrice || 0) * Number(line.qty || 0);
-      total += lineTotal;
-
-      const li = document.createElement("li");
-      li.dataset.name = line.name;
-      li.dataset.condition = line.condition;
-
-      li.innerHTML = `
-        <div class="order-row">
-          <div>
-            ${line.name} (${line.condition}) —
-            $${money(line.unitPrice)} each = $${money(lineTotal)}
-          </div>
-
-          <div class="qty-controls">
-            <button class="qty-btn minus" type="button">−</button>
-            <span class="qty-value">${line.qty}</span>
-            <button class="qty-btn plus" type="button">+</button>
-          </div>
-
-          <button class="remove-btn" type="button">Remove</button>
-        </div>
-      `;
-
-      orderList.appendChild(li);
-    });
-
-    totalEl.textContent = money(total);
-
-    cardsTextarea.value = order
-      .map(l => `${l.qty}x ${l.name} (${l.condition})`)
-      .join(", ");
-  }
-
-  /* ===============================
-     SELL BUTTONS (+ / − under each card)
-  =============================== */
-  results.addEventListener("click", function (e) {
-    const plus = e.target.closest(".sell-plus");
-    const minus = e.target.closest(".sell-minus");
-    if (!plus && !minus) return;
-
-    const row = e.target.closest(".result-row");
-    if (!row) return;
-
-    const cardName = row.dataset.cardName;
-    const card = sellCards.find(c => c.name === cardName);
+  // ---------- CLICK HANDLERS (delegation) ----------
+  document.addEventListener("click", (e) => {
+    const card = e.target.closest(".store-card");
     if (!card) return;
 
-    const cond = (plus || minus).dataset.cond;
+    // Tabs
+    const tabBtn = e.target.closest(".cond-tab");
+    if (tabBtn) {
+      if (tabBtn.getAttribute("aria-disabled") === "true") return;
+      if (tabBtn.classList.contains("disabled")) return;
 
-    // PLUS
-    if (plus) {
-      const price = getPriceFor(card, cond);
-      const max = getMaxFor(card, cond);
-      if (price <= 0 || max <= 0) return;
-
-      const current = qtyInOrder(card.name, cond);
-      if (current >= max) return;
-
-      const idx = findLineIndex(card.name, cond);
-      if (idx >= 0) {
-        order[idx].qty = clampQty(order[idx].qty + 1);
-      } else {
-        order.push({ name: card.name, condition: cond, qty: 1, unitPrice: price });
-      }
-
-      saveCart(order);
-      renderOrder();
-      renderResults(filterBySearch(sellCards));
+      setActiveTab(card, tabBtn.dataset.tab);
       return;
     }
 
-    // MINUS
-    if (minus) {
-      const idx = findLineIndex(card.name, cond);
-      if (idx === -1) return;
-
-      order[idx].qty = order[idx].qty - 1;
-      if (order[idx].qty <= 0) order.splice(idx, 1);
-
-      saveCart(order);
-      renderOrder();
-      renderResults(filterBySearch(sellCards));
-      return;
-    }
-  });
-
-  /* ===============================
-     ORDER CONTROLS: + / − / Remove (in cart list)
-  =============================== */
-  orderList.addEventListener("click", function (e) {
-    const li = e.target.closest("li");
-    if (!li) return;
-
-    const name = li.dataset.name;
-    const condition = li.dataset.condition;
-    const idx = findLineIndex(name, condition);
-    if (idx === -1) return;
-
-    if (e.target.classList.contains("plus")) {
-      order[idx].qty = clampQty(order[idx].qty + 1);
-      saveCart(order);
-      renderOrder();
-      renderResults(filterBySearch(sellCards));
+    // Qty +
+    if (e.target.closest(".qty-plus")) {
+      setStoredQty(card, getStoredQty(card) + 1);
+      clampQtyToMaxAndCart(card);
       return;
     }
 
-    if (e.target.classList.contains("minus")) {
-      order[idx].qty = order[idx].qty - 1;
-      if (order[idx].qty <= 0) order.splice(idx, 1);
-      saveCart(order);
-      renderOrder();
-      renderResults(filterBySearch(sellCards));
+    // Qty -
+    if (e.target.closest(".qty-minus")) {
+      setStoredQty(card, Math.max(1, getStoredQty(card) - 1));
+      clampQtyToMaxAndCart(card);
       return;
     }
 
-    if (e.target.classList.contains("remove-btn")) {
-      order.splice(idx, 1);
-      saveCart(order);
-      renderOrder();
-      renderResults(filterBySearch(sellCards));
-    }
-  });
+    // Add to sell order
+    const addBtn = e.target.closest(".add-to-sell-btn");
+    if (addBtn) {
+      if (addBtn.disabled) return;
 
-  /* ===============================
-     SEARCH INPUT
-  =============================== */
-  function filterBySearch(cards) {
-    const q = String(searchInput?.value || "").toLowerCase().trim();
-    if (!q) return cards;
-    return cards.filter(c => String(c.name || "").toLowerCase().includes(q));
-  }
+      const sku = String(card.dataset.sku || "").trim();
+      const tab = String(card.dataset.activeTab || "NM").toUpperCase();
+      const name = card.querySelector(".store-title")?.textContent?.trim() || sku;
 
-  if (searchInput) {
-    searchInput.addEventListener("input", function () {
-      renderResults(filterBySearch(sellCards));
-    });
-  }
+      const unitPrice = getPriceFor(card, tab);
+      const max = getMaxFor(card, tab);
 
-  /* ===============================
-     FORM SUBMIT (send structured order)
-  =============================== */
-  if (form) {
-    form.addEventListener("submit", async function (event) {
-      event.preventDefault();
+      const qtyWanted = getStoredQty(card);
 
-      if (!order.length) {
-        message.textContent = "Please add at least one card to your sell order.";
-        message.style.color = "red";
+      let cart = loadSellCart();
+      const already = cartQtyFor(cart, sku, tab);
+      const remaining = Math.max(0, max - already);
+      const toAdd = Math.min(qtyWanted, remaining);
+
+      if (toAdd <= 0) {
+        clampQtyToMaxAndCart(card);
         return;
       }
 
-      const name = document.getElementById("name")?.value || "";
-      const email = document.getElementById("email")?.value || "";
+      const idx = cart.findIndex(i => i.sku === sku && i.condition === tab);
+      if (idx >= 0) cart[idx].qty = (Number(cart[idx].qty) || 0) + toAdd;
+      else cart.push({ sku, name, condition: tab, qty: toAdd, unitPrice });
 
-      let computedTotal = 0;
-      order.forEach(l => {
-        computedTotal += (Number(l.qty) || 0) * (Number(l.unitPrice) || 0);
-      });
+      saveSellCart(cart);
 
-      try {
-        const res = await fetch("/api/submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name,
-            email,
-            total: computedTotal.toFixed(2),
-            order
-          })
-        });
+      // Reset qty for this condition to 1 after add
+      setStoredQty(card, 1);
+      clampQtyToMaxAndCart(card);
 
-        const data = await res.json();
-
-        if (!data.ok) {
-          message.textContent = "Error: " + (data.error || "Could not send email.");
-          message.style.color = "red";
-          return;
-        }
-
-        sessionStorage.setItem("sellOrderRecap", JSON.stringify({
-          name,
-          email,
-          order,
-          computedTotal: computedTotal.toFixed(2)
-        }));
-
-        window.location.href = "/recap.html";
-
-      } catch (e) {
-        message.textContent = "Network error. Could not submit.";
-        message.style.color = "red";
-      }
-    });
-  }
-
-  /* ===============================
-     IMAGE MODAL (zoom)
-  =============================== */
-  results.addEventListener("click", function (e) {
-    const img = e.target.closest(".clickable-img");
-    if (!img) return;
-
-    modalImage.src = img.dataset.full;
-    imageModal.classList.remove("hidden");
+      addBtn.textContent = "Added ✓";
+      setTimeout(() => (addBtn.textContent = "Add to Sell Order"), 600);
+      return;
+    }
   });
 
-  if (modalClose) {
-    modalClose.addEventListener("click", function () {
-      imageModal.classList.add("hidden");
-      modalImage.src = "";
-    });
-  }
+  // typing in qty box
+  document.addEventListener("input", (e) => {
+    const qtyInput = e.target.closest(".qty-input");
+    if (!qtyInput) return;
 
-  if (imageModal) {
-    imageModal.addEventListener("click", function (e) {
-      if (e.target === imageModal) {
-        imageModal.classList.add("hidden");
-        modalImage.src = "";
-      }
-    });
-  }
+    const card = qtyInput.closest(".store-card");
+    if (!card) return;
 
-  /* ===============================
-     INITIAL LOAD
-  =============================== */
-  (async () => {
-    order = loadCart();
-    renderOrder();
+    let v = qtyInput.value.replace(/[^\d]/g, "");
+    if (!v) v = "1";
+    qtyInput.value = v;
 
-    sellCards = await loadSelllist();
-    renderResults(sellCards);
-  })();
-});
+    // save to active condition qty
+    setStoredQty(card, Number(v));
+    clampQtyToMaxAndCart(card);
+  });
+})();
+
 
 
 
