@@ -20,15 +20,19 @@
 
     <nav class="nav-links">
       <a href="/" class="nav-link">Sell Cards</a>
-      <a href="/buy.html" class="nav-link active">Buy Cards</a>
-      <a href="/buy-cart.html" class="nav-link">
-        Buy Cart
-        <span id="buyCartBadge" class="cart-badge hidden">0</span>
-      </a>
-      <a href="/shipping.html" class="nav-link">Shipping</a>
-      <a href="/contact.html" class="nav-link">Contact</a>
-    </nav>
-  </div>
+ <a href="/sell-cart.html" class="nav-link">
+  Sell Cart
+  <span id="sellCartBadge" class="cart-badge hidden">0</span>
+</a>
+  <a href="/buy.html" class="nav-link">Buy Cards</a>
+  <a href="/buy-cart.html" class="nav-link">
+  Buy Cart
+  <span id="buyCartBadge" class="cart-badge hidden">0</span>
+</a>
+
+  <a href="/shipping.html" class="nav-link">Shipping</a>
+  <a href="/contact.html" class="nav-link">Contact</a>
+</nav>
 </header>
 
 <!-- MAIN -->

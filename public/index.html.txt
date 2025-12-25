@@ -24,6 +24,7 @@
     </a>
 
    <nav class="nav-links">
+<a href="/" class="nav-link">Sell Cards</a>
  <a href="/sell-cart.html" class="nav-link">
   Sell Cart
   <span id="sellCartBadge" class="cart-badge hidden">0</span>
