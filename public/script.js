@@ -342,6 +342,11 @@
 
       saveSellCart(cart);
 
+       if (window.updateSellCartBadge) {
+       window.updateSellCartBadge();
+     }
+
+
       // Reset qty for this condition to 1 after add
       setStoredQty(card, 1);
       clampQtyToMaxAndCart(card);
