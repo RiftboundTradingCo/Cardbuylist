@@ -1,8 +1,10 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <title>Your Sell Cart | Riftbound Trading Co</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Your Sell Cart</title>
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
 
@@ -19,52 +21,31 @@
   Buy Cart
   <span id="buyCartBadge" class="cart-badge hidden">0</span>
 </a>
-
       <a href="/shipping.html" class="nav-link">Shipping</a>
       <a href="/contact.html" class="nav-link">Contact</a>
     </nav>
   </div>
 </header>
 
-<main>
-  <h1>Your Sell Cart</h1>
-  <p>Review your cards, then submit your sell order.</p>
+<main class="cart-page">
+    <h1>Your Sell Cart</h1>
+    <p>Review your sell items below.</p>
 
-  <ul id="cartList"></ul>
+    <div id="sellCartMessage" class="cart-message"></div>
 
-  <p class="recap-total">
-    <strong>Total:</strong> $<span id="cartTotal">0.00</span>
-  </p>
-  <button id="clearCartBtn" class="clear-cart-btn" type="button">
-  Clear Cart
-</button>
+    <div id="sellCartList" class="cart-list"></div>
 
+    <p class="recap-total">
+      <strong>Total:</strong> $<span id="sellCartTotal">0.00</span>
+    </p>
 
-  <h2>Seller Info</h2>
-  <form id="cartForm">
-    <label>
-      Your Name
-      <input type="text" id="name" required>
-    </label>
+    <div class="cart-actions">
+      <button id="sellClearCartBtn" class="clear-cart-btn" type="button">Clear Sell Cart</button>
+      <a href="/index.html" class="cart-link">← Continue selling</a>
+    </div>
+  </main>
 
-    <label>
-      Email Address
-      <input type="email" id="email" required>
-    </label>
-
-    <button type="submit">Submit Sell Order</button>
-  </form>
-
-  <p id="cartMessage"></p>
-
-  <p style="margin-top:16px;">
-    <a href="/">← Continue adding cards</a>
-  </p>
-</main>
-
-<script src="cart.js"></script>
-  <script src="cart-badge.js?v=1"></script>
-<script src="/sell-cart-badge.js"></script>
-
+  <script src="/sell-cart.js?v=1"></script>
+  <script src="/sell-cart-badge.js?v=1"></script>
 </body>
 </html>
