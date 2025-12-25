@@ -1033,6 +1033,84 @@ p {
 .sell-add-btn:hover {
   filter: brightness(0.95);
 }
+/* Sell card "capacity block" */
+.sell-controls {
+  width: 100%;
+  max-width: 260px;
+  margin-top: 10px;
+  border: 1px solid #e6e6e6;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.sell-cap-row {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  border-top: 1px solid #eee;
+}
+
+.sell-cap-left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 22px;
+  background: #f7f7f7;
+}
+
+.sell-cap-right {
+  padding: 10px 10px 8px;
+}
+
+.sell-cond-grid {
+  display: grid;
+  grid-template-columns: 42px 1fr 34px 34px;
+  gap: 6px;
+  align-items: center;
+}
+
+.sell-cond-tag {
+  font-weight: 800;
+  font-size: 12px;
+  text-align: center;
+  padding: 7px 0;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.sell-price {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.sell-qty {
+  text-align: center;
+  font-weight: 800;
+}
+
+.sell-btn {
+  height: 34px;
+  width: 34px;
+  border-radius: 8px;
+  border: 1px solid #111;
+  background: #111;
+  color: #fff;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.sell-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.sell-cap-note {
+  font-size: 12px;
+  color: #666;
+  padding-top: 6px;
+}
 
 </main>
 
