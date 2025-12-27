@@ -34,33 +34,33 @@
 </nav>
 </header>
 
-<main class="cart-page">
-    <h1>Your Sell Cart</h1>
-    <p>Review your sell items below.</p>
+<main>
+  <h1>Your Sell Cart</h1>
+  <p>Review your sell items below.</p>
 
-    <div id="sellCartMessage" class="cart-message"></div>
+  <ul id="sellCartList" class="cart-list"></ul>
 
-    <div id="sellCartList" class="cart-list"></div>
+  <p class="recap-total">
+    <strong>Total:</strong> $<span id="sellCartTotal">0.00</span>
+  </p>
 
-    <p class="recap-total">
-      <strong>Total:</strong> $<span id="sellCartTotal">0.00</span>
-    </p>
+  <div class="checkout-row">
+    <label for="sellEmail"><strong>Email for confirmation</strong></label>
+    <input id="sellEmail" type="email" placeholder="you@example.com">
+    <button id="sellSubmitBtn" type="button">Submit Sell Order</button>
+  </div>
 
-<div class="checkout-row">
-  <label for="sellEmail" class="checkout-label">Email for confirmation</label>
-  <input id="sellEmail" type="email" placeholder="you@example.com" class="checkout-email" />
-  <button id="sellSubmitBtn" class="checkout-btn" type="button">Submit Sell Order</button>
-</div>
+  <p id="sellCheckoutMessage" class="checkout-message"></p>
 
-<p id="sellCheckoutMessage" class="checkout-message"></p>
+  <button id="sellClearCartBtn" class="clear-cart-btn" type="button">Clear Cart</button>
 
-    <div class="cart-actions">
-      <button id="sellClearCartBtn" class="clear-cart-btn" type="button">Clear Sell Cart</button>
-      <a href="/index.html" class="cart-link">← Continue selling</a>
-    </div>
-  </main>
+  <p style="margin-top:16px;">
+    <a href="/index.html">← Continue shopping</a>
+  </p>
+</main>
 
-  <script src="/sell-cart.js?v=1"></script>
-  <script src="/sell-cart-badge.js?v=1"></script>
+<script src="sell-cart.js?v=1"></script>
+<script src="sell-cart-badge.js?v=1"></script>
+
 </body>
 </html>

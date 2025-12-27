@@ -98,41 +98,45 @@
       row.className = "cart-row";
       row.dataset.sku = group.sku;
 
-      row.innerHTML = `
-        <div class="cart-left">
-          <img src="${group.image}" class="cart-thumb" alt="${group.name}">
-        </div>
+row.innerHTML = `
+  <div class="cart-left">
+    <img src="${group.image}" class="cart-thumb" alt="${group.name}">
+  </div>
 
-        <div class="cart-main">
-          <h3>${group.name}</h3>
+  <div class="cart-main">
+    <h3>${group.name}</h3>
 
-          <div class="cond-tabs">
-            ${["Near Mint","Lightly Played","Moderately Played","Heavily Played"].map(cond => {
-              const qty = group.conditions[cond] || 0;
-              const disabled = qty === 0;
-              return `
-                <button
-                  class="cond-tab ${disabled ? "disabled" : ""}"
-                  data-cond="${cond}"
-                  ${disabled ? "aria-disabled='true'" : ""}
-                >
-                  ${cond.split(" ")[0]}
-                </button>
-              `;
-            }).join("")}
-          </div>
+    <div class="cond-tabs">
+      ${["Near Mint","Lightly Played","Moderately Played","Heavily Played"].map(cond => {
+        const qty = group.conditions[cond] || 0;
+        const disabled = qty === 0;
+        const label =
+          cond === "Near Mint" ? "Near" :
+          cond === "Lightly Played" ? "Lightly" :
+          cond === "Moderately Played" ? "Moderately" : "Heavily";
 
-          <div class="cart-summary">
-            <strong>$${money(skuTotal)}</strong>
-            <div class="cart-sub">
-              In cart (all conditions): ${skuQty} • Subtotal: $${money(skuTotal)}
-            </div>
-          </div>
-        </div>
-      `;
+        return `
+          <button
+            class="cond-tab ${disabled ? "disabled" : ""}"
+            data-cond="${cond}"
+            ${disabled ? "aria-disabled='true'" : ""}
+            type="button"
+          >${label}</button>
+        `;
+      }).join("")}
+    </div>
+  </div>
 
-      listEl.appendChild(row);
-    });
+  <div class="cart-right">
+    <div class="cart-summary">
+      <strong>$${money(skuTotal)}</strong>
+      <div class="cart-sub">
+        In cart (all conditions): ${skuQty} • Subtotal: $${money(skuTotal)}
+      </div>
+    </div>
+  </div>
+`;
+
 
     totalEl.textContent = money(grandTotal);
   }

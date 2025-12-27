@@ -1321,6 +1321,86 @@ p {
   color:#b00020;
   font-weight:600;
 }
+/* Sell cart list should NOT be default bullets */
+.cart-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.cart-row {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 90px 1fr 140px;
+  gap: 16px;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e7e7e7;
+  border-radius: 14px;
+  padding: 16px;
+  margin: 14px 0;
+  box-shadow: 0 10px 25px rgba(0,0,0,.06);
+}
+
+.cart-left {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.cart-thumb {
+  width: 80px;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+}
+
+.cart-main h3 {
+  margin: 0 0 8px;
+}
+
+.cond-tabs {
+  display: inline-flex;
+  background: #f3f3f3;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.cond-tab {
+  border: 0;
+  background: transparent;
+  padding: 8px 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cond-tab.active {
+  background: #111;
+  color: #fff;
+}
+
+.cond-tab.disabled,
+.cond-tab[aria-disabled="true"] {
+  opacity: .35;
+  cursor: not-allowed;
+}
+
+.cart-right {
+  text-align: right;
+}
+
+.cart-summary strong {
+  display: block;
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.cart-sub {
+  font-size: 13px;
+  opacity: .8;
+}
 
 </main>
 
