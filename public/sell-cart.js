@@ -1,9 +1,8 @@
 (() => {
-  console.log("SELL-CART.JS LOADED ✅");
+  console.log("SELL-CART.JS LOADED ✅ (v2)");
 
   const CART_KEY = "sellCart";
 
-  // Tabs (match Buy Cart style)
   const TAB_ORDER = ["NM", "LP", "MP", "HP"];
   const TAB_TO_COND = {
     NM: "Near Mint",
@@ -12,7 +11,7 @@
     HP: "Heavily Played"
   };
 
-  // If your sell pricing uses different multipliers than buy, change these:
+  // If you DON'T store per-condition cents, we fall back to base * multiplier:
   const CONDITION_MULT = {
     "Near Mint": 1.0,
     "Lightly Played": 0.9,
@@ -20,7 +19,6 @@
     "Heavily Played": 0.65
   };
 
-  // Cache active tab per SKU so it doesn't reset on re-render
   const activeTabBySku = new Map();
 
   function normalizeCondition(cond) {
@@ -31,15 +29,6 @@
 
   function moneyFromCents(cents) {
     return `$${(Number(cents || 0) / 100).toFixed(2)}`;
-  }
-
-  function clampInt(n, min, max) {
-    n = Number(n);
-    if (!Number.isFinite(n)) n = min;
-    n = Math.floor(n);
-    if (n < min) n = min;
-    if (n > max) n = max;
-    return n;
   }
 
   function loadCart() {
@@ -54,7 +43,6 @@
 
   function saveCart(cart) {
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    // If you have a badge script that listens for storage, this helps too:
     window.dispatchEvent(new Event("storage"));
   }
 
@@ -73,16 +61,102 @@
   function qtyByTabForSku(cart, sku) {
     const out = { NM: 0, LP: 0, MP: 0, HP: 0 };
     for (const tab of TAB_ORDER) {
-      const cond = TAB_TO_COND[tab];
-      out[tab] = cartQtyFor(cart, sku, cond);
+      out[tab] = cartQtyFor(cart, sku, TAB_TO_COND[tab]);
     }
     return out;
   }
 
-  function centsForCondition(baseCents, condition) {
+  function firstTabWithQty(qtyByTab) {
+    for (const tab of TAB_ORDER) {
+      if ((qtyByTab[tab] || 0) > 0) return tab;
+    }
+    return "NM";
+  }
+
+  // -----------------------------
+  // SELL LIST parsing (robust)
+  // -----------------------------
+  function getUnitCentsFromSelllist(product, condition) {
     const cond = normalizeCondition(condition);
-    const m = CONDITION_MULT[cond] ?? 1.0;
-    return Math.round(Number(baseCents || 0) * m);
+
+    // 1) prices_cents object by condition name
+    if (product?.prices_cents && typeof product.prices_cents === "object") {
+      const v = Number(product.prices_cents[cond] ?? 0);
+      if (Number.isFinite(v) && v > 0) return Math.round(v);
+    }
+
+    // 2) price_cents by condition keys: nm_cents, lp_cents, mp_cents, hp_cents
+    const keyByCond = {
+      "Near Mint": "nm_cents",
+      "Lightly Played": "lp_cents",
+      "Moderately Played": "mp_cents",
+      "Heavily Played": "hp_cents"
+    };
+    const k = keyByCond[cond];
+    if (k && product && product[k] != null) {
+      const v = Number(product[k]);
+      if (Number.isFinite(v) && v > 0) return Math.round(v);
+    }
+
+    // 3) prices in dollars by tab: nm/lp/mp/hp
+    const keyByCondDollars = {
+      "Near Mint": "nm",
+      "Lightly Played": "lp",
+      "Moderately Played": "mp",
+      "Heavily Played": "hp"
+    };
+    const kd = keyByCondDollars[cond];
+    if (kd && product && product[kd] != null) {
+      const dollars = Number(product[kd]);
+      if (Number.isFinite(dollars) && dollars > 0) return Math.round(dollars * 100);
+    }
+
+    // 4) base price_cents with multiplier fallback
+    const baseCents = Number(product?.price_cents || 0);
+    if (Number.isFinite(baseCents) && baseCents > 0) {
+      const mult = CONDITION_MULT[cond] ?? 1.0;
+      return Math.round(baseCents * mult);
+    }
+
+    return 0;
+  }
+
+  function getMaxForCondition(product, condition) {
+    const cond = normalizeCondition(condition);
+
+    // 1) max object by condition name
+    if (product?.max && typeof product.max === "object") {
+      const v = Number(product.max[cond] ?? 0);
+      return Number.isFinite(v) ? Math.max(0, Math.floor(v)) : 0;
+    }
+
+    // 2) max_nm / max_lp / ...
+    const keyByCond = {
+      "Near Mint": "max_nm",
+      "Lightly Played": "max_lp",
+      "Moderately Played": "max_mp",
+      "Heavily Played": "max_hp"
+    };
+    const k = keyByCond[cond];
+    if (k && product && product[k] != null) {
+      const v = Number(product[k]);
+      return Number.isFinite(v) ? Math.max(0, Math.floor(v)) : 0;
+    }
+
+    // 3) camelCase: maxNM / maxLP ...
+    const keyByCondCamel = {
+      "Near Mint": "maxNM",
+      "Lightly Played": "maxLP",
+      "Moderately Played": "maxMP",
+      "Heavily Played": "maxHP"
+    };
+    const kc = keyByCondCamel[cond];
+    if (kc && product && product[kc] != null) {
+      const v = Number(product[kc]);
+      return Number.isFinite(v) ? Math.max(0, Math.floor(v)) : 0;
+    }
+
+    return 0;
   }
 
   async function fetchSelllist() {
@@ -93,22 +167,9 @@
     return data.selllist;
   }
 
-  // We expect selllist.json entries like:
-  // selllist[SKU] = { name, price_cents, image, max: { "Near Mint": 13, ... } }
-  function maxForCondition(product, condition) {
-    const cond = normalizeCondition(condition);
-    const m = product?.max && typeof product.max === "object" ? Number(product.max[cond] ?? 0) : 0;
-    return Number.isFinite(m) ? m : 0;
-  }
-
-  function firstTabWithQty(qtyByTab) {
-    for (const tab of TAB_ORDER) {
-      if ((qtyByTab[tab] || 0) > 0) return tab;
-    }
-    return "NM";
-  }
-
-  // ===== DOM =====
+  // -----------------------------
+  // DOM
+  // -----------------------------
   const listEl = document.getElementById("sellCartList");
   const totalEl = document.getElementById("sellCartTotal");
   const clearBtn = document.getElementById("sellClearCartBtn");
@@ -121,6 +182,8 @@
     console.warn("sell-cart.js: missing #sellCartList or #sellCartTotal");
     return;
   }
+
+  let selllistCache = null;
 
   if (clearBtn) {
     clearBtn.addEventListener("click", () => {
@@ -143,12 +206,10 @@
         return;
       }
 
-      // Build a detailed sell order from selllist pricing (server can also compute; this is for email breakdown)
       try {
         if (msgEl) { msgEl.textContent = "Submitting…"; msgEl.style.color = "#333"; }
 
-        // Load selllist to compute totals/lines
-        const selllist = await fetchSelllist();
+        if (!selllistCache) selllistCache = await fetchSelllist();
 
         const order = [];
         let totalCents = 0;
@@ -157,11 +218,11 @@
           const sku = String(item.sku || "").trim();
           const cond = normalizeCondition(item.condition);
           const qty = Math.max(1, Number(item.qty || 0));
-          const p = selllist[sku];
+
+          const p = selllistCache[sku];
           if (!p) continue;
 
-          const baseCents = Number(p.price_cents || 0);
-          const unitCents = centsForCondition(baseCents, cond);
+          const unitCents = getUnitCentsFromSelllist(p, cond);
           totalCents += unitCents * qty;
 
           order.push({
@@ -169,7 +230,7 @@
             name: p.name || sku,
             condition: cond,
             qty,
-            unitPrice: (unitCents / 100) // matches your existing server formatting
+            unitPrice: (unitCents / 100)
           });
         }
 
@@ -177,7 +238,7 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            name: "", // optional if you want
+            name: "",
             email,
             total: (totalCents / 100).toFixed(2),
             order
@@ -185,12 +246,9 @@
         });
 
         const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) throw new Error(data.error || "Submit failed");
 
-        if (!res.ok || !data.ok) {
-          throw new Error(data.error || "Submit failed");
-        }
-
-        // ✅ clear sell cart after successful submit
+        // ✅ clear on success
         clearCart();
         render();
 
@@ -208,11 +266,99 @@
     });
   }
 
-  // ===== Render =====
-  let selllistCache = null;
+  // -----------------------------
+  // CLICK HANDLER (attach to listEl)
+  // -----------------------------
+  listEl.addEventListener("click", (e) => {
+    const row = e.target.closest(".cart-item");
+    if (!row) return;
 
+    const sku = String(row.dataset.sku || "").trim();
+    if (!sku) return;
+
+    // Tabs
+    const tabBtn = e.target.closest(".cond-tab");
+    if (tabBtn) {
+      if (tabBtn.getAttribute("aria-disabled") === "true") return;
+      if (tabBtn.classList.contains("disabled")) return;
+
+      const tab = String(tabBtn.dataset.tab || "NM").toUpperCase();
+      activeTabBySku.set(sku, tab);
+      render(); // re-render keeps this tab
+      return;
+    }
+
+    // Qty +
+    if (e.target.closest(".qty-plus")) {
+      console.log("sell cart + clicked", sku);
+
+      const tab = String(activeTabBySku.get(sku) || row.dataset.activeTab || "NM").toUpperCase();
+      const cond = TAB_TO_COND[tab] || "Near Mint";
+
+      const cart = loadCart();
+      const p = selllistCache?.[sku];
+      const maxCap = p ? getMaxForCondition(p, cond) : 0;
+
+      const current = cartQtyFor(cart, sku, cond);
+      if (maxCap > 0 && current >= maxCap) return; // enforce max when provided
+      if (maxCap === 0) return; // if truly 0, don't allow adding
+
+      const idx = cart.findIndex(i => String(i.sku) === sku && normalizeCondition(i.condition) === cond);
+      if (idx >= 0) cart[idx].qty = Math.max(1, Number(cart[idx].qty || 0) + 1);
+      else cart.push({ sku, condition: cond, qty: 1 });
+
+      saveCart(cart);
+      render();
+      return;
+    }
+
+    // Qty -
+    if (e.target.closest(".qty-minus")) {
+      console.log("sell cart - clicked", sku);
+
+      const tab = String(activeTabBySku.get(sku) || row.dataset.activeTab || "NM").toUpperCase();
+      const cond = TAB_TO_COND[tab] || "Near Mint";
+
+      const cart = loadCart();
+      const idx = cart.findIndex(i => String(i.sku) === sku && normalizeCondition(i.condition) === cond);
+      if (idx === -1) return;
+
+      cart[idx].qty = Number(cart[idx].qty || 0) - 1;
+      if (cart[idx].qty <= 0) cart.splice(idx, 1);
+
+      saveCart(cart);
+      render();
+      return;
+    }
+
+    // Remove condition
+    if (e.target.closest(".remove-condition-btn")) {
+      const tab = String(activeTabBySku.get(sku) || row.dataset.activeTab || "NM").toUpperCase();
+      const cond = TAB_TO_COND[tab] || "Near Mint";
+
+      let cart = loadCart();
+      cart = cart.filter(i => !(String(i.sku) === sku && normalizeCondition(i.condition) === cond));
+      saveCart(cart);
+      render();
+      return;
+    }
+  });
+
+  // -----------------------------
+  // RENDER
+  // -----------------------------
   async function render() {
     const cart = loadCart();
+
+    // Load selllist once
+    try {
+      if (!selllistCache) selllistCache = await fetchSelllist();
+    } catch (e) {
+      console.error(e);
+      listEl.innerHTML = `<li style="list-style:none;color:crimson;">Failed to load sell list.</li>`;
+      totalEl.textContent = "0.00";
+      return;
+    }
 
     // Group by SKU
     const bySku = new Map();
@@ -227,72 +373,60 @@
       });
     }
 
-    // Load selllist once
-    try {
-      if (!selllistCache) selllistCache = await fetchSelllist();
-    } catch (e) {
-      console.error(e);
-      listEl.innerHTML = `<li style="color:crimson;">Failed to load sell list.</li>`;
-      totalEl.textContent = "0.00";
-      return;
-    }
-
-    // Build rows
     listEl.innerHTML = "";
-    let totalCents = 0;
 
     const skus = Array.from(bySku.keys());
-
     if (skus.length === 0) {
       totalEl.textContent = "0.00";
-      listEl.innerHTML = `<li style="list-style:none; opacity:.75;">Your sell cart is empty.</li>`;
+      listEl.innerHTML = `<li style="list-style:none;opacity:.75;">Your sell cart is empty.</li>`;
       return;
     }
+
+    let totalCents = 0;
 
     for (const sku of skus) {
       const p = selllistCache[sku];
       if (!p) continue;
 
       const name = String(p.name || sku);
+
       const img = String(p.image || "");
       const imgSrc = img ? encodeURI(img.startsWith("/") ? img : `/${img}`) : "";
 
-      const baseCents = Number(p.price_cents || 0);
-
       const qtyByTab = qtyByTabForSku(cart, sku);
 
-      // Preserve active tab per SKU
-      const savedTab = activeTabBySku.get(sku);
-      const defaultTab = savedTab || firstTabWithQty(qtyByTab);
+      // Active tab per SKU
+      const saved = activeTabBySku.get(sku);
+      const defaultTab = saved || firstTabWithQty(qtyByTab);
       const activeTab = TAB_ORDER.includes(defaultTab) ? defaultTab : "NM";
       activeTabBySku.set(sku, activeTab);
 
       const activeCond = TAB_TO_COND[activeTab];
       const activeQty = qtyByTab[activeTab] || 0;
 
-      const unitCents = centsForCondition(baseCents, activeCond);
-      const subtotalCentsForCond = unitCents * activeQty;
+      // Per-condition unit cents (robust)
+      const unitCents = getUnitCentsFromSelllist(p, activeCond);
 
-      const inCartAll = TAB_ORDER.reduce((s, t) => s + (qtyByTab[t] || 0), 0);
+      // subtotal for active condition
+      const activeSubtotalCents = unitCents * activeQty;
 
-      // Total subtotal for this SKU across conditions
+      // subtotal across ALL conditions for this SKU
       const skuSubtotalCents =
-        (centsForCondition(baseCents, TAB_TO_COND.NM) * (qtyByTab.NM || 0)) +
-        (centsForCondition(baseCents, TAB_TO_COND.LP) * (qtyByTab.LP || 0)) +
-        (centsForCondition(baseCents, TAB_TO_COND.MP) * (qtyByTab.MP || 0)) +
-        (centsForCondition(baseCents, TAB_TO_COND.HP) * (qtyByTab.HP || 0));
+        (getUnitCentsFromSelllist(p, TAB_TO_COND.NM) * (qtyByTab.NM || 0)) +
+        (getUnitCentsFromSelllist(p, TAB_TO_COND.LP) * (qtyByTab.LP || 0)) +
+        (getUnitCentsFromSelllist(p, TAB_TO_COND.MP) * (qtyByTab.MP || 0)) +
+        (getUnitCentsFromSelllist(p, TAB_TO_COND.HP) * (qtyByTab.HP || 0));
 
       totalCents += skuSubtotalCents;
 
-      // Max capacity for active condition
-      const maxCap = maxForCondition(p, activeCond);
-      const canPlus = activeQty < maxCap;
+      const inCartAll = TAB_ORDER.reduce((s, t) => s + (qtyByTab[t] || 0), 0);
+
+      const maxCap = getMaxForCondition(p, activeCond);
+      const canPlus = maxCap > 0 && activeQty < maxCap;
 
       const li = document.createElement("li");
       li.className = "cart-item";
       li.dataset.sku = sku;
-      li.dataset.name = name;
-      li.dataset.basecents = String(baseCents);
       li.dataset.activeTab = activeTab;
 
       li.innerHTML = `
@@ -305,7 +439,7 @@
             <div class="cond-tabs" role="tablist" aria-label="Condition">
               ${TAB_ORDER.map(tab => {
                 const tabQty = qtyByTab[tab] || 0;
-                const disabled = tabQty <= 0; // ✅ grey out if none in cart
+                const disabled = tabQty <= 0;
                 const isActive = tab === activeTab;
                 return `
                   <button
@@ -313,7 +447,6 @@
                     type="button"
                     data-tab="${tab}"
                     aria-disabled="${disabled ? "true" : "false"}"
-                    title="${disabled ? "None in cart" : ""}"
                   >${tab}</button>
                 `;
               }).join("")}
@@ -338,11 +471,9 @@
               <button class="qty-plus" type="button" ${!canPlus ? "disabled" : ""}>+</button>
             </div>
 
-            <div class="line-total">${moneyFromCents(subtotalCentsForCond)}</div>
+            <div class="line-total">${moneyFromCents(activeSubtotalCents)}</div>
 
-            <button class="remove-condition-btn" type="button">
-              Remove condition
-            </button>
+            <button class="remove-condition-btn" type="button">Remove condition</button>
           </div>
         </div>
       `;
@@ -353,88 +484,7 @@
     totalEl.textContent = (totalCents / 100).toFixed(2);
   }
 
-  // ===== Click handling (delegation) =====
-  document.addEventListener("click", (e) => {
-    const row = e.target.closest(".cart-item");
-    if (!row) return;
-
-    const sku = String(row.dataset.sku || "").trim();
-    if (!sku) return;
-
-    // Tabs
-    const tabBtn = e.target.closest(".cond-tab");
-    if (tabBtn) {
-      if (tabBtn.getAttribute("aria-disabled") === "true") return;
-      if (tabBtn.classList.contains("disabled")) return;
-
-      const tab = String(tabBtn.dataset.tab || "NM").toUpperCase();
-      row.dataset.activeTab = tab;
-      activeTabBySku.set(sku, tab);
-      render();
-      return;
-    }
-
-    // Qty +
-    if (e.target.closest(".qty-plus")) {
-      const tab = String(row.dataset.activeTab || "NM").toUpperCase();
-      const cond = TAB_TO_COND[tab] || "Near Mint";
-
-      const cart = loadCart();
-      const p = selllistCache?.[sku];
-      const maxCap = p ? maxForCondition(p, cond) : 0;
-
-      const current = cartQtyFor(cart, sku, cond);
-      if (current >= maxCap) return; // ✅ enforce max
-
-      // increment this SKU+condition
-      const idx = cart.findIndex(i => String(i.sku) === sku && normalizeCondition(i.condition) === cond);
-      if (idx >= 0) cart[idx].qty = Math.max(1, Number(cart[idx].qty || 0) + 1);
-      else cart.push({ sku, condition: cond, qty: 1 });
-
-      saveCart(cart);
-      render();
-      return;
-    }
-
-    // Qty -
-    if (e.target.closest(".qty-minus")) {
-      const tab = String(row.dataset.activeTab || "NM").toUpperCase();
-      const cond = TAB_TO_COND[tab] || "Near Mint";
-
-      const cart = loadCart();
-      const idx = cart.findIndex(i => String(i.sku) === sku && normalizeCondition(i.condition) === cond);
-      if (idx === -1) return;
-
-      cart[idx].qty = Number(cart[idx].qty || 0) - 1;
-      if (cart[idx].qty <= 0) cart.splice(idx, 1);
-
-      saveCart(cart);
-
-      // keep current tab even if it becomes 0; render() will grey it out and jump to first non-zero
-      // but we DO NOT want to snap to NM on +/- clicks, so preserve user's tab unless empty:
-      const stillHas = cartQtyFor(cart, sku, cond) > 0;
-      if (!stillHas) {
-        // keep tab stored, but render will select first non-zero tab automatically if current becomes empty
-      }
-
-      render();
-      return;
-    }
-
-    // Remove condition
-    if (e.target.closest(".remove-condition-btn")) {
-      const tab = String(row.dataset.activeTab || "NM").toUpperCase();
-      const cond = TAB_TO_COND[tab] || "Near Mint";
-
-      let cart = loadCart();
-      cart = cart.filter(i => !(String(i.sku) === sku && normalizeCondition(i.condition) === cond));
-      saveCart(cart);
-      render();
-      return;
-    }
-  });
-
-  // Initial load
   render();
+
 })();
 

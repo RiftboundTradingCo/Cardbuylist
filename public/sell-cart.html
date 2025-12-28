@@ -1,77 +1,80 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Buy Cards | Riftbound Trading Co</title>
-  <link rel="stylesheet" href="/style.css?v=205">
-</head>
-<body>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sell Cart • Riftbound Trading Co</title>
 
-<header class="site-header">
-  <nav class="nav">
-    <a href="/" class="logo-link">
-      <img
-        src="/images/riftbound-logo.jpg"
-        alt="Riftbound Trading Co"
-        class="site-logo"
-      >
+  <link rel="stylesheet" href="/style.css?v=1" />
+</head>
+
+<body>
+  <!-- NAV / HEADER (keep your existing header/nav if you already have one) -->
+  <header class="topbar">
+    <a class="brand" href="/index.html">
+      <img src="/riftboundtradingco%20logo.jpg" alt="Riftbound Trading Co" class="brand-logo" />
+      <span class="brand-name">Riftbound Trading Co</span>
     </a>
 
-    <nav class="nav-links">
-      <a href="/" class="nav-link">Sell Cards</a>
- <a href="/sell-cart.html" class="nav-link">
-  Sell Cart
-  <span id="sellCartBadge" class="cart-badge hidden">0</span>
-</a>
-  <a href="/buy.html" class="nav-link">Buy Cards</a>
-  <a href="/buy-cart.html" class="nav-link">
-  Buy Cart
-  <span id="buyCartBadge" class="cart-badge hidden">0</span>
-</a>
+    <nav class="navlinks">
+      <a href="/index.html">Sell Cards</a>
+      <a href="/buy.html">Buy Cards</a>
+      <a href="/buy-cart.html">Buy Cart <span class="cart-badge" data-cart="buy">0</span></a>
+      <a href="/sell-cart.html" class="active">Sell Cart <span class="cart-badge" data-cart="sell">0</span></a>
+      <a href="/shipping.html">Shipping</a>
+      <a href="/contact.html">Contact</a>
+    </nav>
+  </header>
 
-  <a href="/shipping.html" class="nav-link">Shipping</a>
-  <a href="/contact.html" class="nav-link">Contact</a>
-</nav>
-</header>
+  <!-- MAIN -->
+  <main class="page">
+    <h1>Your Sell Cart</h1>
+    <p>Review your sell items below.</p>
 
-<main>
-  <h1>Your Sell Cart</h1>
-  <p>Review your sell items below.</p>
+    <div class="cart-summary">
+      <div class="cart-total">
+        <span>Total:</span>
+        <strong>$<span id="sellCartTotal">0.00</span></strong>
+      </div>
 
-  <ul id="sellCartList" class="cart-list"></ul>
+      <div class="cart-checkout">
+        <label for="sellEmail">Email for confirmation</label>
+        <div class="cart-checkout-row">
+          <input
+            id="sellEmail"
+            type="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+          />
+          <button id="sellSubmitBtn" type="button">Submit Sell Order</button>
+        </div>
 
-  <p class="recap-total">
-    <strong>Total:</strong> $<span id="sellCartTotal">0.00</span>
-  </p>
+        <div id="sellCartMessage" class="cart-message" aria-live="polite"></div>
+      </div>
 
-  <div class="checkout-row">
-    <label for="sellEmail"><strong>Email for confirmation</strong></label>
-    <input id="sellEmail" type="email" placeholder="you@example.com">
-    <button id="sellSubmitBtn" type="button">Submit Sell Order</button>
+      <div class="cart-actions">
+        <button id="sellClearCartBtn" type="button" class="danger-outline">
+          Clear Cart
+        </button>
+        <a href="/index.html" class="link-back">← Continue shopping</a>
+      </div>
+    </div>
+
+    <!-- CART LIST -->
+    <ul id="sellCartList" class="cart-list"></ul>
+  </main>
+
+  <!-- IMAGE MODAL (optional, only if you want zoom like buy cart) -->
+  <div id="imageModal" class="image-modal hidden">
+    <span id="imageModalClose" class="image-modal-close">&times;</span>
+    <img id="imageModalImg" src="" alt="Card image enlarged" />
   </div>
 
-  <p id="sellCheckoutMessage" class="checkout-message"></p>
+  <!-- SCRIPTS (ORDER MATTERS) -->
+  <script src="/sell-cart.js?v=2"></script>
+  <script src="/cart-badge.js?v=1"></script>
 
-  <button id="sellClearCartBtn" class="clear-cart-btn" type="button">Clear Cart</button>
-
-  <p style="margin-top:16px;">
-    <a href="/index.html">← Continue shopping</a>
-  </p>
-<ul id="sellCartList"></ul>
-
-<strong>Total:</strong> $<span id="sellCartTotal">0.00</span>
-
-<input id="sellEmail" type="email" placeholder="you@example.com">
-<button id="sellSubmitBtn" type="button">Submit Sell Order</button>
-
-<button id="sellClearCartBtn" type="button">Clear Cart</button>
-
-<p id="sellCartMessage"></p>
-
-</main>
-
-<script src="sell-cart.js?v=1"></script>
-<script src="sell-cart-badge.js?v=1"></script>
-
+  <!-- If you have a shared zoom modal script, include it last. Otherwise remove. -->
+  <!-- <script src="/image-modal.js?v=1"></script> -->
 </body>
 </html>
