@@ -121,7 +121,7 @@
     return Number(item?.max?.[tab] ?? 0);
   }
 
-  // ===== grouping =====
+   // ===== grouping =====
   function groupCart(cart) {
     const groups = new Map();
 
@@ -160,8 +160,14 @@
       }
     }
 
-    return [...groups.values()];
+    // ✅ stable order (prevents “jumping”)
+    const arr = [...groups.values()].sort((a, b) =>
+      String(a.name || "").localeCompare(String(b.name || ""))
+    );
+
+    return arr;
   }
+
 
   function showMsg(text, isError = false) {
     if (!msgEl) return;
