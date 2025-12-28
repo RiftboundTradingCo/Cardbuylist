@@ -89,12 +89,12 @@ p{ margin: 0 0 14px; color: var(--muted); }
 .brand:hover{ text-decoration:none; }
 
 .brand-logo{
-  /* Make logo show clearly */
-  width: 170px;        /* tweak if you want bigger */
+  max-height: 52px;      /* ✅ keeps header compact */
+  width: auto;           /* maintain aspect ratio */
+  max-width: 180px;      /* prevents horizontal overflow */
   height: auto;
-  display:block;
-  border-radius: 10px;
-  box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  display: block;
+  object-fit: contain;
 }
 .brand-name{
   font-weight: 700;
