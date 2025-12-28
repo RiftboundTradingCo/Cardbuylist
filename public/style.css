@@ -711,7 +711,7 @@ button:disabled{
 
 /* Logo: 2x bigger */
 .site-logo {
-  height: 90px;         /* was ~45px: this is your 2x */
+  height: 180px;         /* was ~45px: this is your 2x */
   width: auto;
   display: block;
   border-radius: 8px;
