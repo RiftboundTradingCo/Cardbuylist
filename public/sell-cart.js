@@ -300,43 +300,44 @@ function render() {
     li.dataset.sku = sku || "";
     li.dataset.activeTab = activeTab;
 
-    li.innerHTML = `
-      <div class="cart-card">
-        ${img ? `<img class="cart-thumb" src="${encodeURI(img)}" alt="${title}">` : ""}
+li.innerHTML = `
+  <div class="cart-card">
+    ${img ? `<img class="cart-thumb" src="${encodeURI(img)}" alt="${title}">` : ""}
 
-        <div class="cart-main">
-          <h3 class="cart-title">${title}</h3>
+    <div class="cart-main">
+      <h3 class="cart-title">${title}</h3>
 
-          <div class="cond-tabs" role="tablist" aria-label="Condition">
-            ${tabsHtml}
-          </div>
-
-          <div class="cart-meta">
-            <div>Condition: <strong>${activeCond}</strong></div>
-            <div>Unit: <strong>${moneyCents(unitCents)}</strong></div>
-
-            <div class="cart-subline">
-              In cart (all conditions): <strong>${inCartAll}</strong> •
-              Subtotal: <strong>${moneyCents(subtotalCents)}</strong>
-            </div>
-
-            <div>Max capacity: <strong>${maxCap}</strong></div>
-          </div>
-        </div>
-
-        <div class="cart-right">
-          <div class="qty-controls">
-            <button class="qty-minus" type="button">−</button>
-            <span class="qty-value">${activeQty}</span>
-            <button class="qty-plus" type="button">+</button>
-          </div>
-
-          <div class="line-price">${moneyCents(unitCents * activeQty)}</div>
-
-          <button class="remove-cond-btn" type="button">Remove condition</button>
-        </div>
+      <div class="cond-tabs" role="tablist" aria-label="Condition">
+        ${tabsHtml}
       </div>
-    `;
+
+      <div class="cart-meta">
+        <div>Condition: <strong>${activeCond}</strong></div>
+        <div>Unit: <strong>${moneyCents(unitCents)}</strong></div>
+
+        <div class="cart-subline">
+          In cart (all conditions): <strong>${inCartAll}</strong> •
+          Subtotal: <strong>${moneyCents(subtotalCents)}</strong>
+        </div>
+
+        <div>Max capacity: <strong>${maxCap}</strong></div>
+      </div>
+    </div>
+
+    <div class="cart-right">
+      <div class="qty-controls">
+        <button class="qty-minus" type="button">−</button>
+        <span class="qty-value">${activeQty}</span>
+        <button class="qty-plus" type="button">+</button>
+      </div>
+
+      <div class="line-price">${moneyCents(unitCents * activeQty)}</div>
+
+      <button class="remove-cond-btn" type="button">Remove condition</button>
+    </div>
+  </div>
+`;
+
 
     // clamp buttons based on max
     const plus = li.querySelector(".qty-plus");
