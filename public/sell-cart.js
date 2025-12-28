@@ -1,10 +1,8 @@
 (() => {
   console.log("SELL-CART.JS LOADED ✅");
 
-  // LocalStorage key for sell cart
   const CART_KEY = "sellCart";
 
-  // Tabs ↔ Conditions
   const TAB_ORDER = ["NM", "LP", "MP", "HP"];
   const TAB_TO_COND = {
     NM: "Near Mint",
@@ -12,14 +10,11 @@
     MP: "Moderately Played",
     HP: "Heavily Played",
   };
-
-  // If your selllist only has a single NM price, we apply multipliers
-  // (You can change these later if sell pricing differs)
-  const CONDITION_MULT = {
-    "Near Mint": 1.0,
-    "Lightly Played": 0.9,
-    "Moderately Played": 0.8,
-    "Heavily Played": 0.65,
+  const COND_TO_TAB = {
+    "Near Mint": "NM",
+    "Lightly Played": "LP",
+    "Moderately Played": "MP",
+    "Heavily Played": "HP",
   };
 
   // ===== DOM =====
@@ -31,11 +26,10 @@
   const msgEl = document.getElementById("sellCartMessage");
 
   if (!listEl || !totalEl) {
-    console.warn("sell-cart.js: required elements missing");
+    console.warn("sell-cart.js: required elements missing (#sellCartList / #sellCartTotal)");
     return;
   }
 
-  // ===== helpers =====
   function moneyCents(c) {
     return `$${(Number(c || 0) / 100).toFixed(2)}`;
   }
@@ -60,38 +54,34 @@
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
   }
 
-  // Some older sell flows store {name, condition, qty, unitPrice}
-  // Newer store {sku, condition, qty}
   function getItemKey(item) {
     const sku = String(item.sku || "").trim();
     if (sku) return sku;
-    // fallback key by name
     return `name:${String(item.name || "").trim().toLowerCase()}`;
   }
 
-  // Convert a cart condition (maybe "NM") to full condition
   function condFromCart(item) {
     const c = String(item.condition || "").trim();
+    // if cart uses NM/LP/MP/HP
     if (TAB_TO_COND[c]) return TAB_TO_COND[c];
     return normalizeCond(c);
   }
 
   // ===== Selllist lookup =====
-  let SELL = {}; // raw selllist
-  let SELL_BY_NAME = new Map(); // fallback lookup by name (lowercase)
+  let SELL = {};
+  let SELL_BY_NAME = new Map();
 
   async function loadSelllist() {
     try {
       const res = await fetch("/api/selllist", { cache: "no-store" });
       const data = await res.json();
-      const selllist = data?.selllist || data?.catalog || {};
-
+      const selllist = data?.selllist || {};
       SELL = selllist;
 
       SELL_BY_NAME.clear();
-      for (const [k, v] of Object.entries(SELL)) {
+      for (const [sku, v] of Object.entries(SELL)) {
         const nm = String(v?.name || "").trim().toLowerCase();
-        if (nm) SELL_BY_NAME.set(nm, k);
+        if (nm) SELL_BY_NAME.set(nm, sku);
       }
 
       console.log("selllist loaded:", Object.keys(SELL).length);
@@ -103,10 +93,8 @@
   }
 
   function resolveSellItem(groupKey, groupName) {
-    // groupKey might be SKU or name:...
     if (SELL[groupKey]) return { sku: groupKey, item: SELL[groupKey] };
 
-    // If groupKey is name:xyz, find by name map
     const nameKey = String(groupName || "").trim().toLowerCase();
     const sku = SELL_BY_NAME.get(nameKey);
     if (sku && SELL[sku]) return { sku, item: SELL[sku] };
@@ -114,65 +102,23 @@
     return { sku: groupKey, item: null };
   }
 
-  function getMaxFor(item, cond) {
-    // supports these possible shapes:
-    // max: { "Near Mint": 10, ... }
-    // max_capacity: { ... }
-    // max_nm, max_lp, ...
+  // ✅ MATCHES YOUR JSON:
+  // item.prices: { NM: 0.1, LP: 0.08, MP: 0.05, HP?: ... }  // dollars
+  // item.max:    { NM: 10,  LP: 5,    MP: 0,    HP?: ... }
+  function tabForCondition(cond) {
     const c = normalizeCond(cond);
-
-    const byObj =
-      (item?.max && typeof item.max === "object" && item.max) ||
-      (item?.max_capacity && typeof item.max_capacity === "object" && item.max_capacity) ||
-      null;
-
-    if (byObj) return Number(byObj[c] ?? 0);
-
-    const tab =
-      c === "Near Mint" ? "nm" :
-      c === "Lightly Played" ? "lp" :
-      c === "Moderately Played" ? "mp" : "hp";
-
-    const flat =
-      item?.[`max_${tab}`] ??
-      item?.[`max${tab.toUpperCase()}`] ??
-      item?.[`max${tab}`];
-
-    return Number(flat ?? 0);
-  }
-
-  function getBaseCents(item) {
-    // supports:
-    // buy_cents / price_cents / price (dollars) / buy_price (dollars)
-    const c =
-      item?.buy_cents ??
-      item?.price_cents ??
-      null;
-
-    if (c != null) return Number(c) || 0;
-
-    const dollars =
-      item?.price ??
-      item?.buy_price ??
-      0;
-
-    // if dollars is like 33.03, convert to cents
-    return Math.round(Number(dollars || 0) * 100);
+    return COND_TO_TAB[c] || "NM";
   }
 
   function centsForCondition(item, cond) {
-    const c = normalizeCond(cond);
+    const tab = tabForCondition(cond);
+    const dollars = Number(item?.prices?.[tab] ?? 0);
+    return Math.round(dollars * 100);
+  }
 
-    // If you later store exact cents per condition, support it:
-    // prices_cents: {"Near Mint": 3303, ...}
-    if (item?.prices_cents && typeof item.prices_cents === "object") {
-      const v = Number(item.prices_cents[c] ?? 0);
-      return v;
-    }
-
-    const base = getBaseCents(item);
-    const mult = CONDITION_MULT[c] ?? 1.0;
-    return Math.round(base * mult);
+  function getMaxFor(item, cond) {
+    const tab = tabForCondition(cond);
+    return Number(item?.max?.[tab] ?? 0);
   }
 
   // ===== grouping =====
@@ -203,7 +149,7 @@
       g.condQty[cond] = (g.condQty[cond] || 0) + qty;
     }
 
-    // choose active tab per group: first condition with qty > 0
+    // choose active tab = first condition with qty > 0
     for (const g of groups.values()) {
       for (const tab of TAB_ORDER) {
         const c = TAB_TO_COND[tab];
@@ -215,6 +161,49 @@
     }
 
     return [...groups.values()];
+  }
+
+  function showMsg(text, isError = false) {
+    if (!msgEl) return;
+    msgEl.textContent = text || "";
+    msgEl.style.color = isError ? "red" : "green";
+  }
+
+  // ===== cart mutation =====
+  function setQty(groupKey, cond, qty) {
+    const cart = loadCart();
+    const c = normalizeCond(cond);
+    const q = Math.max(0, Number(qty || 0));
+
+    const newCart = [];
+    for (const it of cart) {
+      const key = getItemKey(it);
+      const itCond = condFromCart(it);
+
+      if (key !== groupKey || itCond !== c) {
+        newCart.push(it);
+      }
+    }
+
+    if (q > 0) {
+      const sample = cart.find(it => getItemKey(it) === groupKey) || {};
+      newCart.push({
+        sku: sample.sku || (groupKey.startsWith("name:") ? "" : groupKey),
+        name: sample.name || "",
+        condition: c, // store full condition
+        qty: q
+      });
+    }
+
+    saveCart(newCart);
+  }
+
+  function getQty(groupKey, cond) {
+    const cart = loadCart();
+    const c = normalizeCond(cond);
+    return cart
+      .filter(it => getItemKey(it) === groupKey && condFromCart(it) === c)
+      .reduce((s, it) => s + (Number(it.qty || 0) || 0), 0);
   }
 
   // ===== render =====
@@ -229,9 +218,10 @@
       const { sku, item } = resolveSellItem(g.key, g.name);
 
       const title = item?.name || g.name || sku || "Unknown";
-      const img = item?.image ? (item.image.startsWith("/") ? item.image : "/" + item.image) : "";
+      const img = item?.image
+        ? (String(item.image).startsWith("/") ? item.image : "/" + item.image)
+        : "";
 
-      // active condition
       const activeTab = g.activeTab || "NM";
       const activeCond = TAB_TO_COND[activeTab];
       const activeQty = Number(g.condQty[activeCond] || 0);
@@ -239,7 +229,6 @@
       const unitCents = item ? centsForCondition(item, activeCond) : 0;
       const maxCap = item ? getMaxFor(item, activeCond) : 0;
 
-      // totals for group
       let inCartAll = 0;
       let subtotalCents = 0;
       for (const tab of TAB_ORDER) {
@@ -253,7 +242,7 @@
       }
       totalCents += subtotalCents;
 
-      // build tabs (disabled when qty is 0 in cart for that condition)
+      // Tabs disabled when qty in cart for that condition = 0
       const tabsHtml = TAB_ORDER.map((tab) => {
         const cond = TAB_TO_COND[tab];
         const q = Number(g.condQty[cond] || 0);
@@ -269,7 +258,6 @@
         `;
       }).join("");
 
-      // qty stepper (only for active condition)
       const li = document.createElement("li");
       li.className = "cart-item";
       li.dataset.groupKey = g.key;
@@ -290,10 +278,12 @@
             <div class="cart-meta">
               <div>Condition: <strong>${activeCond}</strong></div>
               <div>Unit: <strong>${moneyCents(unitCents)}</strong></div>
+
               <div class="cart-subline">
                 In cart (all conditions): <strong>${inCartAll}</strong> •
                 Subtotal: <strong>${moneyCents(subtotalCents)}</strong>
               </div>
+
               <div>Max capacity: <strong>${maxCap}</strong></div>
             </div>
           </div>
@@ -325,55 +315,8 @@
     totalEl.textContent = (totalCents / 100).toFixed(2);
   }
 
-  function showMsg(text, isError = false) {
-    if (!msgEl) return;
-    msgEl.textContent = text || "";
-    msgEl.style.color = isError ? "red" : "green";
-  }
-
-  // ===== cart mutation helpers =====
-  function setQty(groupKey, cond, qty) {
-    const cart = loadCart();
-    const c = normalizeCond(cond);
-    const q = Math.max(0, Number(qty || 0));
-
-    // cart entries are stored per condition line; update or remove
-    const newCart = [];
-    for (const it of cart) {
-      const key = getItemKey(it);
-      const itCond = condFromCart(it);
-
-      if (key !== groupKey || itCond !== c) {
-        newCart.push(it);
-        continue;
-      }
-      // same line — we'll replace it below
-    }
-
-    if (q > 0) {
-      // keep sku/name from existing or group key
-      const sample = cart.find(it => getItemKey(it) === groupKey) || {};
-      newCart.push({
-        sku: sample.sku || (groupKey.startsWith("name:") ? "" : groupKey),
-        name: sample.name || "",
-        condition: c,
-        qty: q
-      });
-    }
-
-    saveCart(newCart);
-  }
-
-  function getQty(groupKey, cond) {
-    const cart = loadCart();
-    const c = normalizeCond(cond);
-    return cart
-      .filter(it => getItemKey(it) === groupKey && condFromCart(it) === c)
-      .reduce((s, it) => s + (Number(it.qty || 0) || 0), 0);
-  }
-
-  // ===== events =====
-  document.addEventListener("click", async (e) => {
+  // ===== click handlers (delegation) =====
+  document.addEventListener("click", (e) => {
     const itemEl = e.target.closest(".cart-item");
     if (!itemEl) return;
 
@@ -381,7 +324,6 @@
     const activeTab = String(itemEl.dataset.activeTab || "NM").toUpperCase();
     const activeCond = TAB_TO_COND[activeTab];
 
-    // tab click
     const tabBtn = e.target.closest(".cond-tab");
     if (tabBtn) {
       if (tabBtn.getAttribute("aria-disabled") === "true") return;
@@ -392,7 +334,6 @@
       return;
     }
 
-    // plus
     if (e.target.closest(".qty-plus")) {
       const { item } = resolveSellItem(groupKey, "");
       const maxCap = item ? getMaxFor(item, activeCond) : 0;
@@ -404,7 +345,6 @@
       return;
     }
 
-    // minus
     if (e.target.closest(".qty-minus")) {
       const cur = getQty(groupKey, activeCond);
       const next = Math.max(0, cur - 1);
@@ -413,7 +353,6 @@
       return;
     }
 
-    // remove condition
     if (e.target.closest(".remove-cond-btn")) {
       setQty(groupKey, activeCond, 0);
       render();
@@ -421,6 +360,7 @@
     }
   });
 
+  // ===== clear =====
   if (clearBtn) {
     clearBtn.addEventListener("click", () => {
       localStorage.removeItem(CART_KEY);
@@ -429,6 +369,7 @@
     });
   }
 
+  // ===== submit =====
   if (submitBtn) {
     submitBtn.addEventListener("click", async () => {
       showMsg("");
@@ -445,8 +386,6 @@
         return;
       }
 
-      // Build order lines for /api/submit
-      // Your server expects: { name, email, total, order:[{name, condition, qty, unitPrice}] }
       const groups = groupCart(cart);
 
       let totalCents = 0;
@@ -470,7 +409,7 @@
             name: title,
             condition: cond,
             qty,
-            unitPrice: (unitCents / 100) // dollars
+            unitPrice: (unitCents / 100),
           });
         }
       }
@@ -486,8 +425,8 @@
             name: "Sell Cart Customer",
             email,
             total: (totalCents / 100).toFixed(2),
-            order: orderLines
-          })
+            order: orderLines,
+          }),
         });
 
         const data = await res.json().catch(() => ({}));
@@ -496,10 +435,8 @@
           return;
         }
 
-        // ✅ Clear sell cart after submit
         localStorage.removeItem(CART_KEY);
         render();
-
         showMsg("Sell order submitted! Check your email confirmation.");
       } catch (err) {
         console.error(err);
