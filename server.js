@@ -414,25 +414,54 @@ Cards:
 ${lines.map(l => `- ${l}`).join("\n")}
 `;
 
-    if (!resend || !EMAIL_FROM || !OWNER_EMAIL) {
-      console.warn("Sell email skipped (Resend/EMAIL_FROM/OWNER_EMAIL not configured)");
-      return res.json({ ok: true, skipped: true });
-    }
+// --- send emails (Resend) ---
+if (!resend || !EMAIL_FROM) {
+  console.warn("Sell email skipped (Resend/EMAIL_FROM not configured)");
+  return res.json({ ok: true, skipped: true });
+}
 
-    const r = await resend.emails.send({
-      from: EMAIL_FROM,
-      to: OWNER_EMAIL,
-      subject,
-      text
-    });
+// 1) Email YOU (owner)
+if (OWNER_EMAIL) {
+  await resend.emails.send({
+    from: EMAIL_FROM,
+    to: OWNER_EMAIL,
+    subject,
+    text
+  });
+} else {
+  console.warn("OWNER_EMAIL not set; skipping owner email.");
+}
 
-    console.log("Resend sell order email result:", r);
-    res.json({ ok: true });
-  } catch (e) {
-    console.error("Sell submit error:", e);
-    res.status(500).json({ ok: false, error: e.message || "Could not send sell email" });
-  }
-});
+// 2) Email CUSTOMER confirmation
+if (email) {
+  const customerSubject = `We received your sell order`;
+  const customerText =
+`Thanks! We received your sell order.
+
+Name: ${name}
+Email: ${email}
+Total: $${total}
+
+Cards:
+${lines.map(l => `- ${l}`).join("\n")}
+
+We’ll review your order and follow up soon.
+
+Riftbound Trading Co
+`;
+
+  await resend.emails.send({
+    from: EMAIL_FROM,
+    to: email,
+    subject: customerSubject,
+    text: customerText
+  });
+} else {
+  console.warn("Customer email missing; skipping customer confirmation.");
+}
+
+return res.json({ ok: true });
+
 
 /* =========================
    START
