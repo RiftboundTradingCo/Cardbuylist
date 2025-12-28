@@ -89,7 +89,7 @@ p{ margin: 0 0 14px; color: var(--muted); }
 .brand:hover{ text-decoration:none; }
 
 .brand-logo{
-  max-height: 52px;      /* ✅ keeps header compact */
+  max-height: 90px;      /* ✅ keeps header compact */
   width: auto;           /* maintain aspect ratio */
   max-width: 180px;      /* prevents horizontal overflow */
   height: auto;
