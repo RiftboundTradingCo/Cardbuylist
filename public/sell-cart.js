@@ -53,6 +53,10 @@
   function saveCart(cart) {
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
   }
+// ✅ refresh header badges immediately (sell + buy)
+  if (typeof window.updateCartBadges === "function") {
+    window.updateCartBadges();
+  }
 
   function getItemKey(item) {
     const sku = String(item.sku || "").trim();
@@ -203,7 +207,10 @@
 
     saveCart(newCart);
   }
-
+// ✅ refresh header badges immediately (sell + buy)
+  if (typeof window.updateCartBadges === "function") {
+    window.updateCartBadges();
+  }
   function getQty(groupKey, cond) {
     const cart = loadCart();
     const c = normalizeCond(cond);
