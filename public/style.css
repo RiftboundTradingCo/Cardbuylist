@@ -906,6 +906,39 @@ body {
   margin: 0 auto;
   filter: drop-shadow(0 10px 10px rgba(0,0,0,0.22));
 }
+/* ===== Wooden shelf page background ===== */
+body {
+  /* shelves background */
+  background-image: url("/images/wood-shelves.jpg");
+  background-repeat: repeat-y;      /* repeat down the page */
+  background-size: cover;           /* fill width */
+  background-position: top center;
+  background-attachment: fixed;     /* nice “anchored wall” feel */
+}
+
+/* optional: darken slightly for readability */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.12);     /* tweak 0.08–0.18 */
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* make sure your content is above the overlay */
+header, main, .page, .container {
+  position: relative;
+  z-index: 1;
+}
+
+/* give card grid a little “floating off the shelf” depth */
+.store-card, .sell-card, .card, .panel, .cart-card {
+  background: rgba(255,255,255,0.92); /* slightly see-through looks great */
+  backdrop-filter: blur(1px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.20);
+}
+
 
 /* ===============================
    SMALL UTIL
