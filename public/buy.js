@@ -51,9 +51,15 @@
   function loadCart() {
     try { return JSON.parse(localStorage.getItem("buyCart")) || []; } catch { return []; }
   }
-  function saveCart(cart) {
-    localStorage.setItem("buyCart", JSON.stringify(cart));
-  }
+function saveCart(cart) {
+  localStorage.setItem("buyCart", JSON.stringify(cart));
+
+  // tell badge script in THIS tab
+  window.dispatchEvent(new Event("cart:changed"));
+
+  // optional direct call if available
+  if (typeof window.updateCartBadges === "function") window.updateCartBadges();
+}
 
   function cartQtyFor(cart, sku, condition) {
     const cond = normalizeCondition(condition);
