@@ -381,7 +381,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
 });
 
 /**
- * Sell form submit -> sends you an email (your existing sell flow)
+ * Sell form submit -> sends you + customer confirmation
  * Client sends: { name, email, total, order: [{sku?, name, condition, qty, unitPrice}] }
  */
 app.post("/api/submit", async (req, res) => {
@@ -391,7 +391,9 @@ app.post("/api/submit", async (req, res) => {
     const total = String(req.body?.total || "").trim();
     const order = Array.isArray(req.body?.order) ? req.body.order : [];
 
-    if (!order.length) return res.status(400).json({ ok: false, error: "Empty sell order" });
+    if (!order.length) {
+      return res.status(400).json({ ok: false, error: "Empty sell order" });
+    }
 
     const lines = order.map((l) => {
       const qty = Number(l.qty || 0) || 0;
@@ -402,8 +404,8 @@ app.post("/api/submit", async (req, res) => {
       return `${qty}x ${cardName} (${cond}) — $${unit.toFixed(2)} each = $${lineTotal.toFixed(2)}`;
     });
 
-    const subject = `New Sell Order from ${name || "Customer"}`;
-    const text =
+    const ownerSubject = `New Sell Order from ${name || "Customer"}`;
+    const ownerText =
 `New sell order submitted
 
 Name: ${name}
@@ -414,28 +416,28 @@ Cards:
 ${lines.map(l => `- ${l}`).join("\n")}
 `;
 
-// --- send emails (Resend) ---
-if (!resend || !EMAIL_FROM) {
-  console.warn("Sell email skipped (Resend/EMAIL_FROM not configured)");
-  return res.json({ ok: true, skipped: true });
-}
+    // --- send emails (Resend) ---
+    if (!resend || !EMAIL_FROM) {
+      console.warn("Sell email skipped (Resend/EMAIL_FROM not configured)");
+      return res.json({ ok: true, skipped: true });
+    }
 
-// 1) Email YOU (owner)
-if (OWNER_EMAIL) {
-  await resend.emails.send({
-    from: EMAIL_FROM,
-    to: OWNER_EMAIL,
-    subject,
-    text
-  });
-} else {
-  console.warn("OWNER_EMAIL not set; skipping owner email.");
-}
+    // 1) Email YOU (owner)
+    if (OWNER_EMAIL) {
+      await resend.emails.send({
+        from: EMAIL_FROM,
+        to: OWNER_EMAIL,
+        subject: ownerSubject,
+        text: ownerText
+      });
+    } else {
+      console.warn("OWNER_EMAIL not set; skipping owner email.");
+    }
 
-// 2) Email CUSTOMER confirmation
-if (email) {
-  const customerSubject = `We received your sell order`;
-  const customerText =
+    // 2) Email CUSTOMER confirmation
+    if (email) {
+      const customerSubject = "We received your sell order";
+      const customerText =
 `Thanks! We received your sell order.
 
 Name: ${name}
@@ -450,18 +452,22 @@ We’ll review your order and follow up soon.
 Riftbound Trading Co
 `;
 
-  await resend.emails.send({
-    from: EMAIL_FROM,
-    to: email,
-    subject: customerSubject,
-    text: customerText
-  });
-} else {
-  console.warn("Customer email missing; skipping customer confirmation.");
-}
+      await resend.emails.send({
+        from: EMAIL_FROM,
+        to: email,
+        subject: customerSubject,
+        text: customerText
+      });
+    } else {
+      console.warn("Customer email missing; skipping customer confirmation.");
+    }
 
-return res.json({ ok: true });
-
+    return res.json({ ok: true });
+  } catch (e) {
+    console.error("Sell submit error:", e);
+    return res.status(500).json({ ok: false, error: e.message || "Could not send sell email" });
+  }
+});
 
 /* =========================
    START
