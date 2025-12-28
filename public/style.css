@@ -852,6 +852,60 @@ a[href="/sell-cart.html"] .cart-badge {
 
   box-shadow: 0 1px 3px rgba(0,0,0,.35);
 }
+/* =========================
+   WOOD SHELF LOOK
+========================= */
+
+/* Optional page background (very subtle) */
+body {
+  background: #f5f2ea;
+}
+
+/* The card itself sits "on" the shelf */
+.store-card,
+.sell-card,
+.card {
+  position: relative;
+  overflow: visible;              /* important so shelf can show */
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.10);
+  padding-bottom: 34px;           /* space for shelf plank */
+}
+
+/* Wooden shelf plank */
+.store-card::after,
+.sell-card::after,
+.card::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 12px;
+  height: 18px;
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.18), rgba(0,0,0,0.08)),
+    repeating-linear-gradient(
+      90deg,
+      #7b4c2a 0px,
+      #7b4c2a 18px,
+      #6b3f22 18px,
+      #6b3f22 36px
+    );
+  box-shadow:
+    0 6px 0 rgba(0,0,0,0.10),
+    0 14px 18px rgba(0,0,0,0.18);
+}
+
+/* A little "resting" shadow under the card image */
+.store-card img,
+.sell-card img,
+.card img {
+  display: block;
+  margin: 0 auto;
+  filter: drop-shadow(0 10px 10px rgba(0,0,0,0.22));
+}
 
 /* ===============================
    SMALL UTIL
