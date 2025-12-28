@@ -556,6 +556,25 @@ button:disabled{
   font-weight: 900;
   cursor:pointer;
 }
+/* Header logo sizing fix */
+.site-logo{
+  height: 56px;      /* try 48px if you want smaller */
+  width: auto;
+  max-width: 220px;  /* prevents it from stretching wide */
+  object-fit: contain;
+  display: block;
+}
+
+/* If the logo is inside a link/container, keep it from expanding */
+.brand, .site-logo-wrap, .logo, .nav-logo{
+  display: flex;
+  align-items: center;
+}
+.site-logo{
+  width: auto !important;
+  height: 56px !important;
+  max-height: 56px !important;
+}
 
 /* ===============================
    SMALL UTIL
