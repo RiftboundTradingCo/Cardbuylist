@@ -6,6 +6,26 @@
   const submitBtn = document.getElementById("sellSubmitBtn");
   const msgEl = document.getElementById("sellCheckoutMessage");
 
+
+function normalizeCondition(cond) {
+  const s = String(cond || "").trim();
+
+  // accept short codes from sell page
+  if (s === "NM") return "Near Mint";
+  if (s === "LP") return "Lightly Played";
+  if (s === "MP") return "Moderately Played";
+  if (s === "HP") return "Heavily Played";
+
+  // accept full names already
+  if (s === "Near Mint") return "Near Mint";
+  if (s === "Lightly Played") return "Lightly Played";
+  if (s === "Moderately Played") return "Moderately Played";
+  if (s === "Heavily Played") return "Heavily Played";
+
+  // fallback
+  return "Near Mint";
+}
+
   if (!listEl || !totalEl) {
     console.warn("sell-cart.js: missing required elements");
     return;
@@ -33,7 +53,7 @@
       const name = String(item.name || item.sku || "").trim();
       if (!name) continue;
 
-      const condition = String(item.condition || "Near Mint");
+      const condition = normalizeCondition(item.condition);
       const qty = Number(item.qty || 0);
       const unitPrice = Number(item.unitPrice || 0);
 
