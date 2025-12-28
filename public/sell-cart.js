@@ -212,114 +212,148 @@
       .reduce((s, it) => s + (Number(it.qty || 0) || 0), 0);
   }
 
-  // ===== render =====
-  function render() {
-    const cart = loadCart();
-    const groups = groupCart(cart);
+let GROUP_ORDER = [];              // stable order of group keys
+const ACTIVE_TAB_BY_KEY = new Map(); // remember selected tab per group
 
-    listEl.innerHTML = "";
-    let totalCents = 0;
+ // ===== render =====
+function render() {
+  const cart = loadCart();
+  const groupsRaw = groupCart(cart);
 
-    for (const g of groups) {
-      const { sku, item } = resolveSellItem(g.key, g.name);
+  // ---- preserve scroll so nothing "jumps" ----
+  const prevScroll = window.scrollY;
 
-      const title = item?.name || g.name || sku || "Unknown";
-      const img = item?.image
-        ? (String(item.image).startsWith("/") ? item.image : "/" + item.image)
-        : "";
+  // ---- stabilize which tab is active per group ----
+  for (const g of groupsRaw) {
+    const remembered = ACTIVE_TAB_BY_KEY.get(g.key);
+    if (remembered) g.activeTab = remembered;
+  }
 
-      const activeTab = g.activeTab || "NM";
-      const activeCond = TAB_TO_COND[activeTab];
-      const activeQty = Number(g.condQty[activeCond] || 0);
+  // ---- build stable group order (first time = current order; later = keep existing order) ----
+  const keysNow = groupsRaw.map(g => g.key);
 
-      const unitCents = item ? centsForCondition(item, activeCond) : 0;
-      const maxCap = item ? getMaxFor(item, activeCond) : 0;
+  if (GROUP_ORDER.length === 0) {
+    GROUP_ORDER = [...keysNow];
+  } else {
+    // keep existing keys that still exist, in same order
+    GROUP_ORDER = GROUP_ORDER.filter(k => keysNow.includes(k));
+    // append any new keys that appeared
+    for (const k of keysNow) {
+      if (!GROUP_ORDER.includes(k)) GROUP_ORDER.push(k);
+    }
+  }
 
-      let inCartAll = 0;
-      let subtotalCents = 0;
-      for (const tab of TAB_ORDER) {
-        const cond = TAB_TO_COND[tab];
-        const q = Number(g.condQty[cond] || 0);
-        if (q > 0) {
-          inCartAll += q;
-          const u = item ? centsForCondition(item, cond) : 0;
-          subtotalCents += u * q;
-        }
+  // map for quick lookup and render in GROUP_ORDER sequence
+  const byKey = new Map(groupsRaw.map(g => [g.key, g]));
+  const groups = GROUP_ORDER.map(k => byKey.get(k)).filter(Boolean);
+
+  listEl.innerHTML = "";
+  let totalCents = 0;
+
+  for (const g of groups) {
+    const { sku, item } = resolveSellItem(g.key, g.name);
+
+    const title = item?.name || g.name || sku || "Unknown";
+    const img = item?.image
+      ? (String(item.image).startsWith("/") ? item.image : "/" + item.image)
+      : "";
+
+    const activeTab = g.activeTab || "NM";
+    const activeCond = TAB_TO_COND[activeTab];
+    const activeQty = Number(g.condQty[activeCond] || 0);
+
+    const unitCents = item ? centsForCondition(item, activeCond) : 0;
+    const maxCap = item ? getMaxFor(item, activeCond) : 0;
+
+    let inCartAll = 0;
+    let subtotalCents = 0;
+    for (const tab of TAB_ORDER) {
+      const cond = TAB_TO_COND[tab];
+      const q = Number(g.condQty[cond] || 0);
+      if (q > 0) {
+        inCartAll += q;
+        const u = item ? centsForCondition(item, cond) : 0;
+        subtotalCents += u * q;
       }
-      totalCents += subtotalCents;
+    }
+    totalCents += subtotalCents;
 
-      // Tabs disabled when qty in cart for that condition = 0
-      const tabsHtml = TAB_ORDER.map((tab) => {
-        const cond = TAB_TO_COND[tab];
-        const q = Number(g.condQty[cond] || 0);
-        const disabled = q <= 0;
-        const isActive = tab === activeTab;
-        return `
-          <button
-            class="cond-tab${isActive ? " active" : ""}${disabled ? " disabled" : ""}"
-            type="button"
-            data-tab="${tab}"
-            aria-disabled="${disabled ? "true" : "false"}"
-          >${tab}</button>
-        `;
-      }).join("");
+    // Tabs disabled when qty in cart for that condition = 0
+    const tabsHtml = TAB_ORDER.map((tab) => {
+      const cond = TAB_TO_COND[tab];
+      const q = Number(g.condQty[cond] || 0);
+      const disabled = q <= 0;
+      const isActive = tab === activeTab;
+      return `
+        <button
+          class="cond-tab${isActive ? " active" : ""}${disabled ? " disabled" : ""}"
+          type="button"
+          data-tab="${tab}"
+          aria-disabled="${disabled ? "true" : "false"}"
+        >${tab}</button>
+      `;
+    }).join("");
 
-      const li = document.createElement("li");
-      li.className = "cart-item";
-      li.dataset.groupKey = g.key;
-      li.dataset.sku = sku || "";
-      li.dataset.activeTab = activeTab;
+    const li = document.createElement("li");
+    li.className = "cart-item";
+    li.dataset.groupKey = g.key;
+    li.dataset.sku = sku || "";
+    li.dataset.activeTab = activeTab;
 
-      li.innerHTML = `
-        <div class="cart-card">
-          ${img ? `<img class="cart-thumb" src="${encodeURI(img)}" alt="${title}">` : ""}
+    li.innerHTML = `
+      <div class="cart-card">
+        ${img ? `<img class="cart-thumb" src="${encodeURI(img)}" alt="${title}">` : ""}
 
-          <div class="cart-main">
-            <h3 class="cart-title">${title}</h3>
+        <div class="cart-main">
+          <h3 class="cart-title">${title}</h3>
 
-            <div class="cond-tabs" role="tablist" aria-label="Condition">
-              ${tabsHtml}
-            </div>
-
-            <div class="cart-meta">
-              <div>Condition: <strong>${activeCond}</strong></div>
-              <div>Unit: <strong>${moneyCents(unitCents)}</strong></div>
-
-              <div class="cart-subline">
-                In cart (all conditions): <strong>${inCartAll}</strong> •
-                Subtotal: <strong>${moneyCents(subtotalCents)}</strong>
-              </div>
-
-              <div>Max capacity: <strong>${maxCap}</strong></div>
-            </div>
+          <div class="cond-tabs" role="tablist" aria-label="Condition">
+            ${tabsHtml}
           </div>
 
-          <div class="cart-right">
-            <div class="qty-controls">
-              <button class="qty-minus" type="button">−</button>
-              <span class="qty-value">${activeQty}</span>
-              <button class="qty-plus" type="button">+</button>
+          <div class="cart-meta">
+            <div>Condition: <strong>${activeCond}</strong></div>
+            <div>Unit: <strong>${moneyCents(unitCents)}</strong></div>
+
+            <div class="cart-subline">
+              In cart (all conditions): <strong>${inCartAll}</strong> •
+              Subtotal: <strong>${moneyCents(subtotalCents)}</strong>
             </div>
 
-            <div class="line-price">${moneyCents(unitCents * activeQty)}</div>
-
-            <button class="remove-cond-btn" type="button">Remove condition</button>
+            <div>Max capacity: <strong>${maxCap}</strong></div>
           </div>
         </div>
-      `;
 
-      // clamp buttons based on max
-      const plus = li.querySelector(".qty-plus");
-      const minus = li.querySelector(".qty-minus");
+        <div class="cart-right">
+          <div class="qty-controls">
+            <button class="qty-minus" type="button">−</button>
+            <span class="qty-value">${activeQty}</span>
+            <button class="qty-plus" type="button">+</button>
+          </div>
 
-      if (minus) minus.disabled = activeQty <= 0;
-      if (plus) plus.disabled = item ? (activeQty >= maxCap) : true;
+          <div class="line-price">${moneyCents(unitCents * activeQty)}</div>
 
-      listEl.appendChild(li);
-    }
+          <button class="remove-cond-btn" type="button">Remove condition</button>
+        </div>
+      </div>
+    `;
 
-    totalEl.textContent = (totalCents / 100).toFixed(2);
+    // clamp buttons based on max
+    const plus = li.querySelector(".qty-plus");
+    const minus = li.querySelector(".qty-minus");
+
+    if (minus) minus.disabled = activeQty <= 0;
+    if (plus) plus.disabled = item ? (activeQty >= maxCap) : true;
+
+    listEl.appendChild(li);
   }
+
+  totalEl.textContent = (totalCents / 100).toFixed(2);
+
+  // restore scroll AFTER DOM updates
+  window.scrollTo(0, prevScroll);
+}
+
 
   // ===== click handlers (delegation) =====
   document.addEventListener("click", (e) => {
