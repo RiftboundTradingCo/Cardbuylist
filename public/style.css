@@ -558,7 +558,7 @@ button:disabled{
 }
 /* Header logo sizing fix */
 .site-logo{
-  height: 56px;      /* try 48px if you want smaller */
+  height: 80px;      /* try 48px if you want smaller */
   width: auto;
   max-width: 220px;  /* prevents it from stretching wide */
   object-fit: contain;
