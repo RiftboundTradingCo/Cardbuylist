@@ -1,51 +1,17 @@
-(() => {
-  console.log("BUY.JS LOADED ✅");
-
-  const TAB_TO_COND = {
-    NM: "Near Mint",
-    LP: "Lightly Played",
-    MP: "Moderately Played",
-    HP: "Heavily Played"
-  };
-
-  // -----------------------------
-  // Per-condition qty storage on each card
-  // -----------------------------
-  function qtyKeyForTab(tab) {
-    const t = String(tab || "NM").toUpperCase();
-    if (t === "NM") return "qtyNm";
-    if (t === "LP") return "qtyLp";
-    if (t === "MP") return "qtyMp";
-    return "qtyHp";
-  }
-
-  function getStoredQty(card) {
-    const tab = String(card.dataset.activeTab || "NM").toUpperCase();
-    const key = qtyKeyForTab(tab);
-    const n = Number(card.dataset[key] || 1);
-    return Math.max(1, Number.isFinite(n) ? n : 1);
-  }
-
-  function setStoredQty(card, qty) {
-    const tab = String(card.dataset.activeTab || "NM").toUpperCase();
-    const key = qtyKeyForTab(tab);
-    const clean = Math.max(1, Number(qty) || 1);
-
-    card.dataset[key] = String(clean);
-
-    const qtyInput = card.querySelector(".qty-input");
-    const qtyNum = card.querySelector(".qty-num");
-    if (qtyInput) qtyInput.value = String(clean);
-    if (qtyNum) qtyNum.textContent = String(clean);
-  }
 document.addEventListener("DOMContentLoaded", () => {
-  const miniCount = document.getElementById("miniCartCount");
-  const miniSubtotal = document.getElementById("miniCartSubtotal");
-  const miniItems = document.getElementById("miniCartItems");
+  const GRID_ID = "buyGrid";
+  const CART_KEY = "buyCart";
+
+  // Page elements (buy.html)
+  const gridEl = document.getElementById(GRID_ID);
+
+  // Mini cart elements (buy.html)
+  const miniCountEl = document.getElementById("miniCartCount");
+  const miniSubtotalEl = document.getElementById("miniCartSubtotal");
+  const miniItemsEl = document.getElementById("miniCartItems");
   const miniCheckoutBtn = document.getElementById("miniCartCheckoutBtn");
 
-  if (!miniCount || !miniSubtotal || !miniItems) return;
-
+  const TAB_ORDER = ["NM", "LP", "MP", "HP"];
   const TAB_TO_COND = {
     NM: "Near Mint",
     LP: "Lightly Played",
@@ -60,345 +26,344 @@ document.addEventListener("DOMContentLoaded", () => {
     "Heavily Played": 0.65,
   };
 
-  function normalizeCondition(c) {
-    const s = String(c || "Near Mint").trim();
-    return CONDITION_MULT[s] ? s : "Near Mint";
-  }
+  let catalog = {}; // sku -> product
 
-  function calcUnitCents(baseCents, condition) {
-    const mult = CONDITION_MULT[normalizeCondition(condition)] ?? 1.0;
-    return Math.round(Number(baseCents || 0) * mult);
-  }
-
-  function money(cents) {
-    return `$${(Number(cents || 0) / 100).toFixed(2)}`;
+  // -------------------------
+  // Helpers
+  // -------------------------
+  function safeParse(raw, fallback) {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return fallback;
+    }
   }
 
   function loadCart() {
-    try { return JSON.parse(localStorage.getItem("buyCart")) || []; }
-    catch { return []; }
+    return safeParse(localStorage.getItem(CART_KEY) || "[]", []);
   }
 
+  function saveCart(cart) {
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    window.dispatchEvent(new Event("cart:changed"));
+    if (typeof window.updateCartBadges === "function") window.updateCartBadges();
+  }
+
+  function moneyFromCents(cents) {
+    return `$${(Number(cents || 0) / 100).toFixed(2)}`;
+  }
+
+  function normalizeCondition(cond) {
+    const allowed = Object.keys(CONDITION_MULT);
+    const s = String(cond || "Near Mint").trim();
+    return allowed.includes(s) ? s : "Near Mint";
+  }
+
+  function unitCentsFor(product, condition) {
+    const base = Number(product?.price_cents || 0);
+    const mult = CONDITION_MULT[normalizeCondition(condition)] ?? 1.0;
+    return Math.round(base * mult);
+  }
+
+  function getStockFor(product, condition) {
+    const c = normalizeCondition(condition);
+    if (product?.stock && typeof product.stock === "object") {
+      return Number(product.stock[c] ?? 0);
+    }
+    return Number(product?.stock ?? 0);
+  }
+
+  function tabToCondition(tab) {
+    return TAB_TO_COND[String(tab || "NM").toUpperCase()] || "Near Mint";
+  }
+
+  function clampQty(n) {
+    const x = Number(n);
+    if (!Number.isFinite(x) || x < 1) return 1;
+    if (x > 999) return 999;
+    return Math.floor(x);
+  }
+
+  function getCartQtyForSkuCond(cart, sku, cond) {
+    return cart.reduce((sum, it) => {
+      if (String(it.sku || "") === sku && normalizeCondition(it.condition) === normalizeCondition(cond)) {
+        return sum + Math.max(0, Number(it.qty || 0));
+      }
+      return sum;
+    }, 0);
+  }
+
+  // -------------------------
+  // API
+  // -------------------------
   async function fetchCatalog() {
     const res = await fetch("/api/catalog", { cache: "no-store" });
+    if (!res.ok) throw new Error(`Catalog HTTP ${res.status}`);
     const data = await res.json();
-    return data?.catalog || {};
+    if (!data?.ok || !data.catalog) throw new Error("Bad catalog JSON");
+    return data.catalog;
   }
 
-  // group same SKU+condition
-  function groupLines(cart) {
-    const m = new Map(); // key => { sku, condition, qty }
+  // -------------------------
+  // Render Buy Grid
+  // -------------------------
+  function renderGrid() {
+    if (!gridEl) return;
+
+    const items = Object.entries(catalog).map(([sku, product]) => ({
+      sku,
+      ...product,
+    }));
+
+    // optional: sort by name
+    items.sort((a, b) => String(a.name || a.sku).localeCompare(String(b.name || b.sku)));
+
+    gridEl.innerHTML = "";
+
+    for (const p of items) {
+      const sku = p.sku;
+      const name = p.name || sku;
+      const img = p.image ? (String(p.image).startsWith("/") ? p.image : "/" + p.image) : "";
+      const defaultTab = "NM";
+      const defaultCond = tabToCondition(defaultTab);
+      const price = unitCentsFor(p, defaultCond);
+
+      const card = document.createElement("div");
+      card.className = "buy-card";
+      card.dataset.sku = sku;
+      card.dataset.activeTab = defaultTab;
+
+      card.innerHTML = `
+        <div class="buy-card-inner">
+          ${img ? `<img class="buy-card-img" src="${encodeURI(img)}" alt="${name}" />` : ""}
+
+          <h3 class="buy-card-title">${name}</h3>
+
+          <div class="cond-tabs buy-cond-tabs" role="tablist" aria-label="Condition">
+            ${TAB_ORDER.map((t) => `<button class="cond-tab${t === defaultTab ? " active" : ""}" type="button" data-tab="${t}">${t}</button>`).join("")}
+          </div>
+
+          <div class="buy-card-meta">
+            <div>Price: <strong class="buy-unit">${moneyFromCents(price)}</strong></div>
+            <div>In stock: <strong class="buy-stock">${getStockFor(p, defaultCond)}</strong></div>
+          </div>
+
+          <div class="buy-qty-row">
+            <button class="qty-minus" type="button">−</button>
+            <input class="qty-input" type="number" min="1" max="999" value="1" />
+            <button class="qty-plus" type="button">+</button>
+          </div>
+
+          <button class="buy-add-btn" type="button">Add to Buy Cart</button>
+        </div>
+      `;
+
+      gridEl.appendChild(card);
+    }
+  }
+
+  function refreshCardUI(cardEl) {
+    const sku = String(cardEl.dataset.sku || "");
+    const p = catalog[sku];
+    if (!p) return;
+
+    const tab = String(cardEl.dataset.activeTab || "NM").toUpperCase();
+    const cond = tabToCondition(tab);
+
+    const unit = unitCentsFor(p, cond);
+    const stock = getStockFor(p, cond);
+
+    const unitEl = cardEl.querySelector(".buy-unit");
+    const stockEl = cardEl.querySelector(".buy-stock");
+    if (unitEl) unitEl.textContent = moneyFromCents(unit);
+    if (stockEl) stockEl.textContent = String(stock);
+  }
+
+  // -------------------------
+  // Mini cart (right sidebar)
+  // -------------------------
+  function buildMiniCartLines(cart) {
+    // group by sku+condition
+    const map = new Map();
     for (const it of cart) {
       const sku = String(it.sku || "").trim();
       if (!sku) continue;
+      const cond = normalizeCondition(it.condition);
+      const qty = Math.max(0, Number(it.qty || 0));
+      if (qty <= 0) continue;
 
-      const condRaw = String(it.condition || "").trim();
-      const cond = TAB_TO_COND[condRaw] ? TAB_TO_COND[condRaw] : normalizeCondition(condRaw);
-      const qty = Math.max(1, Number(it.qty || 1));
-
-      const key = `${sku}__${cond}`;
-      if (!m.has(key)) m.set(key, { sku, condition: cond, qty: 0 });
-      m.get(key).qty += qty;
+      const key = `${sku}||${cond}`;
+      map.set(key, (map.get(key) || 0) + qty);
     }
-    return [...m.values()];
+
+    const lines = [];
+    for (const [key, qty] of map.entries()) {
+      const [sku, cond] = key.split("||");
+      const product = catalog[sku];
+      const name = product?.name || sku;
+      const unitCents = product ? unitCentsFor(product, cond) : 0;
+      lines.push({
+        sku,
+        name,
+        cond,
+        qty,
+        unitCents,
+        lineCents: unitCents * qty,
+      });
+    }
+
+    // sort by name
+    lines.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    return lines;
   }
 
-  async function renderMiniCart() {
+  function renderMiniCart() {
     const cart = loadCart();
-    const catalog = await fetchCatalog();
+    const lines = buildMiniCartLines(cart);
 
-    const lines = groupLines(cart);
+    const count = lines.reduce((s, l) => s + l.qty, 0);
+    const subtotalCents = lines.reduce((s, l) => s + l.lineCents, 0);
 
-    let totalQty = 0;
-    let totalCents = 0;
+    if (miniCountEl) miniCountEl.textContent = String(count);
+    if (miniSubtotalEl) miniSubtotalEl.textContent = (subtotalCents / 100).toFixed(2);
 
-    miniItems.innerHTML = "";
+    if (miniItemsEl) {
+      miniItemsEl.innerHTML = "";
 
-    for (const line of lines) {
-      const product = catalog[line.sku];
-      if (!product) continue;
+      if (!lines.length) {
+        miniItemsEl.innerHTML = `<li class="mini-empty">Cart is empty.</li>`;
+      } else {
+        for (const l of lines.slice(0, 8)) {
+          const li = document.createElement("li");
+          li.className = "mini-line";
+          li.innerHTML = `
+            <div class="mini-line-name">${l.name}</div>
+            <div class="mini-line-sub">
+              ${l.qty} × ${l.cond} — ${moneyFromCents(l.lineCents)}
+            </div>
+          `;
+          miniItemsEl.appendChild(li);
+        }
 
-      const name = product.name || line.sku;
-      const baseCents = Number(product.price_cents || 0);
-      const unitCents = calcUnitCents(baseCents, line.condition);
-      const lineCents = unitCents * line.qty;
-
-      totalQty += line.qty;
-      totalCents += lineCents;
-
-      const li = document.createElement("li");
-      li.innerHTML = `
-        <div>
-          <div class="mini-cart-item-title">${name}</div>
-          <div class="mini-cart-item-sub">${line.qty} × ${line.condition}</div>
-        </div>
-        <div class="mini-cart-item-price">${money(lineCents)}</div>
-      `;
-      miniItems.appendChild(li);
-    }
-
-    miniCount.textContent = String(totalQty);
-    miniSubtotal.textContent = (totalCents / 100).toFixed(2);
-
-    if (miniCheckoutBtn) {
-      miniCheckoutBtn.disabled = totalQty === 0;
+        // if too many items, show a hint
+        if (lines.length > 8) {
+          const li = document.createElement("li");
+          li.className = "mini-more";
+          li.textContent = `+ ${lines.length - 8} more…`;
+          miniItemsEl.appendChild(li);
+        }
+      }
     }
   }
 
-  // click goes to cart page checkout area
+  // -------------------------
+  // Event delegation: tabs, qty, add
+  // -------------------------
+  document.addEventListener("click", (e) => {
+    const cardEl = e.target.closest(".buy-card");
+    if (!cardEl) return;
+
+    const sku = String(cardEl.dataset.sku || "");
+    const product = catalog[sku];
+    if (!product) return;
+
+    // switch condition tab
+    const tabBtn = e.target.closest(".cond-tab");
+    if (tabBtn) {
+      const tab = String(tabBtn.dataset.tab || "NM").toUpperCase();
+      cardEl.dataset.activeTab = TAB_TO_COND[tab] ? tab : "NM";
+
+      // update active class
+      cardEl.querySelectorAll(".cond-tab").forEach((b) => b.classList.remove("active"));
+      tabBtn.classList.add("active");
+
+      refreshCardUI(cardEl);
+      return;
+    }
+
+    const qtyInput = cardEl.querySelector(".qty-input");
+
+    // qty -
+    if (e.target.closest(".qty-minus")) {
+      const cur = clampQty(qtyInput?.value || 1);
+      const next = Math.max(1, cur - 1);
+      if (qtyInput) qtyInput.value = String(next);
+      return;
+    }
+
+    // qty +
+    if (e.target.closest(".qty-plus")) {
+      const cur = clampQty(qtyInput?.value || 1);
+      const next = Math.min(999, cur + 1);
+      if (qtyInput) qtyInput.value = String(next);
+      return;
+    }
+
+    // add to cart
+    if (e.target.closest(".buy-add-btn")) {
+      const tab = String(cardEl.dataset.activeTab || "NM").toUpperCase();
+      const cond = tabToCondition(tab);
+      const desiredQty = clampQty(qtyInput?.value || 1);
+
+      const stock = getStockFor(product, cond);
+      const cart = loadCart();
+      const already = getCartQtyForSkuCond(cart, sku, cond);
+
+      // clamp add so we never exceed stock (if stock is set)
+      let canAdd = desiredQty;
+      if (stock > 0) {
+        canAdd = Math.max(0, Math.min(desiredQty, stock - already));
+      }
+
+      if (canAdd <= 0) {
+        alert("No more stock available for that condition.");
+        return;
+      }
+
+      // merge into existing line if present
+      const idx = cart.findIndex(
+        (it) => String(it.sku || "") === sku && normalizeCondition(it.condition) === normalizeCondition(cond)
+      );
+
+      if (idx >= 0) {
+        cart[idx].qty = Math.max(1, Number(cart[idx].qty || 0) + canAdd);
+      } else {
+        cart.push({ sku, condition: cond, qty: canAdd });
+      }
+
+      saveCart(cart);
+      renderMiniCart();
+      return;
+    }
+  });
+
+  // Mini checkout button just navigates to buy-cart.html
   if (miniCheckoutBtn) {
     miniCheckoutBtn.addEventListener("click", () => {
       window.location.href = "/buy-cart.html";
     });
   }
 
-  // render now + when cart changes
-  renderMiniCart();
-  window.addEventListener("cart:changed", renderMiniCart);
+  // keep mini cart + badges in sync if another page updates cart
+  window.addEventListener("cart:changed", () => {
+    renderMiniCart();
+  });
+
+  // -------------------------
+  // Init
+  // -------------------------
+  (async function init() {
+    try {
+      catalog = await fetchCatalog();
+    } catch (err) {
+      console.error("buy.js catalog error:", err);
+      if (gridEl) gridEl.innerHTML = `<p style="padding:16px;">Could not load catalog.</p>`;
+      catalog = {};
+      return;
+    }
+
+    renderGrid();
+    renderMiniCart();
+    if (typeof window.updateCartBadges === "function") window.updateCartBadges();
+  })();
 });
-
-  // -----------------------------
-  // Cart + stock helpers
-  // -----------------------------
-  function normalizeCondition(c) {
-    const allowed = ["Near Mint", "Lightly Played", "Moderately Played", "Heavily Played"];
-    const s = String(c || "Near Mint").trim();
-    return allowed.includes(s) ? s : "Near Mint";
-  }
-
-  function loadCart() {
-    try { return JSON.parse(localStorage.getItem("buyCart")) || []; } catch { return []; }
-  }
-function saveCart(cart) {
-  localStorage.setItem("buyCart", JSON.stringify(cart));
-
-  // tell badge script in THIS tab
-  window.dispatchEvent(new Event("cart:changed"));
-
-  // optional direct call if available
-  if (typeof window.updateCartBadges === "function") window.updateCartBadges();
-}
-
-  function cartQtyFor(cart, sku, condition) {
-    const cond = normalizeCondition(condition);
-    return cart
-      .filter(i => i.sku === sku && normalizeCondition(i.condition) === cond)
-      .reduce((sum, i) => sum + (Number(i.qty) || 0), 0);
-  }
-
-  function stockForCard(card, tab) {
-    const t = String(tab || "NM").toUpperCase();
-    if (t === "NM") return Number(card.dataset.stockNm || 0);
-    if (t === "LP") return Number(card.dataset.stockLp || 0);
-    if (t === "MP") return Number(card.dataset.stockMp || 0);
-    return Number(card.dataset.stockHp || 0);
-  }
-
-  function multiplierFor(cond) {
-    if (cond === "Near Mint") return 1.0;
-    if (cond === "Lightly Played") return 0.9;
-    if (cond === "Moderately Played") return 0.8;
-    return 0.65;
-  }
-
-  function clampQtyToAvailable(card) {
-    const sku = String(card.dataset.sku || "").trim();
-    if (!sku) return;
-
-    const tab = String(card.dataset.activeTab || "NM").toUpperCase();
-    const cond = normalizeCondition(card.dataset.activeCond || TAB_TO_COND[tab] || "Near Mint");
-    const stock = stockForCard(card, tab);
-
-    const cart = loadCart();
-    const already = cartQtyFor(cart, sku, cond);
-    const available = Math.max(0, stock - already);
-
-    const plusBtn = card.querySelector(".qty-plus");
-    const minusBtn = card.querySelector(".qty-minus");
-    const addBtn = card.querySelector(".add-to-cart-btn");
-
-    let qty = getStoredQty(card);
-
-    if (available <= 0) {
-      setStoredQty(card, 1);
-      if (plusBtn) plusBtn.disabled = true;
-      if (minusBtn) minusBtn.disabled = true;
-      if (addBtn) { addBtn.disabled = true; addBtn.textContent = "Max in Cart"; }
-      return;
-    }
-
-    qty = Math.min(qty, available);
-    setStoredQty(card, qty);
-
-    if (plusBtn) plusBtn.disabled = qty >= available;
-    if (minusBtn) minusBtn.disabled = qty <= 1;
-    if (addBtn) { addBtn.disabled = false; addBtn.textContent = "Add to Cart"; }
-  }
-
-  function setActiveTab(card, tab) {
-    const t = String(tab || "NM").toUpperCase();
-    const cond = TAB_TO_COND[t];
-    if (!cond) return;
-
-    if (stockForCard(card, t) <= 0) return;
-
-    card.dataset.activeTab = t;
-    card.dataset.activeCond = cond;
-
-    // Update tab UI
-    card.querySelectorAll(".cond-tab").forEach((b) => {
-      b.classList.toggle("active", (b.dataset.tab || "").toUpperCase() === t);
-    });
-
-    // Load per-condition qty for this tab (default 1 if not set)
-    if (!card.dataset[qtyKeyForTab(t)]) card.dataset[qtyKeyForTab(t)] = "1";
-    setStoredQty(card, getStoredQty(card));
-
-    // Update stock label
-    const stockNum = card.querySelector(".stock-num");
-    if (stockNum) stockNum.textContent = String(stockForCard(card, t));
-
-    // Update price label
-    const base = Number(card.dataset.basecents || 0);
-    const unitCents = Math.round(base * multiplierFor(cond));
-    card.dataset.unitCents = String(unitCents);
-
-    const unitPriceEl = card.querySelector(".unit-price");
-    if (unitPriceEl) unitPriceEl.textContent = `$${(unitCents / 100).toFixed(2)}`;
-
-    clampQtyToAvailable(card);
-  }
-
-  // -----------------------------
-  // DOM ready: search + init cards
-  // -----------------------------
-  document.addEventListener("DOMContentLoaded", () => {
-    const buySearch = document.getElementById("buySearch");
-    const grid = document.getElementById("storeGrid");
-    if (!grid) return;
-
-    // Search
-    if (buySearch) {
-      buySearch.addEventListener("input", () => {
-        const q = buySearch.value.toLowerCase().trim();
-        grid.querySelectorAll(".store-card").forEach((card) => {
-          const name = String(card.dataset.name || "").toLowerCase();
-          card.style.display = !q || name.includes(q) ? "" : "none";
-        });
-      });
-    }
-
-    // Initialize new cards (buy-render renders async)
-    const initCard = (card) => {
-      if (!card || card.dataset._inited === "1") return;
-      card.dataset._inited = "1";
-
-      const enabledTab =
-        card.querySelector('.cond-tab[aria-disabled="false"]') ||
-        card.querySelector(".cond-tab:not(.disabled)") ||
-        card.querySelector(".cond-tab");
-
-      if (enabledTab) setActiveTab(card, enabledTab.dataset.tab || "NM");
-      clampQtyToAvailable(card);
-    };
-
-    grid.querySelectorAll(".store-card").forEach(initCard);
-
-    const obs = new MutationObserver(() => {
-      grid.querySelectorAll(".store-card").forEach(initCard);
-    });
-    obs.observe(grid, { childList: true, subtree: true });
-
-    console.log("buy.js: listeners ready ✅");
-  });
-
-  // -----------------------------
-  // Click handling (delegation)
-  // -----------------------------
-  document.addEventListener("click", (e) => {
-    const card = e.target.closest(".store-card");
-    if (!card) return;
-
-    // Tabs
-    const tabBtn = e.target.closest(".cond-tab");
-    if (tabBtn) {
-      if (tabBtn.getAttribute("aria-disabled") === "true") return;
-      if (tabBtn.classList.contains("disabled")) return;
-      setActiveTab(card, tabBtn.dataset.tab);
-      return;
-    }
-
-    // +
-    if (e.target.closest(".qty-plus")) {
-      setStoredQty(card, getStoredQty(card) + 1);
-      clampQtyToAvailable(card);
-      return;
-    }
-
-    // -
-    if (e.target.closest(".qty-minus")) {
-      setStoredQty(card, Math.max(1, getStoredQty(card) - 1));
-      clampQtyToAvailable(card);
-      return;
-    }
-
-    // Add to Cart
-    const addBtn = e.target.closest(".add-to-cart-btn");
-    if (addBtn) {
-      if (addBtn.disabled) return;
-
-      const sku = String(card.dataset.sku || "").trim();
-      const tab = String(card.dataset.activeTab || "NM").toUpperCase();
-      const cond = normalizeCondition(card.dataset.activeCond || TAB_TO_COND[tab] || "Near Mint");
-      const stock = stockForCard(card, tab);
-
-      const qtyWanted = getStoredQty(card);
-
-      let cart = loadCart();
-      const already = cartQtyFor(cart, sku, cond);
-      const available = Math.max(0, stock - already);
-      const toAdd = Math.min(qtyWanted, available);
-
-      if (toAdd <= 0) {
-        clampQtyToAvailable(card);
-        return;
-      }
-
-      const idx = cart.findIndex(i => i.sku === sku && normalizeCondition(i.condition) === cond);
-      if (idx >= 0) cart[idx].qty = (Number(cart[idx].qty) || 0) + toAdd;
-      else cart.push({ sku, condition: cond, qty: toAdd });
-
-      saveCart(cart);
-
-addBtn.textContent = "Added ✓";
-
-// ✅ reset qty for THIS condition back to 1
-setStoredQty(card, 1);
-
-setTimeout(() => {
-  addBtn.textContent = "Add to Cart";
-  clampQtyToAvailable(card);
-}, 600);
-
-      return;
-    }
-  });
-
-  // -----------------------------
-  // Typing qty should update ONLY current condition
-  // -----------------------------
-  document.addEventListener("input", (e) => {
-    const qtyInput = e.target.closest(".qty-input");
-    if (!qtyInput) return;
-
-    const card = qtyInput.closest(".store-card");
-    if (!card) return;
-
-    let v = qtyInput.value.replace(/[^\d]/g, "");
-    if (!v) v = "1";
-
-    setStoredQty(card, Number(v));
-    clampQtyToAvailable(card);
-  });
-})();
-
