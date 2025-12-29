@@ -20,16 +20,15 @@ const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
-const EMAIL_FROM = process.env.EMAIL_FROM || "";   // e.g. "Riftbound Trading Co <orders@riftboundtradingco.com>"
-const OWNER_EMAIL = process.env.OWNER_EMAIL || ""; // where YOU receive notifications
-const PUBLIC_BASE_URL =
-  process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`;
+const EMAIL_FROM = process.env.EMAIL_FROM || "";     // e.g. "Riftbound Trading Co <orders@riftboundtradingco.com>"
+const OWNER_EMAIL = process.env.OWNER_EMAIL || "";   // your email to receive notifications
+const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`;
 
 if (!STRIPE_SECRET_KEY) console.warn("⚠️ STRIPE_SECRET_KEY not set");
 if (!STRIPE_WEBHOOK_SECRET) console.warn("⚠️ STRIPE_WEBHOOK_SECRET not set");
 if (!RESEND_API_KEY) console.warn("⚠️ RESEND_API_KEY not set");
-if (!EMAIL_FROM) console.warn("⚠️ EMAIL_FROM not set (Resend requires a verified domain sender)");
-if (!OWNER_EMAIL) console.warn("⚠️ OWNER_EMAIL not set (owner notification email will be skipped)");
+if (!EMAIL_FROM) console.warn("⚠️ EMAIL_FROM not set");
+if (!OWNER_EMAIL) console.warn("⚠️ OWNER_EMAIL not set");
 
 const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
@@ -205,10 +204,18 @@ app.post(
         }
 
         // ---- customer + shipping info ----
-        const customerEmail =
+        const emailFromStripe =
           session.customer_details?.email ||
           session.customer_email ||
           "";
+
+        const emailFromMetadata = String(session?.metadata?.email || "").trim();
+
+        const customerEmail = String(emailFromStripe || emailFromMetadata || "").trim();
+
+        console.log("Customer email (stripe):", emailFromStripe || "(none)");
+        console.log("Customer email (metadata):", emailFromMetadata || "(none)");
+        console.log("Customer email (final):", customerEmail || "(none)");
 
         const shipName = session.customer_details?.name || "";
         const shipAddress = session.customer_details?.address || null;
@@ -380,18 +387,9 @@ app.post("/api/create-checkout-session", async (req, res) => {
       cancel_url: `${PUBLIC_BASE_URL}/buy-cart.html`,
       metadata: {
         orderId,
-        cart: JSON.stringify(cart)
-      email: email || ""   // ← THIS is the key
+        cart: JSON.stringify(cart),
+        email: email || ""   // ✅ fallback for webhook
       }
-const emailFromStripe =
-  session.customer_details?.email ||
-  session.customer_email ||
-  "";
-
-const emailFromMetadata = String(session?.metadata?.email || "").trim();
-
-const customerEmail = emailFromStripe || emailFromMetadata;
-
     });
 
     res.json({ ok: true, url: session.url, id: session.id, orderId });
@@ -423,8 +421,18 @@ app.post("/api/submit", async (req, res) => {
       return `${qty}x ${cardName} (${cond}) — $${unit.toFixed(2)} each = $${lineTotal.toFixed(2)}`;
     });
 
-    const ownerSubject = `New Sell Order from ${name || "Customer"}`;
-    const ownerText =
+    if (!resend || !EMAIL_FROM) {
+      console.warn("Sell email skipped (Resend/EMAIL_FROM not configured)");
+      return res.json({ ok: true, skipped: true });
+    }
+
+    // Owner email
+    if (OWNER_EMAIL) {
+      const r1 = await resend.emails.send({
+        from: EMAIL_FROM,
+        to: OWNER_EMAIL,
+        subject: `New Sell Order from ${name || "Customer"}`,
+        text:
 `New sell order submitted
 
 Name: ${name}
@@ -433,30 +441,20 @@ Total: $${total}
 
 Cards:
 ${lines.map(l => `- ${l}`).join("\n")}
-`;
-
-    if (!resend || !EMAIL_FROM) {
-      console.warn("Sell email skipped (Resend/EMAIL_FROM not configured)");
-      return res.json({ ok: true, skipped: true });
-    }
-
-    // 1) Email YOU
-    if (OWNER_EMAIL) {
-      const r1 = await resend.emails.send({
-        from: EMAIL_FROM,
-        to: OWNER_EMAIL,
-        subject: ownerSubject,
-        text: ownerText
+`
       });
       console.log("Resend sell owner email result:", r1);
     } else {
       console.warn("OWNER_EMAIL not set; skipping owner sell email.");
     }
 
-    // 2) Email CUSTOMER confirmation
+    // Customer confirmation
     if (email) {
-      const customerSubject = `We received your sell order`;
-      const customerText =
+      const r2 = await resend.emails.send({
+        from: EMAIL_FROM,
+        to: email,
+        subject: `We received your sell order`,
+        text:
 `Thanks! We received your sell order.
 
 Name: ${name}
@@ -469,12 +467,7 @@ ${lines.map(l => `- ${l}`).join("\n")}
 We’ll review your order and follow up soon.
 
 Riftbound Trading Co
-`;
-      const r2 = await resend.emails.send({
-        from: EMAIL_FROM,
-        to: email,
-        subject: customerSubject,
-        text: customerText
+`
       });
       console.log("Resend sell customer email result:", r2);
     } else {
@@ -495,9 +488,6 @@ app.listen(PORT, () => {
   console.log("Starting server...");
   console.log(`Server running on http://localhost:${PORT}`);
 });
-
-
-
 
 
 
