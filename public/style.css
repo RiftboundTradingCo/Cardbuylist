@@ -1121,6 +1121,51 @@ header, main, .page, .container {
   opacity:.6;
   cursor:not-allowed;
 }
+/* =========================
+   FIX: Card images too big
+   (put at very bottom of style.css)
+========================= */
+
+/* Buy/Sell grid card images */
+.card img,
+.card-image,
+.buy-card-img,
+.sell-card-img,
+.grid-card img,
+.product-card img {
+  width: 100% !important;
+  height: 220px !important;          /* <- controls how tall the image area is */
+  object-fit: contain !important;     /* show full card without cropping */
+  display: block !important;
+  margin: 0 auto !important;
+}
+
+/* If your card image is inside a dedicated wrapper */
+.card-image-wrap,
+.card-img-wrap,
+.buy-card-image,
+.sell-card-image {
+  width: 100% !important;
+  height: 220px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Cart thumbnails (buy-cart / sell-cart) */
+.cart-thumb {
+  width: 90px !important;
+  height: 126px !important;          /* trading card-ish ratio */
+  object-fit: cover !important;
+  border-radius: 10px !important;
+}
+
+/* Prevent any random images (logo excluded) from exploding */
+img:not(.site-logo):not(.brand-logo) {
+  max-width: 100%;
+  height: auto;
+}
 
 /* ===============================
    SMALL UTIL
