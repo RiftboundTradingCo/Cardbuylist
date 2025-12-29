@@ -163,6 +163,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!groups.length) {
       listEl.innerHTML = `<li class="buy-cart-empty">Your cart is empty.</li>`;
       if (totalEl) totalEl.textContent = "0.00";
+
+      // ✅ keep count accurate for empty cart too
+      const countEl = document.getElementById("buyCartCount");
+      if (countEl) countEl.textContent = "0";
+
       return;
     }
 
@@ -249,7 +254,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       listEl.appendChild(li);
     }
 
+    // ✅ totals
     if (totalEl) totalEl.textContent = (totalCents / 100).toFixed(2);
+
+    // ✅ cart count moved to end so it matches what’s rendered
+    const countEl = document.getElementById("buyCartCount");
+    if (countEl) {
+      const cartCount = groups.reduce((sum, g) => {
+        let n = 0;
+        for (const qty of g.lines.values()) n += Number(qty || 0);
+        return sum + n;
+      }, 0);
+      countEl.textContent = String(cartCount);
+    }
   }
 
   // ---------- Init ----------
@@ -273,6 +290,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   render(groups, catalog);
 
+  // ✅ Shipping calculator listener (ONLY ONCE, not inside render)
+  const shipBtn = document.getElementById("shippingCalcBtn");
+  if (shipBtn) {
+    shipBtn.addEventListener("click", () => {
+      alert("Shipping calculator coming soon!");
+    });
+  }
+
   // ---------- Clear Cart ----------
   if (clearBtn) {
     clearBtn.addEventListener("click", () => {
@@ -282,7 +307,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // ---------- Stripe Checkout (FIX) ----------
+  // ---------- Stripe Checkout ----------
   if (checkoutBtn) {
     checkoutBtn.addEventListener("click", async (e) => {
       e.preventDefault();
@@ -328,7 +353,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
   } else {
-    console.warn("[Checkout] stripeCheckoutBtn not found on page");
+    console.warn("[Checkout] checkoutBtn not found on page");
   }
 
   // ---------- Interactions (tabs, +/-, remove) ----------
@@ -417,4 +442,5 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 });
+
 

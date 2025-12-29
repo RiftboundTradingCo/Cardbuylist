@@ -30,33 +30,54 @@
 
 
 <main class="page">
-
   <h1>Your Buy Cart</h1>
+  <p>Review your cart items below.</p>
 
-  <!-- ✅ CHECKOUT SECTION (NOW AT TOP) -->
-  <div class="cart-summary checkout-top">
-    <label for="buyEmail">Email for receipt</label>
+  <div class="cart-layout">
+    <!-- LEFT: items -->
+    <section class="cart-left">
+      <ul id="buyCartList" class="cart-list"></ul>
+    </section>
 
-    <div class="checkout-row">
-      <input
-        type="email"
-        id="buyEmail"
-        placeholder="you@example.com"
-        autocomplete="email"
-      />
+    <!-- RIGHT: summary box -->
+    <aside class="cart-rightbar">
+      <div class="cart-summary-box">
+        <h3 class="summary-title">
+          Cart Summary (<span id="buyCartCount">0</span>)
+        </h3>
 
-      <button id="checkoutBtn" type="button">
-        Checkout with Stripe
-      </button>
-    </div>
+        <div class="summary-row">
+          <span>Subtotal:</span>
+          <strong>$<span id="buyCartTotal">0.00</span></strong>
+        </div>
 
-    <p id="checkoutMsg" class="cart-message"></p>
+        <label class="summary-label" for="buyEmail">Email for receipt</label>
+        <input
+          type="email"
+          id="buyEmail"
+          placeholder="you@example.com"
+          autocomplete="email"
+          class="summary-input"
+        />
+
+        <button id="checkoutBtn" type="button" class="summary-btn primary">
+          Checkout
+        </button>
+
+        <button id="shippingCalcBtn" type="button" class="summary-btn secondary">
+          Shipping Calculator
+        </button>
+
+        <button id="buyClearCartBtn" type="button" class="summary-btn danger">
+          Empty Cart
+        </button>
+
+        <p id="checkoutMsg" class="cart-message"></p>
+      </div>
+    </aside>
   </div>
-
-  <!-- ✅ CART ITEMS -->
-  <ul id="buyCartList" class="cart-list"></ul>
-
 </main>
+
 
 <script src="buy-cart.js?v=122"></script>
   <script src="cart-badge.js?v=1"></script>
