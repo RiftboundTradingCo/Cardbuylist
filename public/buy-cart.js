@@ -1,71 +1,89 @@
+/* public/buy-cart.js
+   Buy Cart (group by SKU, tabs per condition, stock clamp, badge updates, Stripe checkout)
+*/
 document.addEventListener("DOMContentLoaded", async () => {
-  const CART_KEY = "buyCart";
-
+  // ===== DOM =====
   const listEl = document.getElementById("buyCartList");
   const totalEl = document.getElementById("buyCartTotal");
   const msgEl = document.getElementById("buyCartMessage");
   const clearBtn = document.getElementById("buyClearCartBtn");
 
-  if (!listEl || !totalEl) return;
+  const checkoutBtn = document.getElementById("stripeCheckoutBtn"); // your button id
+  const emailInput = document.getElementById("buyEmail");           // your email input id
+
+  // ===== CONFIG =====
+  const CART_KEY = "buyCart";
 
   const TAB_ORDER = ["NM", "LP", "MP", "HP"];
   const TAB_TO_COND = {
     NM: "Near Mint",
     LP: "Lightly Played",
     MP: "Moderately Played",
-    HP: "Heavily Played",
+    HP: "Heavily Played"
+  };
+  const COND_TO_TAB = {
+    "Near Mint": "NM",
+    "Lightly Played": "LP",
+    "Moderately Played": "MP",
+    "Heavily Played": "HP"
   };
 
   const CONDITION_MULT = {
     "Near Mint": 1.0,
     "Lightly Played": 0.9,
     "Moderately Played": 0.8,
-    "Heavily Played": 0.65,
+    "Heavily Played": 0.65
   };
 
-  // ---------- helpers ----------
-  function showMsg(text, ok = true) {
-    if (!msgEl) return;
-    msgEl.textContent = text || "";
-    msgEl.style.color = ok ? "#1b7f3a" : "#b00020";
-  }
-
-  function safeParse(raw, fallback) {
-    try { return JSON.parse(raw); } catch { return fallback; }
-  }
-
-  function loadCart() {
-    return safeParse(localStorage.getItem(CART_KEY) || "[]", []);
-  }
-
-  function saveCart(cart) {
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
-
-    // ✅ update header badges in THIS tab immediately
-    window.dispatchEvent(new Event("cart:changed"));
-    if (typeof window.updateCartBadges === "function") window.updateCartBadges();
-  }
-
+  // ===== HELPERS =====
   function moneyCents(cents) {
     return `$${(Number(cents || 0) / 100).toFixed(2)}`;
   }
 
+  function showMsg(text, kind = "") {
+    if (!msgEl) return;
+    msgEl.textContent = text || "";
+    msgEl.className = kind ? `cart-message ${kind}` : "cart-message";
+  }
+
+  function loadCart() {
+    try {
+      const raw = localStorage.getItem(CART_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function dispatchCartUpdated() {
+    // If you have cart-badge.js listening, this is the cleanest trigger.
+    window.dispatchEvent(new CustomEvent("cart:updated", { detail: { key: CART_KEY } }));
+
+    // Fallback: update any badge elements immediately if present
+    const count = loadCart().reduce((s, it) => s + (Number(it.qty) || 0), 0);
+    document.querySelectorAll('[data-cart="buy"], #buyCartBadge').forEach((el) => {
+      if (!el) return;
+      el.textContent = String(count);
+      el.classList.toggle("hidden", count <= 0);
+    });
+  }
+
+  function saveCart(cart) {
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    dispatchCartUpdated();
+  }
+
   function normalizeCondition(c) {
+    const s = String(c || "").trim();
+    if (TAB_TO_COND[s]) return TAB_TO_COND[s]; // handle NM/LP/MP/HP stored
     const allowed = Object.keys(CONDITION_MULT);
-    const s = String(c || "Near Mint").trim();
     return allowed.includes(s) ? s : "Near Mint";
   }
 
-  function tabForCondition(cond) {
-    const c = normalizeCondition(cond);
-    for (const tab of TAB_ORDER) {
-      if (TAB_TO_COND[tab] === c) return tab;
-    }
-    return "NM";
-  }
-
   function calcUnitCents(baseCents, condition) {
-    const mult = CONDITION_MULT[normalizeCondition(condition)] ?? 1.0;
+    const cond = normalizeCondition(condition);
+    const mult = CONDITION_MULT[cond] ?? 1.0;
     return Math.round(Number(baseCents || 0) * mult);
   }
 
@@ -76,6 +94,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     return encodeURI(withSlash);
   }
 
+  function getStockForCondition(product, condition) {
+    const cond = normalizeCondition(condition);
+    if (product?.stock && typeof product.stock === "object") {
+      return Number(product.stock[cond] ?? 0);
+    }
+    return Number(product?.stock ?? 0); // fallback old format
+  }
+
   async function fetchCatalog() {
     const res = await fetch("/api/catalog", { cache: "no-store" });
     if (!res.ok) throw new Error(`Catalog HTTP ${res.status}`);
@@ -84,35 +110,42 @@ document.addEventListener("DOMContentLoaded", async () => {
     return data.catalog;
   }
 
-  function getStockForCondition(product, condition) {
-    const cond = normalizeCondition(condition);
-    if (product && product.stock && typeof product.stock === "object") {
-      return Number(product.stock[cond] ?? 0);
-    }
-    return Number(product?.stock ?? 0);
-  }
-
-  // ----- grouping -----
+  // ===== GROUPING =====
   function groupCart(cart) {
-    const groups = new Map(); // sku -> { sku, lines: Map(cond->qty), activeTab }
+    // sku -> { sku, name?, lines: Map(cond -> qty), activeTab }
+    const groups = new Map();
 
-    for (const line of cart) {
-      const sku = String(line.sku || "").trim();
+    for (const it of cart) {
+      const sku = String(it?.sku || "").trim();
       if (!sku) continue;
 
-      const cond = normalizeCondition(line.condition);
-      const qty = Math.max(1, Number(line.qty || 1));
+      const cond = normalizeCondition(it.condition);
+      const qty = Math.max(0, Number(it.qty || 0));
 
-      if (!groups.has(sku)) groups.set(sku, { sku, lines: new Map(), activeTab: "NM" });
+      if (!groups.has(sku)) {
+        groups.set(sku, {
+          sku,
+          lines: new Map(),
+          activeTab: "NM"
+        });
+      }
+
       const g = groups.get(sku);
-
       g.lines.set(cond, (g.lines.get(cond) || 0) + qty);
-
-      // default active tab to something present in cart
-      if (!g._activeSetByUser) g.activeTab = tabForCondition(cond);
     }
 
-    // stable ordering
+    // choose active tab = first condition with qty > 0 (stable), NOT "last item added"
+    for (const g of groups.values()) {
+      g.activeTab = "NM";
+      for (const tab of TAB_ORDER) {
+        const cond = TAB_TO_COND[tab];
+        if ((Number(g.lines.get(cond) || 0)) > 0) {
+          g.activeTab = tab;
+          break;
+        }
+      }
+    }
+
     return [...groups.values()];
   }
 
@@ -127,7 +160,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     return out;
   }
 
-  // clamp current cart to stock
   function clampGroupsToStock(groups, catalog) {
     let changed = false;
 
@@ -137,7 +169,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       for (const [cond, qty] of g.lines.entries()) {
         const stock = getStockForCondition(product, cond);
-        if (stock > 0 && qty > stock) {
+        if (stock >= 0 && qty > stock) {
           g.lines.set(cond, stock);
           changed = true;
         }
@@ -147,33 +179,39 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       }
 
-      // if active tab now empty, move to first available in cart
+      // keep active tab if still has qty, otherwise jump to first condition in cart
       const activeCond = TAB_TO_COND[g.activeTab] || "Near Mint";
       const activeQty = Number(g.lines.get(activeCond) || 0);
       if (!activeQty) {
-        const firstCartCond = [...g.lines.keys()][0];
-        g.activeTab = firstCartCond ? tabForCondition(firstCartCond) : "NM";
+        const first = [...g.lines.keys()][0];
+        g.activeTab = first ? (COND_TO_TAB[normalizeCondition(first)] || "NM") : "NM";
       }
     }
 
     return { groups, changed };
   }
 
-  // prevent jump
-  function renderWithScroll(fn) {
-    const prev = window.scrollY;
-    fn();
-    requestAnimationFrame(() => window.scrollTo(0, prev));
-  }
+  // ===== RENDER =====
+  function render() {
+    if (!listEl) return;
 
-  // ----- render -----
-  function render(groups, catalog) {
+    const prevScroll = window.scrollY;
+
+    const cart = loadCart();
+    groups = groupCart(cart);
+
+    // clamp to stock each render (keeps things consistent)
+    const clamped = clampGroupsToStock(groups, catalog);
+    groups = clamped.groups;
+    if (clamped.changed) saveCart(flattenGroups(groups));
+
     listEl.innerHTML = "";
     showMsg("");
 
     if (!groups.length) {
-      listEl.innerHTML = `<li class="cart-item"><div class="cart-card">Your cart is empty.</div></li>`;
-      totalEl.textContent = "0.00";
+      listEl.innerHTML = `<li class="cart-empty">Your cart is empty.</li>`;
+      if (totalEl) totalEl.textContent = "0.00";
+      window.scrollTo(0, prevScroll);
       return;
     }
 
@@ -185,50 +223,57 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const title = String(product.name || g.sku);
       const baseCents = Number(product.price_cents || 0);
-      const imgSrc = normalizeImagePath(product.image);
-
-      // precompute per tab info
-      const perTab = TAB_ORDER.map((tab) => {
-        const cond = TAB_TO_COND[tab];
-        const qty = Number(g.lines.get(cond) || 0);
-        const stock = getStockForCondition(product, cond);
-        const unitCents = calcUnitCents(baseCents, cond);
-        return { tab, cond, qty, stock, unitCents };
-      });
+      const img = normalizeImagePath(product.image);
 
       const activeTab = String(g.activeTab || "NM").toUpperCase();
-      const active = perTab.find(x => x.tab === activeTab) || perTab[0];
+      const activeCond = TAB_TO_COND[activeTab] || "Near Mint";
+      const activeQty = Number(g.lines.get(activeCond) || 0);
 
-      // totals for sku
-      const inCartAll = perTab.reduce((s, x) => s + x.qty, 0);
-      const subtotalCents = perTab.reduce((s, x) => s + (x.qty * x.unitCents), 0);
+      // totals across all conditions for this SKU
+      let inCartAll = 0;
+      let subtotalCents = 0;
+
+      for (const tab of TAB_ORDER) {
+        const cond = TAB_TO_COND[tab];
+        const q = Number(g.lines.get(cond) || 0);
+        if (q > 0) {
+          inCartAll += q;
+          subtotalCents += calcUnitCents(baseCents, cond) * q;
+        }
+      }
+
       totalCents += subtotalCents;
 
-      // Tabs: disable when qty in cart for that condition = 0 (matches sell cart behavior)
+      const unitCents = calcUnitCents(baseCents, activeCond);
+      const stock = getStockForCondition(product, activeCond);
+      const canPlus = stock > 0 ? activeQty < stock : true;
+
+      // tabs: enabled if qty in cart for that condition > 0 OR stock > 0
       const tabsHtml = TAB_ORDER.map((tab) => {
-        const x = perTab.find(p => p.tab === tab);
-        const disabled = (x.qty <= 0);
-        const isActive = (tab === active.tab);
+        const cond = TAB_TO_COND[tab];
+        const q = Number(g.lines.get(cond) || 0);
+        const st = getStockForCondition(product, cond);
+        const enabled = q > 0 || st > 0;
+        const isActive = tab === activeTab;
+
         return `
           <button
-            class="cond-tab${isActive ? " active" : ""}${disabled ? " disabled" : ""}"
+            class="cond-tab${isActive ? " active" : ""}${enabled ? "" : " disabled"}"
             type="button"
             data-tab="${tab}"
-            aria-disabled="${disabled ? "true" : "false"}"
+            aria-disabled="${enabled ? "false" : "true"}"
           >${tab}</button>
         `;
       }).join("");
 
-      const canPlus = active.stock > 0 ? active.qty < active.stock : true;
-
       const li = document.createElement("li");
-      li.className = "cart-item buy-cart-item";
+      li.className = "cart-item";              // matches your “nice” cart CSS
       li.dataset.sku = g.sku;
-      li.dataset.activeTab = active.tab;
+      li.dataset.activeTab = activeTab;
 
       li.innerHTML = `
         <div class="cart-card">
-          ${imgSrc ? `<img class="cart-thumb" src="${imgSrc}" alt="${title}">` : ""}
+          ${img ? `<img class="cart-thumb" src="${img}" alt="${title}">` : ""}
 
           <div class="cart-main">
             <h3 class="cart-title">${title}</h3>
@@ -238,9 +283,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             </div>
 
             <div class="cart-meta">
-              <div>Condition: <strong>${active.cond}</strong></div>
-              <div>In stock: <strong>${Number.isFinite(active.stock) ? active.stock : 0}</strong></div>
-              <div>Unit: <strong>${moneyCents(active.unitCents)}</strong></div>
+              <div>Condition: <strong>${activeCond}</strong></div>
+              <div>In stock: <strong>${Number.isFinite(stock) ? stock : 0}</strong></div>
+              <div>Unit: <strong>${moneyCents(unitCents)}</strong></div>
 
               <div class="cart-subline">
                 In cart (all conditions): <strong>${inCartAll}</strong> •
@@ -251,142 +296,175 @@ document.addEventListener("DOMContentLoaded", async () => {
 
           <div class="cart-right">
             <div class="qty-controls">
-              <button class="qty-minus" type="button">−</button>
-              <span class="qty-value">${active.qty}</span>
+              <button class="qty-minus" type="button" ${activeQty <= 0 ? "disabled" : ""}>−</button>
+              <span class="qty-value">${activeQty}</span>
               <button class="qty-plus" type="button" ${canPlus ? "" : "disabled"}>+</button>
             </div>
 
-            <div class="line-price">${moneyCents(active.qty * active.unitCents)}</div>
+            <div class="line-price">${moneyCents(unitCents * activeQty)}</div>
 
             <button class="remove-cond-btn" type="button">Remove condition</button>
           </div>
         </div>
       `;
 
-      // disable minus if qty is 0
-      const minus = li.querySelector(".qty-minus");
-      if (minus) minus.disabled = active.qty <= 0;
-
       listEl.appendChild(li);
     }
 
-    totalEl.textContent = (totalCents / 100).toFixed(2);
+    if (totalEl) totalEl.textContent = (totalCents / 100).toFixed(2);
+
+    // restore scroll so items don't "jump to bottom"
+    window.scrollTo(0, prevScroll);
   }
 
-  // ---------- init ----------
+  // ===== INIT =====
   let catalog = {};
+  let groups = [];
+
   try {
     catalog = await fetchCatalog();
   } catch (e) {
     console.error("buy-cart catalog error:", e);
-    showMsg("Could not load inventory right now.", false);
+    showMsg("Could not load inventory right now.", "error");
     catalog = {};
   }
 
-  let groups = groupCart(loadCart());
+  // initial render
+  render();
 
-  // clamp on load
-  const clamped = clampGroupsToStock(groups, catalog);
-  groups = clamped.groups;
-  if (clamped.changed) saveCart(flattenGroups(groups));
-
-  render(groups, catalog);
-
-  // ---------- clear ----------
+  // ===== CLEAR CART =====
   if (clearBtn) {
     clearBtn.addEventListener("click", () => {
       saveCart([]);
       showMsg("Cart cleared.");
-      renderWithScroll(() => render(groups = [], catalog));
+      render();
     });
   }
 
-  // ---------- interactions ----------
+  // ===== STRIPE CHECKOUT =====
+  if (checkoutBtn) {
+    checkoutBtn.addEventListener("click", async () => {
+      try {
+        showMsg("");
+        checkoutBtn.disabled = true;
+
+        const email = String(emailInput?.value || "").trim();
+        const cart = loadCart();
+
+        if (!cart.length) {
+          alert("Your cart is empty.");
+          checkoutBtn.disabled = false;
+          return;
+        }
+
+        const res = await fetch("/api/create-checkout-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, cart })
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok || !data.url) {
+          throw new Error(data.error || `Checkout failed (HTTP ${res.status})`);
+        }
+
+        window.location.href = data.url;
+      } catch (err) {
+        console.error("Stripe checkout error:", err);
+        alert(err.message || "Could not start checkout.");
+      } finally {
+        checkoutBtn.disabled = false;
+      }
+    });
+  }
+
+  // ===== CLICK HANDLERS (delegation) =====
   document.addEventListener("click", (e) => {
-    const itemEl = e.target.closest(".buy-cart-item");
+    const itemEl = e.target.closest(".cart-item");
     if (!itemEl) return;
 
     const sku = String(itemEl.dataset.sku || "").trim();
     if (!sku) return;
 
+    // rebuild groups from storage (source of truth)
+    const cart = loadCart();
+    groups = groupCart(cart);
     const g = groups.find(x => x.sku === sku);
     if (!g) return;
 
-    // tab click
+    // restore active tab from DOM (so tab stays put even after +/-)
+    g.activeTab = String(itemEl.dataset.activeTab || g.activeTab || "NM").toUpperCase();
+
+    // Tabs
     const tabBtn = e.target.closest(".cond-tab");
     if (tabBtn) {
       if (tabBtn.getAttribute("aria-disabled") === "true") return;
       if (tabBtn.classList.contains("disabled")) return;
 
       const tab = String(tabBtn.dataset.tab || "NM").toUpperCase();
-      const cond = TAB_TO_COND[tab];
-      if (!cond) return;
-
-      // match sell cart behavior: only allow switching to tabs that exist in cart
-      const inCartQty = Number(g.lines.get(cond) || 0);
-      if (inCartQty <= 0) return;
-
       g.activeTab = tab;
-      g._activeSetByUser = true;
 
-      renderWithScroll(() => render(groups, catalog));
+      // write back DOM state so it doesn't flip
+      itemEl.dataset.activeTab = tab;
+
+      // save cart unchanged; just re-render
+      // (active tab is UI-only; we don't need to store it in localStorage)
+      render();
       return;
     }
 
-    const tab = String(g.activeTab || "NM").toUpperCase();
-    const cond = TAB_TO_COND[tab] || "Near Mint";
+    const activeTab = String(itemEl.dataset.activeTab || g.activeTab || "NM").toUpperCase();
+    const activeCond = TAB_TO_COND[activeTab] || "Near Mint";
     const product = catalog[sku];
-    const stock = product ? getStockForCondition(product, cond) : 0;
+    const stock = product ? getStockForCondition(product, activeCond) : 0;
 
-    // plus
+    // Qty +
     if (e.target.closest(".qty-plus")) {
-      let qty = Number(g.lines.get(cond) || 0);
-      qty += 1;
+      const cur = Number(g.lines.get(activeCond) || 0);
+      let next = cur + 1;
+      if (stock > 0) next = Math.min(stock, next);
 
-      if (stock > 0) qty = Math.min(stock, qty);
-
-      g.lines.set(cond, qty);
+      g.lines.set(activeCond, next);
       saveCart(flattenGroups(groups));
-      renderWithScroll(() => render(groups, catalog));
+
+      // keep the same active tab after render
+      itemEl.dataset.activeTab = activeTab;
+      render();
       return;
     }
 
-    // minus
+    // Qty -
     if (e.target.closest(".qty-minus")) {
-      let qty = Number(g.lines.get(cond) || 0);
-      qty = Math.max(0, qty - 1);
+      const cur = Number(g.lines.get(activeCond) || 0);
+      const next = Math.max(0, cur - 1);
 
-      if (qty <= 0) g.lines.delete(cond);
-      else g.lines.set(cond, qty);
+      if (next <= 0) g.lines.delete(activeCond);
+      else g.lines.set(activeCond, next);
 
+      // if group empty, remove it
       if (g.lines.size === 0) {
         groups = groups.filter(x => x.sku !== sku);
-      } else if (!g.lines.get(cond)) {
-        const firstCartCond = [...g.lines.keys()][0];
-        g.activeTab = firstCartCond ? tabForCondition(firstCartCond) : "NM";
       }
 
       saveCart(flattenGroups(groups));
-      renderWithScroll(() => render(groups, catalog));
+      itemEl.dataset.activeTab = activeTab;
+      render();
       return;
     }
 
-    // remove condition
+    // Remove active condition
     if (e.target.closest(".remove-cond-btn")) {
-      g.lines.delete(cond);
-
+      g.lines.delete(activeCond);
       if (g.lines.size === 0) {
         groups = groups.filter(x => x.sku !== sku);
-      } else {
-        const firstCartCond = [...g.lines.keys()][0];
-        g.activeTab = firstCartCond ? tabForCondition(firstCartCond) : "NM";
       }
-
       saveCart(flattenGroups(groups));
-      renderWithScroll(() => render(groups, catalog));
+      itemEl.dataset.activeTab = activeTab;
+      render();
       return;
     }
   });
 });
+
 
 
