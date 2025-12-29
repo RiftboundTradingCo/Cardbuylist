@@ -9,7 +9,6 @@ const crypto = require("crypto");
 const Stripe = require("stripe");
 const { Resend } = require("resend");
 
-
 const app = express();
 
 /* =========================
@@ -21,11 +20,10 @@ const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
-const EMAIL_FROM = process.env.EMAIL_FROM || ""; // e.g. "Riftbound Trading Co <orders@riftboundtradingco.com>"
-const OWNER_EMAIL = process.env.OWNER_EMAIL || ""; // where you receive order notifications
-
+const EMAIL_FROM = process.env.EMAIL_FROM || "";   // e.g. "Riftbound Trading Co <orders@riftboundtradingco.com>"
+const OWNER_EMAIL = process.env.OWNER_EMAIL || ""; // where YOU receive notifications
 const PUBLIC_BASE_URL =
-  process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`; // set to https://riftboundtradingco.com on Render
+  process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`;
 
 if (!STRIPE_SECRET_KEY) console.warn("⚠️ STRIPE_SECRET_KEY not set");
 if (!STRIPE_WEBHOOK_SECRET) console.warn("⚠️ STRIPE_WEBHOOK_SECRET not set");
@@ -90,7 +88,6 @@ function getStockForCondition(product, condition) {
   if (product?.stock && typeof product.stock === "object") {
     return Number(product.stock[cond] ?? 0);
   }
-  // fallback: if you ever store single number stock
   return Number(product?.stock ?? 0);
 }
 
@@ -107,7 +104,9 @@ function decrementStock(catalogObj, sku, condition, qty) {
   const nQty = Number(qty || 0);
 
   if (nQty <= 0) return { ok: false, error: "Invalid qty" };
-  if (current < nQty) return { ok: false, error: `Insufficient stock for ${sku} (${cond}). Have ${current}, need ${nQty}` };
+  if (current < nQty) {
+    return { ok: false, error: `Insufficient stock for ${sku} (${cond}). Have ${current}, need ${nQty}` };
+  }
 
   product.stock[cond] = current - nQty;
   return { ok: true };
@@ -122,10 +121,8 @@ function makeOrderId() {
 }
 
 /* =========================
-   MIDDLEWARE
+   STRIPE WEBHOOK (RAW BODY)
 ========================= */
-
-// Stripe webhook must use raw body:
 app.post(
   "/api/stripe/webhook",
   express.raw({ type: "application/json" }),
@@ -139,6 +136,7 @@ app.post(
 
       const sig = req.headers["stripe-signature"];
       let event;
+
       try {
         event = stripe.webhooks.constructEvent(req.body, sig, STRIPE_WEBHOOK_SECRET);
       } catch (err) {
@@ -148,21 +146,21 @@ app.post(
 
       console.log("Stripe event:", event.type, "id:", event.id);
 
-      // We fulfill on checkout.session.completed
       if (event.type === "checkout.session.completed") {
         const session = event.data.object;
+
         const orderId = session?.metadata?.orderId || "unknown";
         console.log("Checkout completed. Session:", session.id, "orderId:", orderId);
 
-        // Get line items (we stored sku/condition in price.product metadata? We'll use session metadata instead)
-        // We'll store cart JSON in session.metadata.cart (stringified).
+        // Cart from metadata
         const cartJson = session?.metadata?.cart || "[]";
         let cart = [];
         try { cart = JSON.parse(cartJson); } catch { cart = []; }
 
-        // Update inventory based on cart
+        // Load catalog once (source of truth)
         const catalog = readJsonSafe(CATALOG_PATH);
 
+        // ---- inventory update ----
         let inventoryOk = true;
         let inventoryErr = "";
 
@@ -181,30 +179,23 @@ app.post(
 
         if (inventoryOk) {
           writeJsonSafe(CATALOG_PATH, catalog);
-          console.log("Fulfilled order + updated inventory:", orderId);
+          console.log("✅ Fulfilled order + updated inventory:", orderId);
         } else {
-          console.error("Inventory update failed:", inventoryErr);
+          console.error("❌ Inventory update failed:", inventoryErr);
         }
 
-        // Email receipt / owner notify
-        const customerEmail = session.customer_details?.email || session.customer_email || "";
-        const shipName = session.customer_details?.name || "";
-        const shipAddress = session.customer_details?.address || null;
-
-        // Build email lines from the cart + server-side catalog pricing
+        // ---- build itemized lines (server-side prices) ----
         const lines = [];
         let computedTotalCents = 0;
 
         for (const item of cart) {
           const sku = String(item.sku || "").trim();
           const cond = normalizeCondition(item.condition);
-          const qty = Number(item.qty || 0);
+          const qty = Math.max(1, Number(item.qty || 0));
 
-          const p = readJsonSafe(CATALOG_PATH)[sku]; // read latest or use catalog var
-          // safer: use the catalog var we already have if it includes sku
-          const product = catalog[sku] || p;
-
+          const product = catalog[sku];
           const name = product?.name || sku;
+
           const baseCents = Number(product?.price_cents || 0);
           const unitCents = centsForCondition(baseCents, cond);
           const lineCents = unitCents * qty;
@@ -213,6 +204,26 @@ app.post(
           lines.push(`${qty}x ${name} — ${cond} — ${formatMoney(unitCents)} each = ${formatMoney(lineCents)}`);
         }
 
+        // ---- customer + shipping info ----
+        const customerEmail =
+          session.customer_details?.email ||
+          session.customer_email ||
+          "";
+
+        const shipName = session.customer_details?.name || "";
+        const shipAddress = session.customer_details?.address || null;
+
+        const shipBlock = shipAddress
+          ? [
+              shipName,
+              shipAddress.line1,
+              shipAddress.line2,
+              `${shipAddress.city || ""}, ${shipAddress.state || ""} ${shipAddress.postal_code || ""}`,
+              shipAddress.country || ""
+            ].filter(Boolean).join("\n")
+          : "(not provided)";
+
+        // ---- email content ----
         const ownerSubject = `New order ${orderId}`;
         const ownerText =
 `New order received: ${orderId}
@@ -224,12 +235,12 @@ Items:
 ${lines.map(l => `- ${l}`).join("\n")}
 
 Shipping address:
-${shipAddress ? `${shipAddress.line1 || ""} ${shipAddress.line2 || ""}\n${shipAddress.city || ""}, ${shipAddress.state || ""} ${shipAddress.postal_code || ""}\n${shipAddress.country || ""}` : "(not provided)"}
+${shipBlock}
 
 Stripe session: ${session.id}
 `;
 
-        const customerSubject = `Your order receipt (${orderId})`;
+        const customerSubject = `Your Riftbound order receipt (${orderId})`;
         const customerText =
 `Thanks for your purchase!
 
@@ -239,13 +250,19 @@ Total: ${formatMoney(computedTotalCents)}
 Items:
 ${lines.map(l => `- ${l}`).join("\n")}
 
+Shipping to:
+${shipBlock}
+
 We’ll process and ship your order soon.
 
 Riftbound Trading Co
 `;
 
-        // Send emails (Resend)
-        if (resend && EMAIL_FROM) {
+        // ---- send emails ----
+        if (!resend || !EMAIL_FROM) {
+          console.warn("Resend not configured; skipping order emails.");
+        } else {
+          // Owner email
           if (OWNER_EMAIL) {
             const r1 = await resend.emails.send({
               from: EMAIL_FROM,
@@ -258,6 +275,7 @@ Riftbound Trading Co
             console.warn("OWNER_EMAIL not set; skipping owner notification email.");
           }
 
+          // Customer receipt
           if (customerEmail) {
             const r2 = await resend.emails.send({
               from: EMAIL_FROM,
@@ -269,38 +287,33 @@ Riftbound Trading Co
           } else {
             console.warn("No customer email; skipping customer receipt.");
           }
-        } else {
-          console.warn("Resend not configured; skipping emails.");
         }
       }
 
-      res.json({ received: true });
+      return res.json({ received: true });
     } catch (e) {
       console.error("Webhook handler error:", e);
-      res.status(500).send("Webhook handler error");
+      return res.status(500).send("Webhook handler error");
     }
   }
 );
 
-// Normal JSON for everything else:
+/* =========================
+   NORMAL MIDDLEWARE
+========================= */
 app.use(express.json());
-
-// Static site
 app.use(express.static(path.join(__dirname, "public")));
 
 /* =========================
    ROUTES
 ========================= */
-
 app.get("/health", (req, res) => res.send("OK"));
 
-// BUY catalog (customer purchases from you)
 app.get("/api/catalog", (req, res) => {
   const catalog = readJsonSafe(CATALOG_PATH);
   res.json({ ok: true, catalog });
 });
 
-// SELL list (customer sells to you) — separate pricing
 app.get("/api/selllist", (req, res) => {
   const selllist = readJsonSafe(SELLLIST_PATH);
   res.json({ ok: true, selllist });
@@ -322,7 +335,6 @@ app.post("/api/create-checkout-session", async (req, res) => {
 
     const catalog = readJsonSafe(CATALOG_PATH);
 
-    // Validate and build Stripe line_items
     const line_items = [];
 
     for (const item of cart) {
@@ -368,7 +380,6 @@ app.post("/api/create-checkout-session", async (req, res) => {
       cancel_url: `${PUBLIC_BASE_URL}/buy-cart.html`,
       metadata: {
         orderId,
-        // store cart so webhook can update inventory + emails
         cart: JSON.stringify(cart)
       }
     });
@@ -381,8 +392,8 @@ app.post("/api/create-checkout-session", async (req, res) => {
 });
 
 /**
- * Sell form submit -> sends you + customer confirmation
- * Client sends: { name, email, total, order: [{sku?, name, condition, qty, unitPrice}] }
+ * Sell form submit -> emails YOU + customer confirmation
+ * Client sends: { name, email, total, order: [{name, condition, qty, unitPrice}] }
  */
 app.post("/api/submit", async (req, res) => {
   try {
@@ -391,9 +402,7 @@ app.post("/api/submit", async (req, res) => {
     const total = String(req.body?.total || "").trim();
     const order = Array.isArray(req.body?.order) ? req.body.order : [];
 
-    if (!order.length) {
-      return res.status(400).json({ ok: false, error: "Empty sell order" });
-    }
+    if (!order.length) return res.status(400).json({ ok: false, error: "Empty sell order" });
 
     const lines = order.map((l) => {
       const qty = Number(l.qty || 0) || 0;
@@ -416,27 +425,27 @@ Cards:
 ${lines.map(l => `- ${l}`).join("\n")}
 `;
 
-    // --- send emails (Resend) ---
     if (!resend || !EMAIL_FROM) {
       console.warn("Sell email skipped (Resend/EMAIL_FROM not configured)");
       return res.json({ ok: true, skipped: true });
     }
 
-    // 1) Email YOU (owner)
+    // 1) Email YOU
     if (OWNER_EMAIL) {
-      await resend.emails.send({
+      const r1 = await resend.emails.send({
         from: EMAIL_FROM,
         to: OWNER_EMAIL,
         subject: ownerSubject,
         text: ownerText
       });
+      console.log("Resend sell owner email result:", r1);
     } else {
-      console.warn("OWNER_EMAIL not set; skipping owner email.");
+      console.warn("OWNER_EMAIL not set; skipping owner sell email.");
     }
 
     // 2) Email CUSTOMER confirmation
     if (email) {
-      const customerSubject = "We received your sell order";
+      const customerSubject = `We received your sell order`;
       const customerText =
 `Thanks! We received your sell order.
 
@@ -451,15 +460,15 @@ We’ll review your order and follow up soon.
 
 Riftbound Trading Co
 `;
-
-      await resend.emails.send({
+      const r2 = await resend.emails.send({
         from: EMAIL_FROM,
         to: email,
         subject: customerSubject,
         text: customerText
       });
+      console.log("Resend sell customer email result:", r2);
     } else {
-      console.warn("Customer email missing; skipping customer confirmation.");
+      console.warn("Customer email missing; skipping sell confirmation.");
     }
 
     return res.json({ ok: true });
