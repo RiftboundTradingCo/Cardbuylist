@@ -1362,6 +1362,38 @@ img:not(.site-logo):not(.brand-logo) {
   font-weight: 800;
   cursor: pointer;
 }
+.image-modal.hidden { display: none; }
+
+.image-modal{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 9999;
+}
+
+.image-modal img{
+  max-width: min(92vw, 900px);
+  max-height: 92vh;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.55);
+}
+
+.image-modal-close{
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 0;
+  cursor: pointer;
+  font-size: 28px;
+  line-height: 44px;
+}
 
 /* ===============================
    SMALL UTIL

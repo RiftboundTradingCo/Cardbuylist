@@ -98,13 +98,19 @@
   <!-- CONFIRMATION MESSAGE -->
   <p id="message"></p>
 
+<!-- IMAGE MODAL -->
+<div id="imageModal" class="image-modal hidden" aria-hidden="true">
+  <button id="imageModalClose" class="image-modal-close" type="button" aria-label="Close">×</button>
+  <img id="imageModalImg" src="" alt="Card image enlarged" />
+</div>
+
   <!-- Link JavaScript (must be last) -->
 <!-- Load scripts at the bottom (order matters) -->
 <script src="sell-render.js?v=1"></script>
 <script src="script.js?v=999"></script> <!-- your existing sell page logic -->
 <script src="cart-badge.js?v=1"></script>
 <script src="/sell-cart-badge.js"></script>
-
+<script src="/image-modal.js?v=1"></script>
 
 </body>
 </html>

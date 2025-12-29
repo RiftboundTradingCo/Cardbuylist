@@ -171,7 +171,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       card.innerHTML = `
         <div class="buy-card-inner">
-          ${img ? `<img class="buy-card-img" src="${encodeURI(img)}" alt="${name}" />` : ""}
+         ${img ? `<img class="buy-card-img" src="${encodeURI(img)}" alt="${name}" data-zoom="1" />` : ""}
+
 
           <h3 class="buy-card-title">${name}</h3>
 
