@@ -1,70 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Buy Cards | Riftbound Trading Co</title>
-  <link rel="stylesheet" href="/style.css?v=205">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Global styles -->
+  <link rel="stylesheet" href="/style.css" />
+
+  <!-- (Optional) favicon -->
+  <link rel="icon" href="/images/favicon.png" />
 </head>
+
 <body>
 
-<!-- HEADER -->
-<header class="site-header">
-  <div class="header-inner">
-    <a class="brand-wrap" href="/index.html">
-      <img src="/images/riftbound-logo.jpg" alt="Riftbound Trading Co" class="site-logo">
-      <div class="brand-title">Riftbound Trading Co</div>
-    </a>
-
-    <nav class="nav-links">
-      <a class="nav-sell" href="/index.html">Sell Cards</a>
-      <a class="nav-sellcart" href="/sell-cart.html">
-        Sell Cart <span id="sellCartBadge" class="cart-badge hidden">0</span>
-     </a>
-      <a class="nav-buy active" href="/buy.html">Buy Cards</a>
-      <a class="nav-buycart" href="/buy-cart.html">
-        Buy Cart <span id="buyCartBadge" class="cart-badge hidden">0</span>
+  <!-- ===== HEADER ===== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="/" class="logo-wrap">
+        <img
+          src="/images/riftbound-logo.jpg"
+          alt="Riftbound Trading Co"
+          class="site-logo"
+        />
       </a>
-      <a class="nav-ship" href="/shipping.html">Shipping</a>
-      <a class="nav-contact" href="/contact.html">Contact</a>
-    </nav>
-  </div>
-</header>
 
+      <nav class="main-nav">
+        <a class="nav-sell" href="/sell.html">Sell Cards</a>
+        <a class="nav-sellcart" href="/sell-cart.html">
+          Sell Cart <span class="badge badge-sell" id="sellCartBadge">0</span>
+        </a>
+        <a class="nav-buy" href="/buy.html">Buy Cards</a>
+        <a class="nav-buycart" href="/buy-cart.html">
+          Buy Cart <span class="badge badge-buy" id="buyCartBadge">0</span>
+        </a>
+        <a class="nav-ship" href="/shipping.html">Shipping</a>
+        <a class="nav-contact" href="/contact.html">Contact</a>
+      </nav>
+    </div>
+  </header>
 
-<!-- MAIN -->
-<main>
-  <h1>Buy Cards</h1>
-  <p>Browse cards available for purchase.</p>
+  <!-- ===== PAGE CONTENT ===== -->
+  <main class="page">
 
-  <p>
-    <a href="/buy-cart.html" class="nav-cta">View Buy Cart</a>
-  </p>
+    <h1 class="page-title">Buy Cards</h1>
+    <p class="page-subtitle">Browse available cards below.</p>
 
-  <!-- SEARCH -->
-  <input
-    type="text"
-    id="buySearch"
-    class="buy-search"
-    placeholder="Search cards for sale..."
-  >
+    <!-- LAYOUT: cards + mini cart -->
+    <div class="buy-layout">
 
-  <!-- STORE GRID (AUTO-RENDERED) -->
-  <div class="store-grid" id="storeGrid"></div>
-</main>
+      <!-- ===== LEFT: BUY GRID ===== -->
+      <section class="buy-main">
 
-<!-- IMAGE MODAL (MUST BE BEFORE SCRIPTS) -->
-<div id="imageModal" class="image-modal hidden">
-  <span id="imageModalClose" class="image-modal-close">&times;</span>
-  <img id="imageModalImg" src="" alt="Card image enlarged">
-</div>
+        <!-- Your search/filter UI (if any) -->
+        <div class="buy-controls">
+          <!-- optional search bar -->
+        </div>
 
-<!-- SCRIPTS (ORDER MATTERS) -->
-<script src="buy-render.js?v=53"></script>
-<script src="buy.js?v=54"></script>
-<script src="cart-badge.js?v=1"></script>
-<script src="/sell-cart-badge.js"></script>
+        <!-- Card grid (your existing buy cards render here) -->
+        <div id="buyGrid" class="buy-grid">
+          <!-- JS inserts cards here -->
+        </div>
+
+      </section>
+
+      <!-- ===== RIGHT: MINI CART ===== -->
+      <aside class="mini-cart" id="miniCart">
+        <h3>Shopping Cart</h3>
+
+        <div class="mini-cart-summary">
+          <div>
+            <strong><span id="miniCartCount">0</span></strong> items
+          </div>
+          <div>
+            Subtotal:
+            <strong>$<span id="miniCartSubtotal">0.00</span></strong>
+          </div>
+        </div>
+
+        <div class="mini-cart-links">
+          <a href="/buy-cart.html">View Cart</a>
+          <span>|</span>
+          <a href="/buy-cart.html">Checkout</a>
+        </div>
+
+        <ul class="mini-cart-items" id="miniCartItems">
+          <!-- JS inserts mini cart lines here -->
+        </ul>
+
+        <button
+          class="mini-cart-checkout"
+          id="miniCartCheckoutBtn"
+          type="button"
+        >
+          🔒 Secure Checkout
+        </button>
+      </aside>
+
+    </div>
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="site-footer">
+    <p>© Riftbound Trading Co</p>
+  </footer>
+
+  <!-- ===== SCRIPTS ===== -->
+
+  <!-- badge updater (important) -->
+  <script src="/cart-badge.js"></script>
+
+  <!-- main buy page logic (renders cards, add-to-cart, etc.) -->
+  <script src="/buy.js"></script>
 
 </body>
 </html>
+
 
 

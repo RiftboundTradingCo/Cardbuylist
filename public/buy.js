@@ -38,6 +38,124 @@
     if (qtyInput) qtyInput.value = String(clean);
     if (qtyNum) qtyNum.textContent = String(clean);
   }
+document.addEventListener("DOMContentLoaded", () => {
+  const miniCount = document.getElementById("miniCartCount");
+  const miniSubtotal = document.getElementById("miniCartSubtotal");
+  const miniItems = document.getElementById("miniCartItems");
+  const miniCheckoutBtn = document.getElementById("miniCartCheckoutBtn");
+
+  if (!miniCount || !miniSubtotal || !miniItems) return;
+
+  const TAB_TO_COND = {
+    NM: "Near Mint",
+    LP: "Lightly Played",
+    MP: "Moderately Played",
+    HP: "Heavily Played",
+  };
+
+  const CONDITION_MULT = {
+    "Near Mint": 1.0,
+    "Lightly Played": 0.9,
+    "Moderately Played": 0.8,
+    "Heavily Played": 0.65,
+  };
+
+  function normalizeCondition(c) {
+    const s = String(c || "Near Mint").trim();
+    return CONDITION_MULT[s] ? s : "Near Mint";
+  }
+
+  function calcUnitCents(baseCents, condition) {
+    const mult = CONDITION_MULT[normalizeCondition(condition)] ?? 1.0;
+    return Math.round(Number(baseCents || 0) * mult);
+  }
+
+  function money(cents) {
+    return `$${(Number(cents || 0) / 100).toFixed(2)}`;
+  }
+
+  function loadCart() {
+    try { return JSON.parse(localStorage.getItem("buyCart")) || []; }
+    catch { return []; }
+  }
+
+  async function fetchCatalog() {
+    const res = await fetch("/api/catalog", { cache: "no-store" });
+    const data = await res.json();
+    return data?.catalog || {};
+  }
+
+  // group same SKU+condition
+  function groupLines(cart) {
+    const m = new Map(); // key => { sku, condition, qty }
+    for (const it of cart) {
+      const sku = String(it.sku || "").trim();
+      if (!sku) continue;
+
+      const condRaw = String(it.condition || "").trim();
+      const cond = TAB_TO_COND[condRaw] ? TAB_TO_COND[condRaw] : normalizeCondition(condRaw);
+      const qty = Math.max(1, Number(it.qty || 1));
+
+      const key = `${sku}__${cond}`;
+      if (!m.has(key)) m.set(key, { sku, condition: cond, qty: 0 });
+      m.get(key).qty += qty;
+    }
+    return [...m.values()];
+  }
+
+  async function renderMiniCart() {
+    const cart = loadCart();
+    const catalog = await fetchCatalog();
+
+    const lines = groupLines(cart);
+
+    let totalQty = 0;
+    let totalCents = 0;
+
+    miniItems.innerHTML = "";
+
+    for (const line of lines) {
+      const product = catalog[line.sku];
+      if (!product) continue;
+
+      const name = product.name || line.sku;
+      const baseCents = Number(product.price_cents || 0);
+      const unitCents = calcUnitCents(baseCents, line.condition);
+      const lineCents = unitCents * line.qty;
+
+      totalQty += line.qty;
+      totalCents += lineCents;
+
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <div>
+          <div class="mini-cart-item-title">${name}</div>
+          <div class="mini-cart-item-sub">${line.qty} × ${line.condition}</div>
+        </div>
+        <div class="mini-cart-item-price">${money(lineCents)}</div>
+      `;
+      miniItems.appendChild(li);
+    }
+
+    miniCount.textContent = String(totalQty);
+    miniSubtotal.textContent = (totalCents / 100).toFixed(2);
+
+    if (miniCheckoutBtn) {
+      miniCheckoutBtn.disabled = totalQty === 0;
+    }
+  }
+
+  // click goes to cart page checkout area
+  if (miniCheckoutBtn) {
+    miniCheckoutBtn.addEventListener("click", () => {
+      window.location.href = "/buy-cart.html";
+    });
+  }
+
+  // render now + when cart changes
+  renderMiniCart();
+  window.addEventListener("cart:changed", renderMiniCart);
+});
 
   // -----------------------------
   // Cart + stock helpers
