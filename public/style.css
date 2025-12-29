@@ -1326,6 +1326,42 @@ img:not(.site-logo):not(.brand-logo) {
   .buy-layout{ flex-direction: column; }
   .mini-cart{ width: 100%; flex-basis: auto; position: static; margin-left: 0; }
 }
+.buy-controls{
+  margin: 10px 0 18px;
+}
+
+.buy-search{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  max-width: 520px;
+}
+
+#buySearch{
+  flex: 1 1 auto;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.15);
+  padding: 0 14px;
+  font-size: 16px;
+  outline: none;
+  background: rgba(255,255,255,.92);
+}
+
+#buySearch:focus{
+  border-color: rgba(37,99,235,.8);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.18);
+}
+
+#buySearchClear{
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.15);
+  background: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
 
 /* ===============================
    SMALL UTIL

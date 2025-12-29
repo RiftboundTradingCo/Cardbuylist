@@ -4,6 +4,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Page elements (buy.html)
   const gridEl = document.getElementById(GRID_ID);
+  const searchEl = document.getElementById("buySearch");
+  const clearSearchEl = document.getElementById("buySearchClear");
+
+  let ALL_ITEMS = [];      // full list (unfiltered)
+  let FILTERED_ITEMS = []; // items after search
+  let searchQuery = "";
 
   // Mini cart elements (buy.html)
   const miniCountEl = document.getElementById("miniCartCount");
@@ -86,7 +92,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function getCartQtyForSkuCond(cart, sku, cond) {
     return cart.reduce((sum, it) => {
-      if (String(it.sku || "") === sku && normalizeCondition(it.condition) === normalizeCondition(cond)) {
+      if (
+        String(it.sku || "") === sku &&
+        normalizeCondition(it.condition) === normalizeCondition(cond)
+      ) {
         return sum + Math.max(0, Number(it.qty || 0));
       }
       return sum;
@@ -105,18 +114,45 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // -------------------------
-  // Render Buy Grid
+  // Search
+  // -------------------------
+  function applySearch() {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) {
+      FILTERED_ITEMS = ALL_ITEMS.slice();
+    } else {
+      FILTERED_ITEMS = ALL_ITEMS.filter((it) => {
+        const name = String(it.name || "").toLowerCase();
+        const sku = String(it.sku || "").toLowerCase();
+        return name.includes(q) || sku.includes(q);
+      });
+    }
+    renderGrid(); // ✅ renders filtered list
+  }
+
+  if (searchEl) {
+    searchEl.addEventListener("input", () => {
+      searchQuery = searchEl.value || "";
+      applySearch();
+    });
+  }
+
+  if (clearSearchEl) {
+    clearSearchEl.addEventListener("click", () => {
+      searchQuery = "";
+      if (searchEl) searchEl.value = "";
+      applySearch();
+      searchEl?.focus();
+    });
+  }
+
+  // -------------------------
+  // Render Buy Grid (✅ uses FILTERED_ITEMS)
   // -------------------------
   function renderGrid() {
     if (!gridEl) return;
 
-    const items = Object.entries(catalog).map(([sku, product]) => ({
-      sku,
-      ...product,
-    }));
-
-    // optional: sort by name
-    items.sort((a, b) => String(a.name || a.sku).localeCompare(String(b.name || b.sku)));
+    const items = FILTERED_ITEMS;
 
     gridEl.innerHTML = "";
 
@@ -140,7 +176,14 @@ document.addEventListener("DOMContentLoaded", () => {
           <h3 class="buy-card-title">${name}</h3>
 
           <div class="cond-tabs buy-cond-tabs" role="tablist" aria-label="Condition">
-            ${TAB_ORDER.map((t) => `<button class="cond-tab${t === defaultTab ? " active" : ""}" type="button" data-tab="${t}">${t}</button>`).join("")}
+            ${TAB_ORDER
+              .map(
+                (t) =>
+                  `<button class="cond-tab${
+                    t === defaultTab ? " active" : ""
+                  }" type="button" data-tab="${t}">${t}</button>`
+              )
+              .join("")}
           </div>
 
           <div class="buy-card-meta">
@@ -183,7 +226,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Mini cart (right sidebar)
   // -------------------------
   function buildMiniCartLines(cart) {
-    // group by sku+condition
     const map = new Map();
     for (const it of cart) {
       const sku = String(it.sku || "").trim();
@@ -212,7 +254,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // sort by name
     lines.sort((a, b) => String(a.name).localeCompare(String(b.name)));
     return lines;
   }
@@ -245,7 +286,6 @@ document.addEventListener("DOMContentLoaded", () => {
           miniItemsEl.appendChild(li);
         }
 
-        // if too many items, show a hint
         if (lines.length > 8) {
           const li = document.createElement("li");
           li.className = "mini-more";
@@ -267,13 +307,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const product = catalog[sku];
     if (!product) return;
 
-    // switch condition tab
     const tabBtn = e.target.closest(".cond-tab");
     if (tabBtn) {
       const tab = String(tabBtn.dataset.tab || "NM").toUpperCase();
       cardEl.dataset.activeTab = TAB_TO_COND[tab] ? tab : "NM";
 
-      // update active class
       cardEl.querySelectorAll(".cond-tab").forEach((b) => b.classList.remove("active"));
       tabBtn.classList.add("active");
 
@@ -283,7 +321,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const qtyInput = cardEl.querySelector(".qty-input");
 
-    // qty -
     if (e.target.closest(".qty-minus")) {
       const cur = clampQty(qtyInput?.value || 1);
       const next = Math.max(1, cur - 1);
@@ -291,7 +328,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // qty +
     if (e.target.closest(".qty-plus")) {
       const cur = clampQty(qtyInput?.value || 1);
       const next = Math.min(999, cur + 1);
@@ -299,7 +335,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // add to cart
     if (e.target.closest(".buy-add-btn")) {
       const tab = String(cardEl.dataset.activeTab || "NM").toUpperCase();
       const cond = tabToCondition(tab);
@@ -309,7 +344,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const cart = loadCart();
       const already = getCartQtyForSkuCond(cart, sku, cond);
 
-      // clamp add so we never exceed stock (if stock is set)
       let canAdd = desiredQty;
       if (stock > 0) {
         canAdd = Math.max(0, Math.min(desiredQty, stock - already));
@@ -320,9 +354,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // merge into existing line if present
       const idx = cart.findIndex(
-        (it) => String(it.sku || "") === sku && normalizeCondition(it.condition) === normalizeCondition(cond)
+        (it) =>
+          String(it.sku || "") === sku &&
+          normalizeCondition(it.condition) === normalizeCondition(cond)
       );
 
       if (idx >= 0) {
@@ -337,14 +372,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Mini checkout button just navigates to buy-cart.html
   if (miniCheckoutBtn) {
     miniCheckoutBtn.addEventListener("click", () => {
       window.location.href = "/buy-cart.html";
     });
   }
 
-  // keep mini cart + badges in sync if another page updates cart
   window.addEventListener("cart:changed", () => {
     renderMiniCart();
   });
@@ -362,8 +395,23 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // ✅ Build items once
+    ALL_ITEMS = Object.entries(catalog).map(([sku, product]) => ({
+      sku,
+      ...product,
+    }));
+
+    // optional: sort by name
+    ALL_ITEMS.sort((a, b) =>
+      String(a.name || a.sku).localeCompare(String(b.name || b.sku))
+    );
+
+    // ✅ default filtered = all
+    FILTERED_ITEMS = ALL_ITEMS.slice();
+
     renderGrid();
     renderMiniCart();
     if (typeof window.updateCartBadges === "function") window.updateCartBadges();
   })();
 });
+
