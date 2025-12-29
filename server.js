@@ -381,7 +381,17 @@ app.post("/api/create-checkout-session", async (req, res) => {
       metadata: {
         orderId,
         cart: JSON.stringify(cart)
+      email: email || ""   // ← THIS is the key
       }
+const emailFromStripe =
+  session.customer_details?.email ||
+  session.customer_email ||
+  "";
+
+const emailFromMetadata = String(session?.metadata?.email || "").trim();
+
+const customerEmail = emailFromStripe || emailFromMetadata;
+
     });
 
     res.json({ ok: true, url: session.url, id: session.id, orderId });
