@@ -29,38 +29,33 @@
 </header>
 
 
-<main>
-  <h1>Your Buy Cart</h1>
-  <p>Review your cart items below.</p>
+<main class="page">
 
+  <h1>Your Buy Cart</h1>
+
+  <!-- ✅ CHECKOUT SECTION (NOW AT TOP) -->
+  <div class="cart-summary checkout-top">
+    <label for="buyEmail">Email for receipt</label>
+
+    <div class="checkout-row">
+      <input
+        type="email"
+        id="buyEmail"
+        placeholder="you@example.com"
+        autocomplete="email"
+      />
+
+      <button id="checkoutBtn" type="button">
+        Checkout with Stripe
+      </button>
+    </div>
+
+    <p id="checkoutMsg" class="cart-message"></p>
+  </div>
+
+  <!-- ✅ CART ITEMS -->
   <ul id="buyCartList" class="cart-list"></ul>
 
-  <p class="recap-total">
-    <strong>Total:</strong> $<span id="buyCartTotal">0.00</span>
-  </p>
-
-  <label>
-  Email for receipt
-  <input type="email" id="buyEmail" placeholder="you@example.com">
-</label>
-
-<button id="checkoutBtn" type="button">Checkout with Stripe</button>
-<p id="checkoutMsg"></p>
-
-
-  <button id="buyClearCartBtn" class="clear-cart-btn" type="button">Clear Cart</button>
-
-  <p style="margin-top:16px;">
-    <a href="/buy.html">← Continue shopping</a>
-  </p>
-
-  <p id="buyCartMessage"></p>
-
-  <div id="imageModal" class="image-modal hidden">
-  <span id="imageModalClose" class="image-modal-close">&times;</span>
-  <img id="imageModalImg" src="" alt="Card image enlarged">
-</div>
-  
 </main>
 
 <script src="buy-cart.js?v=122"></script>
