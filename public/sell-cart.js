@@ -407,45 +407,99 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // ===== submit sell order (optional: if you already have submit flow) =====
-  if (submitBtn) {
-    submitBtn.addEventListener("click", async () => {
-      const email = String(emailInput?.value || "").trim();
-      if (!email) {
-        showMsg("Please enter your email for confirmation.", false);
+  // ===== submit sell order (redirect to recap.html) =====
+if (submitBtn) {
+  submitBtn.addEventListener("click", async () => {
+    const email = String(emailInput?.value || "").trim();
+    if (!email || !email.includes("@")) {
+      showMsg("Please enter a valid email for confirmation.", false);
+      return;
+    }
+
+    const cart = loadCart();
+    if (!cart.length) {
+      showMsg("Your sell cart is empty.", false);
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Submitting...";
+
+    try {
+      // Build order lines from grouped cart + selllist prices
+      const groups = groupCart(cart);
+      const order = [];
+
+      for (const g of groups) {
+        const { item } = resolveSellItem(g.key, g.name);
+        if (!item) continue;
+
+        for (const tab of TAB_ORDER) {
+          const q = Number(g.condQty[tab] || 0);
+          if (q <= 0) continue;
+
+          const unit = getPriceFor(item, tab); // dollars
+          order.push({
+            name: item.name,
+            condition: tab,     // "NM" | "LP" | "MP"
+            qty: q,
+            unitPrice: unit     // dollars
+          });
+        }
+      }
+
+      if (!order.length) {
+        showMsg("Could not build order (missing selllist pricing).", false);
         return;
       }
 
-      const cart = loadCart();
-      if (!cart.length) {
-        showMsg("Your sell cart is empty.", false);
-        return;
+      const total = order.reduce(
+        (sum, l) => sum + (Number(l.qty || 0) * Number(l.unitPrice || 0)),
+        0
+      );
+
+      const res = await fetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Sell Customer",
+          email,
+          total: total.toFixed(2),
+          order
+        })
+      });
+
+      let data = {};
+      try { data = await res.json(); } catch {}
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || res.statusText || "Submit failed");
       }
 
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Submitting...";
+      // ✅ Save recap payload for recap.html
+      sessionStorage.setItem("sellOrderRecap", JSON.stringify({
+        name: "Sell Customer",
+        email,
+        order,
+        computedTotal: total.toFixed(2)
+      }));
 
-      try {
-        // Convert cart to email lines with prices
-        const groups = groupCart(cart);
-        const order = [];
+      // ✅ Clear cart + update UI/badges
+      saveCart([]);
+      // (optional) no need to render since we're redirecting
 
-        for (const g of groups) {
-          const { item } = resolveSellItem(g.key, g.name);
-          if (!item) continue;
+      // ✅ Redirect
+      window.location.href = "/recap.html";
 
-          for (const tab of TAB_ORDER) {
-            const q = Number(g.condQty[tab] || 0);
-            if (q <= 0) continue;
+    } catch (err) {
+      console.error("Sell submit error:", err);
+      showMsg("Error submitting sell order. Try again.", false);
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit Sell Order";
+    }
+  });
+}
 
-            const unit = getPriceFor(item, tab);
-            order.push({
-              name: item.name,
-              condition: tab,
-              qty: q,
-              unitPrice: unit
-            });
-          }
         }
 
         // compute total
