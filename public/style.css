@@ -1,1356 +1,325 @@
-/* ===============================
+/* =========================================================
    Riftbound Trading Co — style.css
-   Goal: consistent look across all pages (buy/sell/cart),
-   match the screenshot layout, BLUE tabs, visible logo.
-================================= */
+   (single stylesheet used across all pages)
+========================================================= */
 
-:root{
-  --bg: #ffffff;
-  --text: #0f172a;
-  --muted: #64748b;
-
-  --topbar: #2f3540;         /* dark header */
-  --topbarText: #ffffff;
-
-  --accent: #f59e0b;         /* orange headings / CTA */
-  --link: #2563eb;
-
-  --cardBg: #ffffff;
-  --cardBorder: #e5e7eb;
-  --cardShadow: 0 10px 25px rgba(15, 23, 42, .08);
-
-  --tabBlue: #2563eb;        /* ACTIVE condition tab */
-  --tabBlueHover: #1d4ed8;
-
-  --danger: #ef4444;
-  --dangerBorder: #fca5a5;
-
-  --btnBlue: #2563eb;
-  --btnBlueHover: #1d4ed8;
-
-  --radius: 16px;
-}
-
-/* ---- base ---- */
+/* ---------- Base / Reset ---------- */
 *{ box-sizing:border-box; }
 html,body{ height:100%; }
 body{
   margin:0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-  color:var(--text);
-  background:var(--bg);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color:#0f172a;
+  background:#0b0f16;
 }
 
 /* links */
-a{ color: var(--link); text-decoration: none; }
-a:hover{ text-decoration: underline; }
+a{ color:inherit; text-decoration:none; }
+a:hover{ text-decoration:underline; }
 
-/* headings */
-h1,h2,h3{ margin:0 0 10px; }
-h1{
-  font-size: 44px;
-  line-height: 1.1;
-  color: var(--accent);
-  letter-spacing: .2px;
+/* ---------- Wood shelves background ---------- */
+body{
+  /* Put your shelves image here (the big background) */
+  background-image: url("/images/wooden-shelves.jpg");
+  background-size: cover;
+  background-position: top center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
-p{ margin: 0 0 14px; color: var(--muted); }
 
-/* page wrapper */
+/* Optional: darken slightly so content pops */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background: rgba(0,0,0,.15);
+  pointer-events:none;
+  z-index:-1;
+}
+
+/* ---------- Page wrapper ---------- */
 .page{
-  max-width: 1120px;
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 36px 20px 60px;
+  padding: 28px 18px 60px;
 }
 
-/* ===============================
-   TOP BAR / NAV
-================================= */
+.page-title{
+  margin: 6px 0 6px;
+  font-size: 52px;
+  line-height: 1.05;
+  color: #f59e0b; /* orange headline */
+  font-weight: 900;
+  letter-spacing: .5px;
+}
+
+.page-subtitle{
+  margin: 0 0 18px;
+  color: rgba(15, 23, 42, .65);
+  font-weight: 600;
+}
+
+/* make subtitle readable on wood */
+.page, .page *{
+  text-shadow: none;
+}
+
+/* ---------- Header / Nav (wood wall + gem colors) ---------- */
 .topbar{
-  background: var(--topbar);
-  color: var(--topbarText);
-  display:flex;
-  align-items:center;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 14px 18px;
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 1000;
+  padding: 10px 16px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+
+  /* wood wall background */
+  background-image: url("/images/wood-wall.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  /* subtle dark overlay so text readable */
+  box-shadow: 0 8px 22px rgba(0,0,0,.25);
 }
+
+.topbar::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,.25);
+  pointer-events:none;
+}
+.topbar > *{ position:relative; } /* above overlay */
 
 .brand{
   display:flex;
   align-items:center;
-  gap: 12px;
-  min-width: 220px;
-  color: var(--topbarText);
-  text-decoration: none;
+  gap:12px;
+  min-width: 240px;
 }
-.brand:hover{ text-decoration:none; }
 
-.brand-logo{
-  max-height: 90px;      /* ✅ keeps header compact */
-  width: auto;           /* maintain aspect ratio */
-  max-width: 180px;      /* prevents horizontal overflow */
-  height: auto;
-  display: block;
+.brand-logo,
+.site-logo{
+  /* ✅ controls logo size everywhere */
+  height: 56px;              /* adjust to taste */
+  width: auto;
+  max-width: 220px;
   object-fit: contain;
+  display:block;
+  border-radius: 8px;
 }
+
 .brand-name{
-  font-weight: 700;
-  letter-spacing: .2px;
-  display:none; /* hide text name since logo is primary */
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: .3px;
+  text-shadow: 0 2px 10px rgba(0,0,0,.55);
+  white-space: nowrap;
 }
 
 .navlinks{
+  margin-left:auto;
   display:flex;
   align-items:center;
-  gap: 18px;
+  gap: 10px;
   flex-wrap: wrap;
 }
+
 .navlinks a{
-  color: rgba(255,255,255,.9);
-  font-weight: 600;
-  padding: 10px 12px;
-  border-radius: 12px;
-  text-decoration:none;
-}
-.navlinks a:hover{
-  background: rgba(255,255,255,.10);
-  text-decoration:none;
-}
-.navlinks a.active{
-  background: rgba(255,255,255,.16);
-  outline: 1px solid rgba(255,255,255,.18);
+  font-weight: 900;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.25);
+  border: 1px solid rgba(255,255,255,.12);
+  text-shadow: 0 2px 10px rgba(0,0,0,.55);
 }
 
-/* badges */
+.navlinks a.active{
+  background: rgba(255,255,255,.14);
+  border-color: rgba(255,255,255,.22);
+}
+
+/* gem colors per link order:
+   Sell Cards (orange), Sell Cart (yellow), Buy Cards (purple),
+   Buy Cart (red), Shipping (blue), Contact (green)
+*/
+.navlinks a:nth-child(1){ color:#f59e0b; }  /* orange */
+.navlinks a:nth-child(2){ color:#fbbf24; }  /* yellow */
+.navlinks a:nth-child(3){ color:#a855f7; }  /* purple */
+.navlinks a:nth-child(4){ color:#ef4444; }  /* red */
+.navlinks a:nth-child(5){ color:#3b82f6; }  /* blue */
+.navlinks a:nth-child(6){ color:#22c55e; }  /* green */
+
+/* ---------- Badges (gem images) ---------- */
 .cart-badge{
-  margin-left: 8px;
-  background: var(--danger);
-  color: #fff;
-  font-weight: 800;
-  font-size: 12px;
-  line-height: 18px;
-  padding: 1px 8px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  margin-left: 6px;
   border-radius: 999px;
-  display:inline-block;
+  font-weight: 900;
+  font-size: 12px;
+  color:#fff;
+  line-height: 20px;
   vertical-align: middle;
 }
 .cart-badge.hidden{ display:none; }
 
-/* ===============================
-   COMMON BUTTONS / INPUTS
-================================= */
-input[type="text"], input[type="email"], input[type="number"]{
-  font: inherit;
-  padding: 12px 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
-  outline: none;
-  width: 100%;
-  background: #fff;
-}
-input:focus{
-  border-color: #93c5fd;
-  box-shadow: 0 0 0 4px rgba(37,99,235,.15);
+/* Buy cart badge = red gem */
+.cart-badge[data-cart="buy"],
+#buyCartBadge{
+  background-image: url("/images/red-badge.png");
+  background-size: cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  color: transparent; /* show gem only */
+  text-shadow:none;
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  padding:0;
 }
 
-button{
-  font: inherit;
-  cursor: pointer;
-}
-button:disabled{
-  cursor: not-allowed;
-  opacity: .55;
-}
-
-/* primary CTA */
-.nav-cta, .btn-primary{
-  display:inline-block;
-  padding: 10px 16px;
-  border-radius: 14px;
-  background: #fbbf24;
-  color:#111827;
-  font-weight: 800;
-  border: 1px solid rgba(0,0,0,.08);
-  text-decoration:none;
-}
-.nav-cta:hover, .btn-primary:hover{
-  filter: brightness(.98);
-  text-decoration:none;
+/* Sell cart badge = yellow gem */
+.cart-badge[data-cart="sell"]{
+  background-image: url("/images/yellow-badge.png");
+  background-size: cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  color: transparent; /* show gem only */
+  text-shadow:none;
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  padding:0;
 }
 
-/* blue action button (Add to Cart / Add to Sell Order) */
-.add-to-cart-btn, .add-to-sell-btn, .blue-btn{
-  width: 100%;
-  border: none;
-  background: var(--btnBlue);
+/* If you still want numbers visible on top of gem, remove color: transparent above
+   and uncomment this:
+*/
+/*
+.cart-badge[data-cart="buy"], .cart-badge[data-cart="sell"]{
   color:#fff;
-  font-weight: 800;
-  padding: 12px 14px;
-  border-radius: 12px;
+  text-shadow: 0 2px 6px rgba(0,0,0,.8);
+  font-size: 12px;
 }
-.add-to-cart-btn:hover, .add-to-sell-btn:hover, .blue-btn:hover{
-  background: var(--btnBlueHover);
-}
-.add-to-cart-btn:disabled{
-  background: #9ca3af;
-}
+*/
 
-/* outline danger */
-.danger-outline{
-  border: 1px solid var(--dangerBorder);
-  color: var(--danger);
-  background: transparent;
-  font-weight: 800;
-  border-radius: 12px;
-  padding: 10px 14px;
-}
-.danger-outline:hover{
-  background: rgba(239,68,68,.06);
-}
-
-/* ===============================
-   BUY/SELL GRID CARDS
-================================= */
-.store-grid, .results-grid{
-  display:grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 18px;
-  margin-top: 22px;
-}
-
-@media (max-width: 1200px){
-  .store-grid, .results-grid{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
-}
-@media (max-width: 980px){
-  .store-grid, .results-grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-@media (max-width: 720px){
-  .store-grid, .results-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (max-width: 460px){
-  .store-grid, .results-grid{ grid-template-columns: 1fr; }
-}
-
-.store-card, .result-card{
-  background: var(--cardBg);
-  border: 1px solid var(--cardBorder);
-  border-radius: var(--radius);
-  box-shadow: var(--cardShadow);
-  padding: 16px;
-  display:flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.store-card img, .result-card img{
-  width: 100%;
-  height: 220px;
-  object-fit: contain;
-  border-radius: 14px;
-  background: #fff;
-}
-
-.store-title{
-  font-size: 18px;
-  font-weight: 900;
-  color:#0b1220;
-  text-align: center;
-  margin-top: 2px;
-}
-
-/* search bars */
-.buy-search, #search, #buySearch{
-  max-width: 520px;
-  margin: 10px 0 0;
-}
-
-/* ===============================
-   CONDITION TABS (BLUE ACTIVE)
-================================= */
-.cond-tabs{
-  display:inline-flex;
-  align-items:center;
-  gap: 0;
-  padding: 4px;
-  background: #f3f4f6;
-  border-radius: 14px;
-  border: 1px solid #e5e7eb;
-  width: fit-content;
-}
-
-.cond-tab{
-  border: none;
-  background: transparent;
-  color: #111827;
-  font-weight: 900;
-  font-size: 13px;
-  padding: 8px 12px;
-  border-radius: 12px;
-  line-height: 1;
-}
-.cond-tab:hover{ background: rgba(0,0,0,.05); }
-
-.cond-tab.active{
-  background: var(--tabBlue);
-  color: #fff;
-}
-.cond-tab.active:hover{ background: var(--tabBlueHover); }
-
-.cond-tab.disabled,
-.cond-tab[aria-disabled="true"]{
-  color: #9ca3af;
-}
-.cond-tab.disabled:hover,
-.cond-tab[aria-disabled="true"]:hover{
-  background: transparent;
-}
-
-/* ===============================
-   BUY PAGE QTY STEPPER
-   (match buy cart: black +/-)
-================================= */
-.qty-stepper{
-  display:flex;
-  align-items:center;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 2px;
-}
-
-.qty-minus, .qty-plus{
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  border: none;
-  background: #000;
-  color: #fff;
-  font-weight: 900;
-  font-size: 18px;
-  line-height: 38px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-}
-.qty-minus:disabled, .qty-plus:disabled{
-  background: #9ca3af;
-}
-
-.qty-input{
-  width: 56px !important;
-  text-align:center;
-  padding: 10px 8px !important;
-  border-radius: 10px !important;
-}
-
-/* buy line row */
-.buyline{
-  display:flex;
-  align-items:center;
-  justify-content: space-between;
-  gap: 10px;
-  color: #111827;
-  font-weight: 700;
-  font-size: 13px;
-}
-.stock-label{ color: var(--muted); font-weight: 700; }
-
-/* ===============================
-   CART PAGES (BUY + SELL)
-================================= */
-.cart-summary{
-  display:flex;
-  flex-direction: column;
-  gap: 14px;
-  margin: 8px 0 20px;
-}
-
-.cart-total{
-  font-size: 18px;
-  color: var(--accent);
-  font-weight: 900;
-}
-.cart-total strong{
-  color: var(--accent);
-}
-
-.cart-checkout{
-  display:flex;
-  flex-direction: column;
-  gap: 8px;
-  max-width: 520px;
-}
-.cart-checkout label{
-  font-weight: 800;
-  color: #111827;
-}
-.cart-checkout-row{
-  display:flex;
-  gap: 10px;
-  align-items:center;
-}
-.cart-checkout-row input{ flex: 1; }
-.cart-checkout-row button{
-  border: 1px solid #d1d5db;
-  background:#fff;
-  padding: 12px 14px;
-  border-radius: 12px;
-  font-weight: 900;
-}
-.cart-checkout-row button:hover{
-  background:#f3f4f6;
-}
-
-.cart-message{
-  color: var(--muted);
-  font-weight: 700;
-  min-height: 20px;
-}
-
-.cart-actions{
-  display:flex;
-  gap: 14px;
-  align-items:center;
-}
-.link-back{
-  font-weight: 800;
-}
-
-/* list */
+/* ---------- Shared: cards / panels ---------- */
 .cart-list{
-  list-style: none;
-  padding: 0;
+  list-style:none;
+  padding:0;
   margin: 18px 0 0;
-  display:flex;
-  flex-direction: column;
-  gap: 18px;
 }
 
-.cart-item{ margin:0; padding:0; }
+.cart-item{
+  list-style:none;
+  margin: 0 0 18px;
+}
 
-/* card layout like screenshot */
 .cart-card{
-  background: var(--cardBg);
-  border: 1px solid var(--cardBorder);
-  border-radius: var(--radius);
-  box-shadow: var(--cardShadow);
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 18px;
+  box-shadow: 0 10px 22px rgba(0,0,0,.16);
   padding: 18px;
-  display:grid;
-  grid-template-columns: 110px 1fr 260px;
-  gap: 18px;
-  align-items: center;
 }
 
-@media (max-width: 860px){
-  .cart-card{
-    grid-template-columns: 110px 1fr;
-  }
-  .cart-right{
-    grid-column: 1 / -1;
-    display:flex;
-    justify-content: flex-end;
-    gap: 14px;
-    align-items: center;
-  }
+/* Sell/Buy cart row layout (image | main | right) */
+.cart-card{
+  display:grid;
+  grid-template-columns: 96px 1fr 220px;
+  gap: 18px;
+  align-items:center;
 }
 
 .cart-thumb{
-  width: 92px;
-  height: 128px;
+  width: 84px;
+  height: auto;
+  max-height: 120px;
   object-fit: contain;
-  border-radius: 14px;
-  background: #fff;
+  border-radius: 12px;
+  cursor: zoom-in;
 }
 
 .cart-title{
-  font-size: 22px;
-  font-weight: 1000;
-  margin: 0 0 8px;
-  color: #0b1220;
+  margin: 0 0 10px;
+  font-size: 28px;
+  font-weight: 900;
 }
 
+.cart-main{ min-width:0; }
+
 .cart-meta{
-  display:flex;
-  flex-direction: column;
-  gap: 6px;
-  color: #111827;
   font-weight: 700;
-  font-size: 14px;
+  color: rgba(15,23,42,.85);
+  line-height: 1.55;
 }
 .cart-subline{
-  color: var(--muted);
-  font-weight: 800;
+  margin-top: 6px;
+  color: rgba(15,23,42,.75);
 }
 
 /* right column */
 .cart-right{
   justify-self: end;
-  text-align: right;
   display:flex;
-  flex-direction: column;
+  flex-direction:column;
   align-items:flex-end;
   gap: 10px;
 }
 
-.qty-controls{
-  display:flex;
-  align-items:center;
-  gap: 10px;
-}
-.qty-value{
-  min-width: 26px;
-  text-align:center;
-  font-weight: 1000;
-  color:#111827;
-}
-
-/* line price */
 .line-price{
-  font-size: 20px;
-  font-weight: 1000;
-  color:#111827;
-}
-
-/* remove button */
-.remove-cond-btn, .remove-btn{
-  border: 1px solid var(--dangerBorder);
-  background: transparent;
-  color: var(--danger);
   font-weight: 900;
-  padding: 10px 14px;
-  border-radius: 12px;
-}
-.remove-cond-btn:hover, .remove-btn:hover{
-  background: rgba(239,68,68,.06);
-}
-
-/* ===============================
-   IMAGE MODAL (zoom)
-================================= */
-.image-modal{
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.7);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding: 24px;
-  z-index: 999;
-}
-.image-modal.hidden{ display:none; }
-
-.image-modal img{
-  max-width: min(640px, 95vw);
-  max-height: 90vh;
-  border-radius: 16px;
-  background: #fff;
-}
-.image-modal-close{
-  position: absolute;
-  top: 18px;
-  right: 22px;
-  color: #fff;
-  font-size: 36px;
-  font-weight: 900;
-  cursor:pointer;
-}
-/* Header logo sizing fix */
-.site-logo{
-  height: 80px;      /* try 48px if you want smaller */
-  width: auto;
-  max-width: 220px;  /* prevents it from stretching wide */
-  object-fit: contain;
-  display: block;
-}
-
-/* If the logo is inside a link/container, keep it from expanding */
-.brand, .site-logo-wrap, .logo, .nav-logo{
-  display: flex;
-  align-items: center;
-}
-.site-logo{
-  width: auto !important;
-  height: 56px !important;
-  max-height: 56px !important;
-}
-/* ===== Cart layout (Buy Cart + Sell Cart) ===== */
-.cart-list{
-  list-style: none;
-  padding: 0;
-  margin: 24px 0 0;
-}
-
-.cart-item{
-  list-style: none;
-  margin: 0 0 16px 0;
-  padding: 0;
-}
-
-.cart-card{
-  display: flex;
-  gap: 18px;
-  align-items: center;
-  background: #fff;
-  border: 1px solid rgba(0,0,0,.08);
-  border-radius: 16px;
-  padding: 18px;
-  box-shadow: 0 8px 22px rgba(0,0,0,.05);
-}
-
-.cart-thumb{
-  width: 110px;
-  height: auto;
-  border-radius: 10px;
-  object-fit: contain;
-  flex: 0 0 auto;
-}
-
-.cart-main{
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.cart-title{
-  margin: 0 0 10px;
   font-size: 22px;
-  font-weight: 700;
+  color:#0f172a;
 }
 
-.cart-meta{
-  display: grid;
-  gap: 6px;
-  font-size: 14px;
-}
-
-.cart-subline{
-  margin-top: 6px;
-  color: rgba(0,0,0,.75);
-}
-
-.cart-right{
-  flex: 0 0 220px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
-}
-
-.qty-controls{
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.qty-minus, .qty-plus{
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  border: 1px solid rgba(0,0,0,.15);
-  background: #111;
-  color: #fff;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-.qty-minus:disabled, .qty-plus:disabled{
-  opacity: .35;
-  cursor: not-allowed;
-}
-
-.qty-value{
-  min-width: 24px;
-  text-align: center;
-  font-weight: 700;
-}
-
-.line-price{
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.remove-cond-btn{
-  border: 1px solid rgba(255,0,0,.35);
-  background: rgba(255,0,0,.08);
-  color: #c00;
-  padding: 10px 14px;
-  border-radius: 12px;
-  cursor: pointer;
-}
-
-/* Mobile stack */
-@media (max-width: 720px){
-  .cart-card{ flex-direction: column; align-items: stretch; }
-  .cart-right{ align-items: flex-start; flex: 1 1 auto; }
-}
-/* =========================
-   WOOD HEADER (ALL PAGES)
-========================= */
-
-.site-header {
-  background: url("/images/wood-header.jpg") center / cover no-repeat;
-  border-bottom: 4px solid rgba(0,0,0,0.25);
-}
-
-.site-header::after {
-  content: "";
-  display: block;
-  height: 100%;
-}
-
-.site-header .header-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 14px 22px;
-  background: rgba(20, 20, 20, 0.35); /* dark overlay so text is readable */
-  backdrop-filter: blur(1px);
-}
-
-/* Logo: 2x bigger */
-.site-logo {
-  height: 180px;         /* was ~45px: this is your 2x */
-  width: auto;
-  display: block;
-  border-radius: 8px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
-}
-
-.brand-wrap {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 180px;
-}
-
-.brand-title {
-  color: #fff;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.6);
-  font-size: 18px;
-}
-
-/* Nav layout */
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.nav-links a {
-  font-weight: 800;
-  text-decoration: none;
-  padding: 10px 12px;
-  border-radius: 999px;
-  background: rgba(0,0,0,0.35);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
-  text-shadow: 0 2px 10px rgba(0,0,0,0.6);
-  transition: transform 120ms ease, background 120ms ease;
-}
-
-.nav-links a:hover {
-  transform: translateY(-1px);
-  background: rgba(0,0,0,0.5);
-}
-
-.nav-links a.active {
-  background: rgba(255,255,255,0.12);
-  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.18);
-}
-
-/* Gem colors */
-.nav-sell { color: #ff8a2a; }   /* orange */
-.nav-sellcart { color: #ffd84a; }/* yellow */
-.nav-buy { color: #b06cff; }    /* purple */
-.nav-buycart { color: #ff4b4b; }/* red */
-.nav-ship { color: #3aa9ff; }   /* blue */
-.nav-contact { color: #33d17a; }/* green */
-
-/* Cart badge */
-.cart-badge {
-  margin-left: 6px;
-  background: #ff4b4b;
-  color: #fff;
-  font-size: 12px;
-  padding: 2px 7px;
-  border-radius: 999px;
-  font-weight: 900;
-  vertical-align: middle;
-}
-
-/* Mobile */
-@media (max-width: 800px) {
-  .site-header .header-inner {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .nav-links {
-    justify-content: flex-start;
-  }
-  .site-logo {
-    height: 72px; /* slightly smaller on mobile */
-  }
-}
-/* Base badge (works for all badges) */
-.cart-badge {
-  display: inline-grid;
-  place-items: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 6px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1;
-}
-
-/* Buy cart badge = gem image */
-#buyCartBadge,
-a[href="/buy-cart.html"] .cart-badge {
-  width: 22px;           /* tweak size here */
-  height: 22px;
-  min-width: 22px;
-  padding: 0;            /* because it’s a square */
-  border-radius: 6px;    /* or 999px if you want fully round */
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0,0,0,.9);
-
-  background-image: url("/images/red-badge.png");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-
-  box-shadow: 0 1px 3px rgba(0,0,0,.35);
-}
-/* Sell cart badge = yellow gem */
-#sellCartBadge,
-a[href="/sell-cart.html"] .cart-badge {
-  width: 22px;
-  height: 22px;
-  min-width: 22px;
-  padding: 0;
-  border-radius: 999px;
-
-  display: inline-grid;
-  place-items: center;
-
-  color: #1a1a1a; /* darker text for yellow */
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1;
-  text-shadow: 0 1px 1px rgba(255,255,255,.35);
-
-  background-image: url("/images/yellow-badge.png");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-
-  box-shadow: 0 1px 3px rgba(0,0,0,.35);
-}
-/* =========================
-   WOOD SHELF LOOK
-========================= */
-
-/* Optional page background (very subtle) */
-body {
-  background: #f5f2ea;
-}
-
-/* The card itself sits "on" the shelf */
-.store-card,
-.sell-card,
-.card {
-  position: relative;
-  overflow: visible;              /* important so shelf can show */
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 10px 22px rgba(0,0,0,0.10);
-  padding-bottom: 34px;           /* space for shelf plank */
-}
-
-/* Wooden shelf plank */
-.store-card::after,
-.sell-card::after,
-.card::after {
-  content: "";
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: 12px;
-  height: 18px;
-  border-radius: 10px;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.18), rgba(0,0,0,0.08)),
-    repeating-linear-gradient(
-      90deg,
-      #7b4c2a 0px,
-      #7b4c2a 18px,
-      #6b3f22 18px,
-      #6b3f22 36px
-    );
-  box-shadow:
-    0 6px 0 rgba(0,0,0,0.10),
-    0 14px 18px rgba(0,0,0,0.18);
-}
-
-/* A little "resting" shadow under the card image */
-.store-card img,
-.sell-card img,
-.card img {
-  display: block;
-  margin: 0 auto;
-  filter: drop-shadow(0 10px 10px rgba(0,0,0,0.22));
-}
-/* ===== Wooden shelf page background ===== */
-body {
-  /* shelves background */
-  background-image: url("/images/wood-shelves.jpg");
-  background-repeat: repeat-y;      /* repeat down the page */
-  background-size: cover;           /* fill width */
-  background-position: top center;
-  background-attachment: fixed;     /* nice “anchored wall” feel */
-}
-
-/* optional: darken slightly for readability */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.12);     /* tweak 0.08–0.18 */
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* make sure your content is above the overlay */
-header, main, .page, .container {
-  position: relative;
-  z-index: 1;
-}
-
-/* give card grid a little “floating off the shelf” depth */
-.store-card, .sell-card, .card, .panel, .cart-card {
-  background: rgba(255,255,255,0.92); /* slightly see-through looks great */
-  backdrop-filter: blur(1px);
-  box-shadow: 0 10px 24px rgba(0,0,0,0.20);
-}
-
-.cart-layout{
-  display:grid;
-  grid-template-columns: 1fr 320px;
-  gap: 24px;
-  align-items:start;
-}
-
-@media (max-width: 980px){
-  .cart-layout{
-    grid-template-columns: 1fr;
-  }
-  .cart-rightbar{
-    order: -1; /* summary appears above items on mobile */
-  }
-}
-
-.cart-summary-box{
-  background:#f6f6f6;
-  border:1px solid rgba(0,0,0,0.12);
-  border-radius:12px;
-  padding:16px;
-  position: sticky;
-  top: 16px;
-}
-
-.summary-title{
-  margin:0 0 12px 0;
-  font-size:18px;
-}
-
-.summary-row{
+/* ---------- Condition tabs (blue active) ---------- */
+.cond-tabs{
   display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:12px;
-}
-
-.summary-label{
-  display:block;
-  margin: 12px 0 6px;
-  font-weight:600;
-}
-
-.summary-input{
-  width:100%;
-  padding:10px 12px;
-  border-radius:10px;
-  border:1px solid rgba(0,0,0,0.18);
-  background:#fff;
-  margin-bottom:12px;
-}
-
-.summary-btn{
-  width:100%;
-  padding:12px 12px;
-  border-radius:10px;
-  border:0;
-  cursor:pointer;
-  font-weight:700;
-  margin-bottom:10px;
-}
-
-.summary-btn.primary{
-  background:#1f7a1f;
-  color:#fff;
-}
-
-.summary-btn.secondary{
-  background:#fff;
-  border:1px solid rgba(0,0,0,0.18);
-}
-
-.summary-btn.danger{
-  background:#fff;
-  border:1px solid rgba(200,0,0,0.35);
-  color:#b00020;
-}
-/* ===== buy page layout with sidebar ===== */
-.buy-layout{
-  display:grid;
-  grid-template-columns: 1fr 320px;
-  gap: 24px;
-  align-items:start;
-}
-
-@media (max-width: 980px){
-  .buy-layout{
-    grid-template-columns: 1fr;
-  }
-  .mini-cart{
-    position: static;
-    width: 100%;
-  }
-}
-
-.mini-cart{
-  position: sticky;
-  top: 90px; /* adjust if your header height is different */
-  background: #fff;
-  border: 1px solid #e6e6e6;
-  border-radius: 12px;
-  padding: 14px;
-  box-shadow: 0 6px 20px rgba(0,0,0,.06);
-}
-
-.mini-cart h3{
-  margin: 4px 0 10px;
-  font-size: 16px;
-  font-weight: 800;
-}
-
-.mini-cart-summary{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  margin-bottom: 10px;
-}
-
-.mini-cart-links{
-  font-size: 13px;
-  margin-bottom: 10px;
-}
-
-.mini-cart-links a{
-  text-decoration:none;
-  font-weight:700;
-}
-
-.mini-cart-items{
-  list-style:none;
-  padding:0;
-  margin: 0 0 12px;
-  max-height: 260px;
-  overflow:auto;
-  border-top: 1px solid #eee;
-  border-bottom: 1px solid #eee;
-}
-
-.mini-cart-items li{
-  padding: 10px 0;
-  border-bottom: 1px solid #f2f2f2;
-  display:grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px;
-}
-
-.mini-cart-items li:last-child{
-  border-bottom:none;
-}
-
-.mini-cart-item-title{
-  font-weight: 800;
-  font-size: 13px;
-  line-height: 1.2;
-}
-
-.mini-cart-item-sub{
-  font-size: 12px;
-  opacity: .8;
-  margin-top: 2px;
-}
-
-.mini-cart-item-price{
-  font-weight: 800;
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-.mini-cart-checkout{
-  width:100%;
-  border:none;
-  border-radius: 8px;
-  padding: 12px 10px;
-  font-weight: 900;
-  cursor:pointer;
-  background: #1a7f2b;
-  color:#fff;
-}
-.mini-cart-checkout:disabled{
-  opacity:.6;
-  cursor:not-allowed;
-}
-/* =========================
-   FIX: Card images too big
-   (put at very bottom of style.css)
-========================= */
-
-/* Buy/Sell grid card images */
-.card img,
-.card-image,
-.buy-card-img,
-.sell-card-img,
-.grid-card img,
-.product-card img {
-  width: 100% !important;
-  height: 220px !important;          /* <- controls how tall the image area is */
-  object-fit: contain !important;     /* show full card without cropping */
-  display: block !important;
-  margin: 0 auto !important;
-}
-
-/* If your card image is inside a dedicated wrapper */
-.card-image-wrap,
-.card-img-wrap,
-.buy-card-image,
-.sell-card-image {
-  width: 100% !important;
-  height: 220px !important;
-  overflow: hidden !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-/* Cart thumbnails (buy-cart / sell-cart) */
-.cart-thumb {
-  width: 90px !important;
-  height: 126px !important;          /* trading card-ish ratio */
-  object-fit: cover !important;
-  border-radius: 10px !important;
-}
-
-/* Prevent any random images (logo excluded) from exploding */
-img:not(.site-logo):not(.brand-logo) {
-  max-width: 100%;
-  height: auto;
-}
-/* =========================
-   BUY PAGE LAYOUT (grid + mini cart)
-========================= */
-
-/* Two columns: left can shrink, right fixed */
-.buy-layout{
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 24px;
-  align-items: start;
-}
-
-/* IMPORTANT: allow grid children to shrink instead of overflowing */
-.buy-layout > *{
-  min-width: 0;
-}
-
-.buy-main{
-  min-width: 0;
-}
-
-/* Mini cart stays in its column */
-.mini-cart{
-  width: 100%;
-  box-sizing: border-box;
-  position: sticky;
-  top: 90px; /* adjust to your header height */
-  background: #fff;
-  border-radius: 14px;
-  box-shadow: 0 10px 25px rgba(0,0,0,.15);
-  padding: 16px;
-  z-index: 1; /* keep low so it doesn't cover cards */
-}
-
-/* Card grid: responsive by default */
-.buy-grid{
-  display: grid;
-  gap: 22px;
-  align-items: stretch;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-
-/* Force 4 across only when there's enough space */
-@media (min-width: 1400px){
-  .buy-grid{ grid-template-columns: repeat(4, minmax(220px, 1fr)); }
-}
-
-@media (max-width: 1399px){
-  .buy-grid{ grid-template-columns: repeat(3, minmax(220px, 1fr)); }
-}
-
-@media (max-width: 980px){
-  .buy-layout{ grid-template-columns: 1fr; }
-  .mini-cart{ position: static; top: auto; }
-  .buy-grid{ grid-template-columns: repeat(2, minmax(220px, 1fr)); }
-}
-
-@media (max-width: 560px){
-  .buy-grid{ grid-template-columns: 1fr; }
-}
-
-/* =========================
-   BUY SEARCH
-========================= */
-
-.buy-controls{
-  margin: 10px 0 18px;
-}
-
-.buy-search{
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  max-width: 520px;
-}
-
-#buySearch{
-  flex: 1 1 auto;
-  height: 42px;
-  border-radius: 12px;
-  border: 1px solid rgba(0,0,0,.15);
-  padding: 0 14px;
-  font-size: 16px;
-  outline: none;
-  background: rgba(255,255,255,.92);
-}
-
-#buySearch:focus{
-  border-color: rgba(37,99,235,.8);
-  box-shadow: 0 0 0 3px rgba(37,99,235,.18);
-}
-
-#buySearchClear{
-  height: 42px;
-  padding: 0 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(0,0,0,.15);
-  background: #fff;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-
-/* =========================
-   BUY CARD PANEL (this is the "second image" look)
-========================= */
-
-.buy-card{
-  background: rgba(255,255,255,.92);
-  border: 1px solid rgba(0,0,0,.08);
-  border-radius: 18px;
-  box-shadow: 0 8px 18px rgba(0,0,0,.10);
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.buy-card .card-img{
-  width: 210px;
-  max-width: 100%;
-  height: auto;
-  max-height: 280px;
-  object-fit: contain;
-  display: block;
-  margin: 6px auto 10px;
-}
-
-.buy-card .card-title{
-  width: 100%;
-  text-align: center;
-  font-weight: 800;
-  font-size: 22px;
-  margin: 6px 0 12px;
-}
-
-/* tabs */
-.buy-card .cond-tabs{
-  width: 100%;
-  display: flex;
-  gap: 8px;
-  justify-content: flex-start;
-  background: #eef2f7;
+  gap:8px;
+  background:#eef2f7;
   border-radius: 14px;
   padding: 6px;
-  margin-bottom: 12px;
+  margin: 0 0 10px;
+  width: fit-content;
 }
 
-.buy-card .cond-tab{
-  border: 0;
+.cond-tab{
+  border:0;
   padding: 6px 12px;
   border-radius: 12px;
-  font-weight: 800;
-  cursor: pointer;
+  font-weight: 900;
+  cursor:pointer;
   background: transparent;
+  color:#111827;
 }
 
-.buy-card .cond-tab.active{
-  background: #2563eb; /* blue */
-  color: #fff;
+.cond-tab.active{
+  background:#2563eb; /* blue */
+  color:#fff;
 }
 
-.buy-card .cond-tab.disabled{
-  opacity: .45;
-  cursor: not-allowed;
+.cond-tab.disabled{
+  opacity:.45;
+  cursor:not-allowed;
 }
 
-/* price/stock lines */
-.buy-card .card-meta{
-  width: 100%;
-  font-size: 15px;
-  line-height: 1.5;
-  margin-bottom: 10px;
-}
-
-.buy-card .qty-row{
-  width: 100%;
-  display: flex;
+/* ---------- Quantity controls (cart pages) ---------- */
+.qty-controls{
+  display:flex;
+  align-items:center;
   gap: 10px;
-  justify-content: center;
-  align-items: center;
-  margin: 10px 0 12px;
 }
 
-.buy-card .qty-btn{
+.qty-minus, .qty-plus,
+.cart-minus, .cart-plus{
   width: 42px;
   height: 36px;
   border-radius: 10px;
@@ -1358,62 +327,193 @@ img:not(.site-logo):not(.brand-logo) {
   font-size: 20px;
   font-weight: 900;
   cursor: pointer;
-  background: #111;
-  color: #fff;
+  background:#111;
+  color:#fff;
 }
 
-.buy-card .qty-btn:disabled{
-  opacity: .35;
-  cursor: not-allowed;
+.qty-minus:disabled, .qty-plus:disabled,
+.cart-minus:disabled, .cart-plus:disabled{
+  opacity:.35;
+  cursor:not-allowed;
 }
 
-.buy-card .qty-input{
-  width: 56px;
-  height: 36px;
-  border-radius: 10px;
+.qty-value, .cart-qty{
+  min-width: 24px;
+  text-align:center;
+  font-weight: 900;
+  font-size: 16px;
+}
+
+.remove-cond-btn, .cart-remove{
+  border: 1px solid rgba(239,68,68,.45);
+  background: rgba(255,255,255,.65);
+  color:#ef4444;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 900;
+  cursor:pointer;
+}
+.remove-cond-btn:hover, .cart-remove:hover{
+  background: rgba(239,68,68,.08);
+}
+
+/* ---------- Cart summary blocks ---------- */
+.cart-summary{
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 18px;
+  box-shadow: 0 10px 22px rgba(0,0,0,.16);
+  padding: 18px;
+}
+
+.cart-total{
+  display:flex;
+  gap:10px;
+  align-items:baseline;
+  font-size: 18px;
+  font-weight: 900;
+  color:#0f172a;
+}
+.cart-total strong{ font-size: 22px; }
+
+.cart-checkout{
+  margin-top: 12px;
+}
+.cart-checkout label{
+  display:block;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+.cart-checkout-row{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.cart-checkout-row input{
+  height: 42px;
+  border-radius: 12px;
   border: 1px solid rgba(0,0,0,.15);
-  text-align: center;
+  padding: 0 14px;
+  font-size: 16px;
+  min-width: 260px;
+  background: rgba(255,255,255,.95);
+}
+
+.cart-checkout-row button{
+  height: 42px;
+  border-radius: 12px;
+  border: 0;
+  padding: 0 16px;
+  font-weight: 900;
+  cursor:pointer;
+  background:#2563eb;
+  color:#fff;
+}
+
+.cart-message{
+  margin-top: 10px;
   font-weight: 800;
 }
 
-.buy-card .add-btn{
+.cart-actions{
+  margin-top: 14px;
+  display:flex;
+  align-items:center;
+  gap: 14px;
+  flex-wrap:wrap;
+}
+
+.danger-outline{
+  border: 1px solid rgba(239,68,68,.45);
+  background: rgba(255,255,255,.65);
+  color:#ef4444;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 900;
+  cursor:pointer;
+}
+.danger-outline:hover{ background: rgba(239,68,68,.08); }
+
+.link-back{
+  font-weight: 900;
+  color:#2563eb;
+}
+
+/* ---------- BUY PAGE LAYOUT (grid + mini cart) ---------- */
+.buy-layout{
+  display:grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 24px;
+  align-items:start;
+}
+
+.buy-main{ min-width:0; }
+
+.mini-cart{
+  width: 100%;
+  position: sticky;
+  top: 90px;
+  background: rgba(255,255,255,.95);
+  border-radius: 14px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.15);
+  padding: 16px;
+}
+
+.mini-cart h3{
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.mini-cart-summary{
+  display:flex;
+  flex-direction:column;
+  gap: 6px;
+  font-weight: 800;
+}
+
+.mini-cart-links{
+  margin: 10px 0 12px;
+  font-weight: 900;
+  color:#2563eb;
+}
+.mini-cart-links a{ color:#2563eb; }
+
+.mini-cart-items{
+  list-style:none;
+  padding: 0;
+  margin: 10px 0 12px;
+  border-top: 1px solid rgba(0,0,0,.08);
+}
+.mini-line{
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+}
+.mini-line-name{ font-weight: 900; }
+.mini-line-sub{ color: rgba(15,23,42,.75); font-weight: 800; margin-top: 4px; }
+.mini-empty{ padding: 12px 0; color: rgba(15,23,42,.65); font-weight: 800; }
+
+.mini-cart-checkout{
   width: 100%;
   border: 0;
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 12px 14px;
   font-weight: 900;
-  cursor: pointer;
-  background: #2563eb;
-  color: #fff;
+  cursor:pointer;
+  background:#15803d;
+  color:#fff;
 }
 
-/* mobile: stack mini cart under */
-@media (max-width: 1350px){
-  .buy-layout{ grid-template-columns: 1fr 300px; }
-  .buy-grid{ grid-template-columns: repeat(3, minmax(220px, 1fr)); }
-}
-
-@media (max-width: 980px){
-  .buy-layout{ grid-template-columns: 1fr; }
-  .mini-cart{ position: static; }
-  .buy-grid{ grid-template-columns: repeat(2, minmax(220px, 1fr)); }
-}
-
-@media (max-width: 560px){
-  .buy-grid{ grid-template-columns: 1fr; }
-}
-
-.buy-controls{
-  margin: 10px 0 18px;
-}
-
+/* Search bar */
+.buy-controls{ margin: 10px 0 18px; }
 .buy-search{
-  display: flex;
+  display:flex;
   gap: 10px;
-  align-items: center;
-  max-width: 520px;
+  align-items:center;
+  max-width: 560px;
 }
-
 #buySearch{
   flex: 1 1 auto;
   height: 42px;
@@ -1424,30 +524,123 @@ img:not(.site-logo):not(.brand-logo) {
   outline: none;
   background: rgba(255,255,255,.92);
 }
-
 #buySearch:focus{
   border-color: rgba(37,99,235,.8);
   box-shadow: 0 0 0 3px rgba(37,99,235,.18);
 }
-
 #buySearchClear{
   height: 42px;
   padding: 0 14px;
   border-radius: 12px;
   border: 1px solid rgba(0,0,0,.15);
   background: #fff;
-  font-weight: 800;
+  font-weight: 900;
   cursor: pointer;
 }
-.image-modal.hidden { display: none; }
+
+/* Buy grid (4 across when it fits) */
+.buy-grid{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(220px, 1fr));
+  gap: 22px;
+  align-items: stretch;
+}
+
+/* scale down columns sooner so it NEVER goes under mini cart */
+@media (max-width: 1500px){
+  .buy-grid{ grid-template-columns: repeat(3, minmax(220px, 1fr)); }
+}
+@media (max-width: 1150px){
+  .buy-layout{ grid-template-columns: 1fr; }
+  .mini-cart{ position: static; top:auto; }
+  .buy-grid{ grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+}
+@media (max-width: 650px){
+  .buy-grid{ grid-template-columns: 1fr; }
+}
+
+/* Buy card panel */
+.buy-card{
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 18px;
+  box-shadow: 0 8px 18px rgba(0,0,0,.10);
+  padding: 18px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+.buy-card-inner{ width:100%; }
+
+.buy-card-img{
+  width: 210px;
+  max-width: 100%;
+  height: auto;
+  max-height: 280px;
+  object-fit: contain;
+  display:block;
+  margin: 6px auto 10px;
+  border-radius: 14px;
+  cursor: zoom-in;
+}
+
+.buy-card-title{
+  width:100%;
+  text-align:center;
+  font-weight: 900;
+  font-size: 22px;
+  margin: 6px 0 12px;
+  color:#0f172a;
+}
+
+.buy-card-meta{
+  width:100%;
+  font-size: 15px;
+  line-height: 1.55;
+  margin-bottom: 10px;
+  font-weight: 800;
+}
+
+.buy-qty-row{
+  width: 100%;
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  align-items:center;
+  margin: 10px 0 12px;
+}
+
+.buy-qty-row .qty-input{
+  width: 56px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,.15);
+  text-align:center;
+  font-weight: 900;
+}
+
+.buy-add-btn{
+  width:100%;
+  border:0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-weight: 900;
+  cursor:pointer;
+  background:#2563eb;
+  color:#fff;
+}
+
+/* ---------- Image Modal (zoom) ---------- */
+.image-modal.hidden{ display:none; }
 
 .image-modal{
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: rgba(0,0,0,.82);
+  display:flex;
+  align-items:center;
+  justify-content:center;
   padding: 24px;
   z-index: 9999;
 }
@@ -1470,67 +663,27 @@ img:not(.site-logo):not(.brand-logo) {
   cursor: pointer;
   font-size: 28px;
   line-height: 44px;
-}
-/* ===== BUY PAGE HARD OVERRIDES (put at very bottom of style.css) ===== */
-
-.page .buy-layout{
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 360px !important;
-  gap: 28px !important;
-  align-items: start !important;
+  background: rgba(255,255,255,.15);
+  color:#fff;
 }
 
-/* force correct column placement */
-.page .buy-layout .buy-main{
-  grid-column: 1 !important;
-  min-width: 0 !important;
-}
-.page .buy-layout .mini-cart{
-  grid-column: 2 !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-
-  /* IMPORTANT: keep it in-flow (sticky is OK; fixed/absolute is NOT) */
-  position: sticky !important;
-  top: 90px !important;
-
-  /* prevent covering cards */
-  z-index: 1 !important;
+/* ---------- Mobile header tweaks ---------- */
+@media (max-width: 900px){
+  .brand-name{ display:none; }
+  .brand-logo, .site-logo{ height: 48px; }
+  .navlinks{ gap: 8px; }
+  .navlinks a{ padding: 7px 10px; font-size: 14px; }
 }
 
-/* grid for cards ONLY inside left column */
-.page .buy-layout .buy-grid{
-  display: grid !important;
-  grid-template-columns: repeat(4, minmax(220px, 1fr)) !important;
-  gap: 22px !important;
-}
-
-/* responsivity so it never collides with the mini cart column */
-@media (max-width: 1400px){
-  .page .buy-layout .buy-grid{
-    grid-template-columns: repeat(3, minmax(220px, 1fr)) !important;
+@media (max-width: 560px){
+  .page-title{ font-size: 42px; }
+  .cart-card{
+    grid-template-columns: 72px 1fr;
+  }
+  .cart-right{
+    grid-column: 1 / -1;
+    justify-self: start;
+    align-items:flex-start;
+    margin-top: 10px;
   }
 }
-@media (max-width: 1100px){
-  .page .buy-layout{
-    grid-template-columns: 1fr !important;
-  }
-  .page .buy-layout .mini-cart{
-    position: static !important;
-    top: auto !important;
-  }
-  .page .buy-layout .buy-grid{
-    grid-template-columns: repeat(2, minmax(220px, 1fr)) !important;
-  }
-}
-@media (max-width: 600px){
-  .page .buy-layout .buy-grid{
-    grid-template-columns: 1fr !important;
-  }
-}
-
-/* ===============================
-   SMALL UTIL
-================================= */
-.hidden{ display:none !important; }
-.center{ text-align:center; }
