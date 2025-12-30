@@ -1170,38 +1170,41 @@ img:not(.site-logo):not(.brand-logo) {
    BUY PAGE LAYOUT (grid + mini cart)
 ========================= */
 
+/* ===== BUY PAGE LAYOUT (cards + mini cart) ===== */
+
 .buy-layout{
-  display: flex;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 1fr 340px; /* left = cards, right = mini cart */
   gap: 24px;
+  align-items: start;
 }
 
 .buy-main{
-  flex: 1 1 auto;
-  min-width: 0;
+  min-width: 0; /* prevents overflow pushing under */
 }
 
-/* push mini cart to the RIGHT */
+/* mini cart stays in its own column */
 .mini-cart{
-  flex: 0 0 340px;
-  width: 340px;
-  margin-left: auto;
+  width: 100%;
   position: sticky;
-  top: 90px; /* adjust if header taller */
+  top: 90px; /* adjust to header height */
   background: #fff;
   border-radius: 14px;
   box-shadow: 0 10px 25px rgba(0,0,0,.15);
   padding: 16px;
+  z-index: 2;
 }
+
 
 /* If your shelves background is on the page/body,
    make sure the card panels are readable */
 .buy-grid{
   display: grid;
-  grid-template-columns: repeat(4, minmax(240px, 1fr));
+  grid-template-columns: repeat(4, minmax(220px, 1fr));
   gap: 22px;
   align-items: stretch;
 }
+
 
 /* 3 across */
 @media (max-width: 1250px){
@@ -1338,10 +1341,21 @@ img:not(.site-logo):not(.brand-logo) {
 }
 
 /* mobile: stack mini cart under */
-@media (max-width: 980px){
-  .buy-layout{ flex-direction: column; }
-  .mini-cart{ width: 100%; flex-basis: auto; position: static; margin-left: 0; }
+@media (max-width: 1350px){
+  .buy-layout{ grid-template-columns: 1fr 300px; }
+  .buy-grid{ grid-template-columns: repeat(3, minmax(220px, 1fr)); }
 }
+
+@media (max-width: 980px){
+  .buy-layout{ grid-template-columns: 1fr; }
+  .mini-cart{ position: static; }
+  .buy-grid{ grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+}
+
+@media (max-width: 560px){
+  .buy-grid{ grid-template-columns: 1fr; }
+}
+
 .buy-controls{
   margin: 10px 0 18px;
 }
