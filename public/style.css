@@ -1170,55 +1170,102 @@ img:not(.site-logo):not(.brand-logo) {
    BUY PAGE LAYOUT (grid + mini cart)
 ========================= */
 
-/* ===== BUY PAGE LAYOUT (cards + mini cart) ===== */
-
+/* Two columns: left can shrink, right fixed */
 .buy-layout{
   display: grid;
-  grid-template-columns: 1fr 340px; /* left = cards, right = mini cart */
+  grid-template-columns: minmax(0, 1fr) 340px;
   gap: 24px;
   align-items: start;
 }
 
-.buy-main{
-  min-width: 0; /* prevents overflow pushing under */
+/* IMPORTANT: allow grid children to shrink instead of overflowing */
+.buy-layout > *{
+  min-width: 0;
 }
 
-/* mini cart stays in its own column */
+.buy-main{
+  min-width: 0;
+}
+
+/* Mini cart stays in its column */
 .mini-cart{
   width: 100%;
+  box-sizing: border-box;
   position: sticky;
-  top: 90px; /* adjust to header height */
+  top: 90px; /* adjust to your header height */
   background: #fff;
   border-radius: 14px;
   box-shadow: 0 10px 25px rgba(0,0,0,.15);
   padding: 16px;
-  z-index: 2;
+  z-index: 1; /* keep low so it doesn't cover cards */
 }
 
-
-/* If your shelves background is on the page/body,
-   make sure the card panels are readable */
+/* Card grid: responsive by default */
 .buy-grid{
   display: grid;
-  grid-template-columns: repeat(4, minmax(220px, 1fr));
   gap: 22px;
   align-items: stretch;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
-
-/* 3 across */
-@media (max-width: 1250px){
-  .buy-grid{ grid-template-columns: repeat(3, minmax(240px, 1fr)); }
+/* Force 4 across only when there's enough space */
+@media (min-width: 1400px){
+  .buy-grid{ grid-template-columns: repeat(4, minmax(220px, 1fr)); }
 }
 
-/* 2 across */
-@media (max-width: 900px){
-  .buy-grid{ grid-template-columns: repeat(2, minmax(240px, 1fr)); }
+@media (max-width: 1399px){
+  .buy-grid{ grid-template-columns: repeat(3, minmax(220px, 1fr)); }
 }
 
-/* 1 across */
+@media (max-width: 980px){
+  .buy-layout{ grid-template-columns: 1fr; }
+  .mini-cart{ position: static; top: auto; }
+  .buy-grid{ grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+}
+
 @media (max-width: 560px){
   .buy-grid{ grid-template-columns: 1fr; }
+}
+
+/* =========================
+   BUY SEARCH
+========================= */
+
+.buy-controls{
+  margin: 10px 0 18px;
+}
+
+.buy-search{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  max-width: 520px;
+}
+
+#buySearch{
+  flex: 1 1 auto;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.15);
+  padding: 0 14px;
+  font-size: 16px;
+  outline: none;
+  background: rgba(255,255,255,.92);
+}
+
+#buySearch:focus{
+  border-color: rgba(37,99,235,.8);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.18);
+}
+
+#buySearchClear{
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.15);
+  background: #fff;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 
