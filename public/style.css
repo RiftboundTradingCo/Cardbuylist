@@ -687,3 +687,62 @@ body::before{
     margin-top: 10px;
   }
 }
+/* 1) Force the buy layout columns to be real columns (no overlap) */
+.buy-layout{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 28px;
+  align-items: start;
+}
+
+/* 2) Make sure the LEFT column cannot “bleed” under the mini cart */
+.buy-main{
+  min-width: 0;
+}
+
+/* 3) Keep the mini cart in its own column, no overlay stacking */
+.mini-cart{
+  grid-column: 2;
+  align-self: start;
+  position: sticky;
+  top: 90px;
+  z-index: 1;          /* keep it above the wood bg, not above cards */
+}
+
+/* 4) Make the grid fit the available space so it never goes under the mini cart */
+.buy-grid{
+  display: grid;
+  gap: 22px;
+  grid-template-columns: repeat(4, minmax(200px, 1fr)); /* slightly smaller */
+}
+
+/* If screen isn’t wide enough for 4 + mini cart, drop to 3 */
+@media (max-width: 1520px){
+  .buy-grid{ grid-template-columns: repeat(3, minmax(220px, 1fr)); }
+}
+@media (max-width: 1180px){
+  .buy-layout{ grid-template-columns: 1fr; }
+  .mini-cart{ position: static; top:auto; }
+  .buy-grid{ grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+}
+@media (max-width: 650px){
+  .buy-grid{ grid-template-columns: 1fr; }
+}
+
+/* 5) Prevent super-long names from forcing weird layout */
+.buy-card-title{
+  width: 100%;
+  text-align: center;
+  font-weight: 900;
+  font-size: 20px;
+  margin: 6px 0 12px;
+
+  /* clamp to 2 lines */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+body{
+  background: url("/images/wooden-shelves.jpg") top center / cover fixed no-repeat;
+}
