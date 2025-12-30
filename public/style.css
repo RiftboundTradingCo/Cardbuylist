@@ -1198,10 +1198,26 @@ img:not(.site-logo):not(.brand-logo) {
    make sure the card panels are readable */
 .buy-grid{
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(4, minmax(240px, 1fr));
   gap: 22px;
   align-items: stretch;
 }
+
+/* 3 across */
+@media (max-width: 1250px){
+  .buy-grid{ grid-template-columns: repeat(3, minmax(240px, 1fr)); }
+}
+
+/* 2 across */
+@media (max-width: 900px){
+  .buy-grid{ grid-template-columns: repeat(2, minmax(240px, 1fr)); }
+}
+
+/* 1 across */
+@media (max-width: 560px){
+  .buy-grid{ grid-template-columns: 1fr; }
+}
+
 
 /* =========================
    BUY CARD PANEL (this is the "second image" look)
