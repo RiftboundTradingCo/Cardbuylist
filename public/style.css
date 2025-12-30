@@ -1471,6 +1471,63 @@ img:not(.site-logo):not(.brand-logo) {
   font-size: 28px;
   line-height: 44px;
 }
+/* ===== BUY PAGE HARD OVERRIDES (put at very bottom of style.css) ===== */
+
+.page .buy-layout{
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 360px !important;
+  gap: 28px !important;
+  align-items: start !important;
+}
+
+/* force correct column placement */
+.page .buy-layout .buy-main{
+  grid-column: 1 !important;
+  min-width: 0 !important;
+}
+.page .buy-layout .mini-cart{
+  grid-column: 2 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+
+  /* IMPORTANT: keep it in-flow (sticky is OK; fixed/absolute is NOT) */
+  position: sticky !important;
+  top: 90px !important;
+
+  /* prevent covering cards */
+  z-index: 1 !important;
+}
+
+/* grid for cards ONLY inside left column */
+.page .buy-layout .buy-grid{
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(220px, 1fr)) !important;
+  gap: 22px !important;
+}
+
+/* responsivity so it never collides with the mini cart column */
+@media (max-width: 1400px){
+  .page .buy-layout .buy-grid{
+    grid-template-columns: repeat(3, minmax(220px, 1fr)) !important;
+  }
+}
+@media (max-width: 1100px){
+  .page .buy-layout{
+    grid-template-columns: 1fr !important;
+  }
+  .page .buy-layout .mini-cart{
+    position: static !important;
+    top: auto !important;
+  }
+  .page .buy-layout .buy-grid{
+    grid-template-columns: repeat(2, minmax(220px, 1fr)) !important;
+  }
+}
+@media (max-width: 600px){
+  .page .buy-layout .buy-grid{
+    grid-template-columns: 1fr !important;
+  }
+}
 
 /* ===============================
    SMALL UTIL
