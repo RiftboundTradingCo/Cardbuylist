@@ -816,3 +816,5 @@ body::before{
 body{
   background: url("/images/wooden-shelves.jpg") top center / cover fixed no-repeat;
 }
+.cart-badge.hidden { display: none; }
+
