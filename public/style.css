@@ -1118,3 +1118,34 @@ body {
     width: 100%;
   }
 }
+/* --- FIX: condition tabs never overflow the card --- */
+.buy-card .cond-tabs{
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+
+  display: flex;
+  gap: 8px;
+
+  /* key fixes */
+  flex-wrap: wrap;            /* allow wrapping instead of sticking out */
+  justify-content: center;    /* keeps it centered when it wraps */
+  overflow: hidden;           /* prevents any visual spill */
+}
+
+/* make each tab flexible so 4 tabs fit nicely */
+.buy-card .cond-tab{
+  flex: 1 1 56px;             /* grows/shrinks, minimum ~56px */
+  max-width: 90px;            /* prevents giant tabs */
+  padding: 6px 10px;
+  text-align: center;
+  white-space: nowrap;        /* keep NM/LP/MP/HP on one line */
+}
+
+/* optional: tighten a bit on small screens */
+@media (max-width: 520px){
+  .buy-card .cond-tab{
+    flex-basis: 48px;
+    padding: 6px 8px;
+  }
+}
