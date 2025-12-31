@@ -852,3 +852,146 @@ body{
   max-height: 130px !important;
   object-fit: contain !important;
 }
+/* =========================================================
+   SHARED PRODUCT GRID + CARD (USE ON BUY + SELL)
+========================================================= */
+
+.product-layout{
+  display: grid;
+  grid-template-columns: 1fr 340px; /* left content, right mini cart (buy only) */
+  gap: 24px;
+  align-items: start;
+}
+
+.product-main{ min-width: 0; }
+
+/* Grid of cards */
+.product-grid{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(220px, 1fr));
+  gap: 22px;
+  align-items: stretch;
+}
+
+@media (max-width: 1250px){
+  .product-grid{ grid-template-columns: repeat(3, minmax(220px, 1fr)); }
+}
+@media (max-width: 900px){
+  .product-grid{ grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+}
+@media (max-width: 560px){
+  .product-grid{ grid-template-columns: 1fr; }
+}
+
+/* The “panel card” look */
+.product-card{
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 18px;
+  box-shadow: 0 8px 18px rgba(0,0,0,.10);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ✅ THIS is what prevents huge images */
+.product-card img{
+  width: 210px;
+  max-width: 100%;
+  height: auto;
+  max-height: 280px;
+  object-fit: contain;
+  display: block;
+  margin: 6px auto 10px;
+}
+
+.product-card .product-title{
+  width: 100%;
+  text-align: center;
+  font-weight: 800;
+  font-size: 22px;
+  margin: 6px 0 12px;
+}
+
+/* Tabs */
+.product-card .cond-tabs{
+  width: 100%;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+  background: #eef2f7;
+  border-radius: 14px;
+  padding: 6px;
+  margin-bottom: 12px;
+}
+
+.product-card .cond-tab{
+  border: 0;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  background: transparent;
+}
+
+.product-card .cond-tab.active{
+  background: #2563eb;
+  color: #fff;
+}
+
+.product-card .cond-tab.disabled{
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+/* Meta lines (price, stock, remaining, etc.) */
+.product-card .product-meta{
+  width: 100%;
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+/* Qty row */
+.product-card .qty-row{
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  margin: 10px 0 12px;
+}
+
+.product-card .qty-btn{
+  width: 42px;
+  height: 36px;
+  border-radius: 10px;
+  border: 0;
+  font-size: 20px;
+  font-weight: 900;
+  cursor: pointer;
+  background: #111;
+  color: #fff;
+}
+
+.product-card .qty-input{
+  width: 56px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,.15);
+  text-align: center;
+  font-weight: 800;
+}
+
+/* Main action button */
+.product-card .primary-btn{
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-weight: 900;
+  cursor: pointer;
+  background: #2563eb;
+  color: #fff;
+}

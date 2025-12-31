@@ -198,46 +198,29 @@
 
       const imgSrc = image ? encodeURI(image.startsWith("/") ? image : "/" + image) : "";
 
-      card.innerHTML = `
-        ${imgSrc ? `<img class="zoomable" src="${imgSrc}" alt="${name}">` : ""}
-        <h3 class="store-title">${name}</h3>
+card.className = "product-card";
+card.innerHTML = `
+  ${img ? `<img src="${encodeURI(img)}" alt="${name}">` : ""}
 
-        <div class="cond-tabs" role="tablist" aria-label="Condition">
-          ${TAB_ORDER.map(tab => {
-            const tabMax = tab === "NM" ? nmMax : tab === "LP" ? lpMax : mpMax;
-            const disabled = tabMax <= 0;
-            const isActive = tab === activeTab;
-            return `
-              <button
-                class="cond-tab${isActive ? " active" : ""}${disabled ? " disabled" : ""}"
-                type="button"
-                data-tab="${tab}"
-                aria-disabled="${disabled ? "true" : "false"}"
-              >${tab}</button>
-            `;
-          }).join("")}
-        </div>
+  <h3 class="product-title">${name}</h3>
 
-        <div class="sell-meta">
-          <div class="sell-price">
-            Buy Price: <strong class="unit-price">$${money(getPriceFor(card, activeTab))}</strong>
-          </div>
+  <div class="cond-tabs" role="tablist">
+    ... your NM/LP/MP tabs ...
+  </div>
 
-          <div class="sell-cap">
-            Max capacity: <strong class="max-num">${getMaxFor(card, activeTab)}</strong>
-            • In cart: <strong class="incart-num">0</strong>
-            • Remaining: <strong class="remaining-num">0</strong>
-          </div>
-        </div>
+  <div class="product-meta">
+    <div>Buy Price: <strong>$${price}</strong></div>
+    <div>Max capacity: <strong>${max}</strong> • In cart: <strong>${inCart}</strong> • Remaining: <strong>${remaining}</strong></div>
+  </div>
 
-        <div class="qty-stepper">
-          <button class="qty-minus" type="button">−</button>
-          <input class="qty-input" type="number" min="1" value="1" inputmode="numeric">
-          <button class="qty-plus" type="button">+</button>
-        </div>
+  <div class="qty-row">
+    <button class="qty-btn qty-minus" type="button">−</button>
+    <input class="qty-input" type="number" value="1" min="1" max="999">
+    <button class="qty-btn qty-plus" type="button">+</button>
+  </div>
 
-        <button class="add-to-sell-btn" type="button">Add to Sell Order</button>
-      `;
+  <button class="primary-btn sell-add-btn" type="button">Add to Sell Order</button>
+`;
 
       // initialize qty storage for all tabs
       card.dataset.qtyNm = "1";
