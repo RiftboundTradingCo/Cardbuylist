@@ -23,6 +23,9 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
 const EMAIL_FROM = process.env.EMAIL_FROM || "";     // e.g. "Riftbound Trading Co <orders@riftboundtradingco.com>"
 const OWNER_EMAIL = process.env.OWNER_EMAIL || "";   // your email to receive notifications
 const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`;
+const ORDERS_PATH = path.join(__dirname, "data", "orders.json");
+const SELLIST_PATH = path.join(__dirname, "data", "selllist.json"); // your buylist file
+
 
 if (!STRIPE_SECRET_KEY) console.warn("⚠️ STRIPE_SECRET_KEY not set");
 if (!STRIPE_WEBHOOK_SECRET) console.warn("⚠️ STRIPE_WEBHOOK_SECRET not set");
@@ -118,6 +121,26 @@ function formatMoney(cents) {
 function makeOrderId() {
   return `ord_${Date.now()}_${crypto.randomBytes(3).toString("hex")}`;
 }
+
+function appendOrder(order) {
+  const db = readJsonSafe(ORDERS_PATH) || { orders: [] };
+  db.orders = Array.isArray(db.orders) ? db.orders : [];
+  db.orders.unshift(order); // newest first
+  writeJsonSafe(ORDERS_PATH, db);
+}
+function requireAdmin(req, res, next) {
+  const token = String(req.headers["x-admin-token"] || "").trim();
+  if (!process.env.ADMIN_TOKEN) {
+    return res.status(500).json({ ok: false, error: "ADMIN_TOKEN not set" });
+  }
+  if (token !== process.env.ADMIN_TOKEN) {
+    return res.status(401).json({ ok: false, error: "Unauthorized" });
+  }
+  next();
+}
+
+// apply to every admin endpoint
+app.use("/api/admin", requireAdmin);
 
 /* =========================
    STRIPE WEBHOOK (RAW BODY)
@@ -305,6 +328,24 @@ Riftbound Trading Co
   }
 );
 
+appendOrder({
+  id: orderId,
+  type: "buy",
+  status: "paid",
+  createdAt: new Date().toISOString(),
+  customer: {
+    name: shipName || "",
+    email: customerEmail || ""
+  },
+  lines: cart.map(it => ({
+    sku: String(it.sku || ""),
+    condition: normalizeCondition(it.condition),
+    qty: Number(it.qty || 0)
+  })),
+  totalCents: computedTotalCents,
+  stripeSessionId: session.id
+});
+
 /* =========================
    NORMAL MIDDLEWARE
 ========================= */
@@ -420,6 +461,23 @@ app.post("/api/submit", async (req, res) => {
       const lineTotal = qty * unit;
       return `${qty}x ${cardName} (${cond}) — $${unit.toFixed(2)} each = $${lineTotal.toFixed(2)}`;
     });
+
+const selllist = readJsonSafe(SELLIST_PATH);
+
+// For each line item:
+for (const l of order) {
+  const sku = String(l.sku || "").trim(); // IMPORTANT: include sku in sell submit if possible
+  const tab = String(l.condition || "").trim(); // "NM"/"LP"/"MP"
+  const qty = Number(l.qty || 0);
+
+  if (!selllist[sku]) continue;
+
+  const curMax = Number(selllist[sku]?.max?.[tab] ?? 0);
+  const nextMax = Math.max(0, curMax - qty);
+  selllist[sku].max[tab] = nextMax;
+}
+
+writeJsonSafe(SELLIST_PATH, selllist);
 
     if (!resend || !EMAIL_FROM) {
       console.warn("Sell email skipped (Resend/EMAIL_FROM not configured)");
