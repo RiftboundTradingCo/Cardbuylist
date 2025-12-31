@@ -36,7 +36,7 @@ body{
 }
 
 .site-logo{
-  height: 64px;        /* <-- control logo size here */
+  height: 120px;        /* <-- control logo size here */
   width: auto;
   display: block;
   border-radius: 10px;
@@ -173,7 +173,7 @@ body::before{
 .brand-logo,
 .site-logo{
   /* ✅ controls logo size everywhere */
-  height: 56px;              /* adjust to taste */
+  height: 120px;              /* adjust to taste */
   width: auto;
   max-width: 220px;
   object-fit: contain;
