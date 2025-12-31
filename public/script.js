@@ -1,31 +1,45 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const GRID_ID = "sellGrid";
   const CART_KEY = "sellCart";
 
-  // Page elements (sell.html)
   const gridEl = document.getElementById(GRID_ID);
-
-  // Optional search UI (if you add these ids in your sell.html)
   const searchEl = document.getElementById("sellSearch");
   const clearSearchEl = document.getElementById("sellSearchClear");
 
-  // Image modal (optional, but recommended)
+  if (!gridEl) return;
+
+  // Sell uses NM/LP/MP
+  const TAB_ORDER = ["NM", "LP", "MP"];
+
+  // ---------- modal (click image to zoom) ----------
   const modal = document.getElementById("imageModal");
   const modalImg = document.getElementById("imageModalImg");
   const modalClose = document.getElementById("imageModalClose");
 
-  const TAB_ORDER = ["NM", "LP", "MP"];
+  function openModal(src) {
+    if (!modal || !modalImg) return;
+    modalImg.src = src;
+    modal.classList.remove("hidden");
+  }
+  function closeModal() {
+    if (!modal || !modalImg) return;
+    modal.classList.add("hidden");
+    modalImg.src = "";
+  }
+  if (modalClose) modalClose.addEventListener("click", closeModal);
+  if (modal) {
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+  }
 
-  let selllist = {};        // sku -> item
-  let ALL_ITEMS = [];       // [{sku, ...item}]
-  let FILTERED_ITEMS = [];  // filtered list
-  let searchQuery = "";
-
-  // -------------------------
-  // Helpers
-  // -------------------------
+  // ---------- helpers ----------
   function safeParse(raw, fallback) {
-    try { return JSON.parse(raw); } catch { return fallback; }
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return fallback;
+    }
   }
 
   function loadCart() {
@@ -34,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function saveCart(cart) {
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    // ✅ notify badges + other pages
+    // ✅ badges + cross-page sync
     window.dispatchEvent(new Event("cart:changed"));
     if (typeof window.updateCartBadges === "function") window.updateCartBadges();
   }
@@ -44,114 +58,48 @@ document.addEventListener("DOMContentLoaded", () => {
     return TAB_ORDER.includes(u) ? u : "NM";
   }
 
-  function normalizeImagePath(p) {
-    const s = String(p || "").trim();
-    if (!s) return "";
-    return encodeURI(s.startsWith("/") ? s : `/${s}`);
-  }
-
-  // stable key: sku if present, else fallback name
+  // identify item by sku if present, else by name
   function getItemKey(item) {
     const sku = String(item.sku || "").trim();
     if (sku) return sku;
     return `name:${String(item.name || "").trim().toLowerCase()}`;
   }
 
-  // Sell cart stores condition as "NM"/"LP"/"MP"
-  function condFromCart(item) {
-    return normalizeTab(item.condition);
+  function money(n) {
+    return `$${Number(n || 0).toFixed(2)}`;
   }
 
-  function clampQty(n) {
-    const x = Number(n);
-    if (!Number.isFinite(x) || x < 1) return 1;
-    if (x > 999) return 999;
-    return Math.floor(x);
+  function normalizeImagePath(p) {
+    const s = String(p || "").trim();
+    if (!s) return "";
+    return encodeURI(s.startsWith("/") ? s : `/${s}`);
   }
 
-  function getPriceFor(item, tab) {
+  function getCartQty(cart, sku, tab) {
     const t = normalizeTab(tab);
-    const p = Number(item?.prices?.[t] ?? 0);
-    return Number.isFinite(p) ? p : 0;
+    return cart.reduce((sum, it) => {
+      if (String(it.sku || "") !== sku) return sum;
+      if (normalizeTab(it.condition) !== t) return sum;
+      return sum + Math.max(0, Number(it.qty || 0));
+    }, 0);
   }
 
-  function getMaxFor(item, tab) {
+  function setCartQty(cart, sku, name, tab, qty) {
     const t = normalizeTab(tab);
-    const m = Number(item?.max?.[t] ?? 0);
-    return Number.isFinite(m) ? m : 0;
+    const q = Math.max(0, Number(qty || 0));
+
+    // remove existing line for sku+tab
+    let next = cart.filter(
+      (it) => !(String(it.sku || "") === sku && normalizeTab(it.condition) === t)
+    );
+
+    // add consolidated line if q>0
+    if (q > 0) next.push({ sku, name, condition: t, qty: q });
+
+    return next;
   }
 
-  function getCartQtyForKeyCond(cart, key, tab) {
-    const t = normalizeTab(tab);
-    let sum = 0;
-    for (const it of cart) {
-      if (getItemKey(it) !== key) continue;
-      if (condFromCart(it) === t) sum += Math.max(0, Number(it.qty || 0));
-    }
-    return sum;
-  }
-
-  function setQtyForKeyCond(key, tab, nextQty) {
-    const t = normalizeTab(tab);
-    const q = Math.max(0, Number(nextQty || 0));
-
-    let cart = loadCart();
-
-    // remove existing line(s) for this key/tab
-    cart = cart.filter((it) => !(getItemKey(it) === key && condFromCart(it) === t));
-
-    if (q > 0) {
-      if (key.startsWith("name:")) {
-        cart.push({ name: key.slice(5), condition: t, qty: q });
-      } else {
-        const item = selllist[key];
-        const name = item?.name || key;
-        cart.push({ sku: key, name, condition: t, qty: q });
-      }
-    }
-
-    saveCart(cart);
-  }
-
-  // -------------------------
-  // Image Modal
-  // -------------------------
- // IMAGE MODAL ZOOM HANDLING
-const modal = document.getElementById("imageModal");
-const modalImg = document.getElementById("imageModalImg");
-const modalClose = document.getElementById("imageModalClose");
-
-function openModal(src){
-  if (!modal || !modalImg) return;
-  modalImg.src = src;
-  modal.classList.remove("hidden");
-}
-
-function closeModal(){
-  if (!modal) return;
-  modal.classList.add("hidden");
-  modalImg.src = "";
-}
-
-// close buttons
-if (modalClose) modalClose.addEventListener("click", closeModal);
-if (modal) modal.addEventListener("click", (e) => {
-  if (e.target === modal) closeModal();
-});
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeModal();
-});
-
-// card image click → zoom
-document.addEventListener("click", (e) => {
-  const imgEl = e.target.closest(".card-zoom-img");
-  if (!imgEl) return;
-  openModal(imgEl.src);
-});
-
-  // -------------------------
-  // API
-  // -------------------------
+  // ---------- data ----------
   async function fetchSellList() {
     const res = await fetch("/api/selllist", { cache: "no-store" });
     if (!res.ok) throw new Error(`selllist HTTP ${res.status}`);
@@ -160,9 +108,11 @@ document.addEventListener("click", (e) => {
     return data.selllist;
   }
 
-  // -------------------------
-  // Search
-  // -------------------------
+  let selllist = {};
+  let ALL_ITEMS = [];
+  let FILTERED_ITEMS = [];
+  let searchQuery = "";
+
   function applySearch() {
     const q = searchQuery.trim().toLowerCase();
     if (!q) {
@@ -193,128 +143,136 @@ document.addEventListener("click", (e) => {
     });
   }
 
-  // -------------------------
-  // Render Grid (SELL)
-  // -------------------------
+  // ---------- render ----------
   function renderGrid() {
-    if (!gridEl) return;
-
-    const items = (FILTERED_ITEMS.length ? FILTERED_ITEMS : ALL_ITEMS);
+    const items = FILTERED_ITEMS.length ? FILTERED_ITEMS : ALL_ITEMS;
 
     gridEl.innerHTML = "";
-
-    if (!items.length) {
-      gridEl.innerHTML = `<p style="padding:16px;">No cards found.</p>`;
-      return;
-    }
 
     for (const p of items) {
       const sku = p.sku;
       const name = p.name || sku;
       const imgSrc = normalizeImagePath(p.image);
 
+      const defaultTab = "NM";
+      const price = Number(p?.prices?.[defaultTab] ?? 0);
+      const maxCap = Number(p?.max?.[defaultTab] ?? 0);
+
       const card = document.createElement("div");
-      card.className = "product-card";          // ✅ shared card styling
+      card.className = "buy-card sell-card"; // reuse your buy-card styling
       card.dataset.sku = sku;
-      card.dataset.activeTab = "NM";
-
-      const unit = getPriceFor(p, "NM");
-      const maxCap = getMaxFor(p, "NM");
-
-      // initial cart qty for this sku/cond
-      const cart = loadCart();
-      const inCart = getCartQtyForKeyCond(cart, sku, "NM");
-      const remaining = Math.max(0, maxCap - inCart);
+      card.dataset.activeTab = defaultTab;
 
       card.innerHTML = `
-        ${imgSrc ? `<img class="sell-card-img" src="${imgSrc}" alt="${name}" />` : ""}
+        <div class="buy-card-inner">
+          ${
+            imgSrc
+              ? `<img class="buy-card-img sell-card-img" src="${imgSrc}" alt="${name}" />`
+              : ""
+          }
 
-        <h3 class="product-title">${name}</h3>
+          <h3 class="buy-card-title">${name}</h3>
 
-        <div class="cond-tabs" role="tablist" aria-label="Condition">
-          ${TAB_ORDER.map((t) => `
-            <button class="cond-tab${t === "NM" ? " active" : ""}" type="button" data-tab="${t}">
-              ${t}
-            </button>
-          `).join("")}
-        </div>
-
-        <div class="product-meta">
-          <div>Buy Price: <strong class="sell-price">$${unit.toFixed(2)}</strong></div>
-          <div>
-            Max capacity: <strong class="sell-max">${maxCap}</strong> •
-            In cart: <strong class="sell-incart">${inCart}</strong> •
-            Remaining: <strong class="sell-remain">${remaining}</strong>
+          <div class="cond-tabs buy-cond-tabs" role="tablist" aria-label="Condition">
+            ${TAB_ORDER.map(
+              (t) =>
+                `<button class="cond-tab${t === defaultTab ? " active" : ""}" type="button" data-tab="${t}">${t}</button>`
+            ).join("")}
           </div>
-        </div>
 
-        <div class="qty-row">
-          <button class="qty-btn qty-minus" type="button">−</button>
-          <input class="qty-input" type="number" min="1" max="999" value="1" />
-          <button class="qty-btn qty-plus" type="button">+</button>
-        </div>
+          <div class="buy-card-meta">
+            <div>Buy Price: <strong class="sell-unit">${money(price)}</strong></div>
+            <div>Max capacity: <strong class="sell-max">${Number.isFinite(maxCap) ? maxCap : 0}</strong></div>
+            <div>In cart: <strong class="sell-incart">0</strong> • Remaining: <strong class="sell-remain">0</strong></div>
+          </div>
 
-        <button class="primary-btn sell-add-btn" type="button">Add to Sell Order</button>
+          <div class="buy-qty-row">
+            <button class="qty-minus" type="button">−</button>
+            <input class="qty-input" type="number" min="1" max="999" value="1" />
+            <button class="qty-plus" type="button">+</button>
+          </div>
+
+          <button class="buy-add-btn sell-add-btn" type="button">Add to Sell Order</button>
+        </div>
       `;
 
+      // init cart stats
+      refreshCardCartStats(card);
+
       // click image to zoom
-      const imgEl = card.querySelector("img");
-      if (imgEl) {
-        imgEl.style.cursor = "zoom-in";
-        imgEl.addEventListener("click", () => openModal(imgEl.getAttribute("src")));
-      }
+      const imgEl = card.querySelector(".sell-card-img");
+      if (imgEl) imgEl.addEventListener("click", () => openModal(imgEl.getAttribute("src")));
 
       gridEl.appendChild(card);
     }
   }
 
-  function refreshSellCardUI(cardEl) {
+  function refreshCardUI(cardEl) {
     const sku = String(cardEl.dataset.sku || "");
-    const item = selllist[sku];
-    if (!item) return;
+    const p = selllist[sku];
+    if (!p) return;
 
     const tab = normalizeTab(cardEl.dataset.activeTab || "NM");
 
-    const price = getPriceFor(item, tab);
-    const maxCap = getMaxFor(item, tab);
+    // update active tab styling
+    cardEl.querySelectorAll(".cond-tab").forEach((b) => b.classList.remove("active"));
+    const activeBtn = cardEl.querySelector(`.cond-tab[data-tab="${tab}"]`);
+    if (activeBtn) activeBtn.classList.add("active");
 
-    const cart = loadCart();
-    const inCart = getCartQtyForKeyCond(cart, sku, tab);
-    const remaining = Math.max(0, maxCap - inCart);
+    const price = Number(p?.prices?.[tab] ?? 0);
+    const maxCap = Number(p?.max?.[tab] ?? 0);
 
-    const priceEl = cardEl.querySelector(".sell-price");
+    const unitEl = cardEl.querySelector(".sell-unit");
     const maxEl = cardEl.querySelector(".sell-max");
-    const inCartEl = cardEl.querySelector(".sell-incart");
-    const remEl = cardEl.querySelector(".sell-remain");
+    if (unitEl) unitEl.textContent = money(price);
+    if (maxEl) maxEl.textContent = String(Number.isFinite(maxCap) ? maxCap : 0);
 
-    if (priceEl) priceEl.textContent = `$${price.toFixed(2)}`;
-    if (maxEl) maxEl.textContent = String(maxCap);
-    if (inCartEl) inCartEl.textContent = String(inCart);
-    if (remEl) remEl.textContent = String(remaining);
+    refreshCardCartStats(cardEl);
   }
 
-  // -------------------------
-  // Click handling (tabs, qty, add)
-  // -------------------------
+  function refreshCardCartStats(cardEl) {
+    const sku = String(cardEl.dataset.sku || "");
+    const p = selllist[sku];
+    if (!p) return;
+
+    const tab = normalizeTab(cardEl.dataset.activeTab || "NM");
+    const cart = loadCart();
+
+    const inCart = getCartQty(cart, sku, tab);
+    const maxCap = Number(p?.max?.[tab] ?? 0);
+    const remaining = Math.max(0, maxCap - inCart);
+
+    const inCartEl = cardEl.querySelector(".sell-incart");
+    const remainEl = cardEl.querySelector(".sell-remain");
+    if (inCartEl) inCartEl.textContent = String(inCart);
+    if (remainEl) remainEl.textContent = String(remaining);
+
+    // optional: disable Add if none left
+    const addBtn = cardEl.querySelector(".sell-add-btn");
+    if (addBtn) addBtn.disabled = maxCap > 0 ? remaining <= 0 : true;
+  }
+
+  function clampQty(n) {
+    const x = Number(n);
+    if (!Number.isFinite(x) || x < 1) return 1;
+    if (x > 999) return 999;
+    return Math.floor(x);
+  }
+
+  // ---------- interactions ----------
   document.addEventListener("click", (e) => {
-    const cardEl = e.target.closest(".product-card");
+    const cardEl = e.target.closest(".sell-card");
     if (!cardEl) return;
 
     const sku = String(cardEl.dataset.sku || "");
-    const item = selllist[sku];
-    if (!item) return;
+    const p = selllist[sku];
+    if (!p) return;
 
-    // tabs
+    // tab switch
     const tabBtn = e.target.closest(".cond-tab");
     if (tabBtn) {
-      const tab = normalizeTab(tabBtn.dataset.tab || "NM");
-      cardEl.dataset.activeTab = tab;
-
-      // active class
-      cardEl.querySelectorAll(".cond-tab").forEach((b) => b.classList.remove("active"));
-      tabBtn.classList.add("active");
-
-      refreshSellCardUI(cardEl);
+      cardEl.dataset.activeTab = normalizeTab(tabBtn.dataset.tab || "NM");
+      refreshCardUI(cardEl);
       return;
     }
 
@@ -341,57 +299,51 @@ document.addEventListener("click", (e) => {
       const tab = normalizeTab(cardEl.dataset.activeTab || "NM");
       const desired = clampQty(qtyInput?.value || 1);
 
-      const maxCap = getMaxFor(item, tab);
+      const maxCap = Number(p?.max?.[tab] ?? 0);
       const cart = loadCart();
-      const inCart = getCartQtyForKeyCond(cart, sku, tab);
-      const remaining = Math.max(0, maxCap - inCart);
+      const already = getCartQty(cart, sku, tab);
 
-      const toAdd = Math.min(desired, remaining);
-      if (toAdd <= 0) {
+      // clamp so we never exceed max capacity
+      let canAdd = desired;
+      if (maxCap > 0) canAdd = Math.max(0, Math.min(desired, maxCap - already));
+
+      if (canAdd <= 0) {
         alert("You’ve reached the max capacity for that condition.");
         return;
       }
 
-      // merge into existing line
-      const idx = cart.findIndex((it) => String(it.sku || "") === sku && condFromCart(it) === tab);
-      if (idx >= 0) {
-        cart[idx].qty = Math.max(1, Number(cart[idx].qty || 0) + toAdd);
-      } else {
-        cart.push({ sku, name: item.name || sku, condition: tab, qty: toAdd });
-      }
+      const name = p.name || sku;
+      const nextQty = already + canAdd;
+      const nextCart = setCartQty(cart, sku, name, tab, nextQty);
 
-      saveCart(cart);
-      refreshSellCardUI(cardEl);
+      saveCart(nextCart);
+      refreshCardCartStats(cardEl);
       return;
     }
   });
 
-  // Keep cards in sync if cart changes from another tab/page
+  // keep page in sync if cart changes elsewhere
   window.addEventListener("cart:changed", () => {
-    document.querySelectorAll(".product-card").forEach(refreshSellCardUI);
+    document.querySelectorAll(".sell-card").forEach(refreshCardCartStats);
   });
 
-  // -------------------------
-  // Init
-  // -------------------------
-  (async function init() {
-    try {
-      selllist = await fetchSellList();
-    } catch (err) {
-      console.error("sell.js selllist error:", err);
-      if (gridEl) gridEl.innerHTML = `<p style="padding:16px;">Could not load sell list.</p>`;
-      return;
-    }
+  // ---------- init ----------
+  try {
+    selllist = await fetchSellList();
+  } catch (err) {
+    console.error("sell.js selllist error:", err);
+    gridEl.innerHTML = `<p style="padding:16px;">Could not load sell list.</p>`;
+    selllist = {};
+    return;
+  }
 
-    ALL_ITEMS = Object.entries(selllist).map(([sku, item]) => ({ sku, ...item }));
-    ALL_ITEMS.sort((a, b) => String(a.name || a.sku).localeCompare(String(b.name || b.sku)));
+  ALL_ITEMS = Object.entries(selllist).map(([sku, item]) => ({ sku, ...item }));
+  ALL_ITEMS.sort((a, b) => String(a.name || a.sku).localeCompare(String(b.name || b.sku)));
+  FILTERED_ITEMS = ALL_ITEMS.slice();
 
-    FILTERED_ITEMS = ALL_ITEMS.slice();
-    renderGrid();
+  applySearch();
 
-    // initial badge refresh
-    if (typeof window.updateCartBadges === "function") window.updateCartBadges();
-  })();
+  if (typeof window.updateCartBadges === "function") window.updateCartBadges();
 });
 
 
