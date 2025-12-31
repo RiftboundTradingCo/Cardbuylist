@@ -816,3 +816,39 @@ body{
   display: none;
 }
 
+/* =========================
+   CARD IMAGE SIZE FIX (BUY + SELL)
+   Prevent "massive images"
+========================= */
+
+/* Buy grid card images */
+.buy-card img,
+.buy-card-img{
+  width: 210px !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: 280px !important;
+  object-fit: contain !important;
+  display: block;
+  margin: 8px auto 12px;
+}
+
+/* Sell grid card images (adjust class names if yours differ) */
+.sell-card img,
+.sell-card-img{
+  width: 210px !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: 280px !important;
+  object-fit: contain !important;
+  display: block;
+  margin: 8px auto 12px;
+}
+
+/* If you have thumbs in carts */
+.cart-thumb{
+  width: 92px !important;
+  height: auto !important;
+  max-height: 130px !important;
+  object-fit: contain !important;
+}
