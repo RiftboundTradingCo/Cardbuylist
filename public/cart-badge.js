@@ -1,45 +1,44 @@
 (function () {
-  function getCount(key) {
-    try {
-      const cart = JSON.parse(localStorage.getItem(key) || "[]");
-      return cart.reduce((sum, it) => sum + Math.max(0, Number(it.qty || 0)), 0);
-    } catch {
-      return 0;
-    }
+  function readCart(key) {
+    try { return JSON.parse(localStorage.getItem(key) || "[]"); }
+    catch { return []; }
   }
 
-  function updateBadgeFor(cartName, count) {
-    const el = document.querySelector(`.cart-badge[data-cart="${cartName}"]`);
-    if (!el) return;
+  function countQty(cart) {
+    return cart.reduce((sum, it) => sum + Math.max(0, Number(it.qty || 0)), 0);
+  }
 
-    el.textContent = String(count);
+  function setBadge(cartName, count) {
+    const badge = document.querySelector(`.cart-badge[data-cart="${cartName}"]`);
+    if (!badge) return;
 
-    if (count > 0) {
-      el.classList.remove("hidden");
-    } else {
-      el.classList.add("hidden");
-    }
+    badge.dataset.count = String(count);
+
+    // update visible count text (works for gem badge)
+    const countEl = badge.querySelector(".cart-badge__count");
+    if (countEl) countEl.textContent = String(count);
+
+    // show/hide
+    if (count > 0) badge.classList.remove("hidden");
+    else badge.classList.add("hidden");
   }
 
   function updateCartBadges() {
-    const buyCount = getCount("buyCart");
-    const sellCount = getCount("sellCart");
+    const buyCount = countQty(readCart("buyCart"));
+    const sellCount = countQty(readCart("sellCart"));
 
-    updateBadgeFor("buy", buyCount);
-    updateBadgeFor("sell", sellCount);
+    setBadge("buy", buyCount);
+    setBadge("sell", sellCount);
   }
 
-  // expose for other scripts if needed
   window.updateCartBadges = updateCartBadges;
 
-  // run on load
   document.addEventListener("DOMContentLoaded", updateCartBadges);
-
-  // run when a cart changes (same tab)
   window.addEventListener("cart:changed", updateCartBadges);
 
-  // run when cart changes in another tab
+  // updates when other tabs change localStorage
   window.addEventListener("storage", (e) => {
     if (e.key === "buyCart" || e.key === "sellCart") updateCartBadges();
   });
 })();
+

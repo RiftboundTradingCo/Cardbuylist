@@ -223,51 +223,37 @@ body::before{
 .navlinks a:nth-child(6){ color:#22c55e; }  /* green */
 
 /* ---------- Badges (gem images) ---------- */
-.cart-badge{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  margin-left: 6px;
-  border-radius: 999px;
-  font-weight: 900;
-  font-size: 12px;
-  color:#fff;
-  line-height: 20px;
+.hidden { display: none !important; }
+
+.cart-badge.cart-badge--gem{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 26px;
+  height: 26px;
+  margin-left: 8px;
   vertical-align: middle;
 }
-.cart-badge.hidden{ display:none; }
 
-/* Buy cart badge = red gem */
-.cart-badge[data-cart="buy"],
-#buyCartBadge{
-  background-image: url("/images/red-badge.png");
-  background-size: cover;
-  background-position:center;
-  background-repeat:no-repeat;
-  color: transparent; /* show gem only */
-  text-shadow:none;
+.cart-badge.cart-badge--gem img{
   width: 26px;
   height: 26px;
-  min-width: 26px;
-  padding:0;
+  display: block;
+  border-radius: 999px;
 }
 
-/* Sell cart badge = yellow gem */
-.cart-badge[data-cart="sell"]{
-  background-image: url("/images/yellow-badge.png");
-  background-size: cover;
-  background-position:center;
-  background-repeat:no-repeat;
-  color: transparent; /* show gem only */
-  text-shadow:none;
-  width: 26px;
-  height: 26px;
-  min-width: 26px;
-  padding:0;
+.cart-badge.cart-badge--gem .cart-badge__count{
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: 12px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,.8);
 }
+
 
 /* If you still want numbers visible on top of gem, remove color: transparent above
    and uncomment this:
