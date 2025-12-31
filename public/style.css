@@ -995,3 +995,13 @@ body{
   background: #2563eb;
   color: #fff;
 }
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background-image: url("/images/wooden-shelves.jpg"); /* <-- update filename to YOUR real one */
+  background-repeat: repeat;
+  background-size: cover;
+  background-position: center top;
+  background-attachment: fixed;
+}
