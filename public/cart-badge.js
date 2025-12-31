@@ -1,38 +1,54 @@
-(function () {
+// cart-badge.js
+(() => {
   function safeParse(raw, fallback) {
-    try { return JSON.parse(raw); } catch { return fallback; }
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return fallback;
+    }
   }
 
-  function countCart(key) {
-    const arr = safeParse(localStorage.getItem(key) || "[]", []);
-    return arr.reduce((sum, it) => sum + Math.max(0, Number(it?.qty || 0)), 0);
+  function countItems(key) {
+    const cart = safeParse(localStorage.getItem(key) || "[]", []);
+    return cart.reduce((sum, item) => sum + Math.max(0, Number(item.qty || 0)), 0);
   }
 
-  function setBadge(el, n) {
+  function updateBadge(el, count) {
     if (!el) return;
-    el.textContent = String(n);
 
-    // hide when 0
-    if (n > 0) el.classList.remove("hidden");
-    else el.classList.add("hidden");
+    el.textContent = String(count);
+
+    // hide badge when empty
+    if (count > 0) {
+      el.classList.remove("hidden");
+    } else {
+      el.classList.add("hidden");
+    }
   }
 
-  window.updateCartBadges = function updateCartBadges() {
-    const sellCount = countCart("sellCart");
-    const buyCount  = countCart("buyCart");
+  window.updateCartBadges = function () {
+    const sellCount = countItems("sellCart");
+    const buyCount  = countItems("buyCart");
 
-    document.querySelectorAll('.cart-badge[data-cart="sell"]').forEach(el => setBadge(el, sellCount));
-    document.querySelectorAll('.cart-badge[data-cart="buy"]').forEach(el => setBadge(el, buyCount));
+    document
+      .querySelectorAll('.cart-badge[data-cart="sell"]')
+      .forEach(el => updateBadge(el, sellCount));
+
+    document
+      .querySelectorAll('.cart-badge[data-cart="buy"]')
+      .forEach(el => updateBadge(el, buyCount));
   };
 
-  // update when page loads
+  // initial load
   document.addEventListener("DOMContentLoaded", window.updateCartBadges);
 
-  // update when your code dispatches cart:changed
+  // custom event (fired by buy/sell cart scripts)
   window.addEventListener("cart:changed", window.updateCartBadges);
 
-  // update when cart changes in another tab
+  // cross-tab updates
   window.addEventListener("storage", (e) => {
-    if (e.key === "sellCart" || e.key === "buyCart") window.updateCartBadges();
+    if (e.key === "buyCart" || e.key === "sellCart") {
+      window.updateCartBadges();
+    }
   });
 })();
