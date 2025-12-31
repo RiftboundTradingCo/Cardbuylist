@@ -50,10 +50,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function saveCart(cart) {
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    window.dispatchEvent(new Event("cart:changed"));
-    if (typeof window.updateCartBadges === "function") window.updateCartBadges();
-  }
+  localStorage.setItem("buyCart", JSON.stringify(cart));
+
+  // 🔔 notify header badges + mini cart
+  window.dispatchEvent(new Event("cart:changed"));
+}
+
 
   function moneyFromCents(cents) {
     return `$${(Number(cents || 0) / 100).toFixed(2)}`;

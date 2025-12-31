@@ -30,13 +30,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     return safeParse(localStorage.getItem(CART_KEY) || "[]", []);
   }
 
-  function saveCart(cart) {
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+ function saveCart(cart) {
+  localStorage.setItem(CART_KEY, JSON.stringify(cart));
 
-    // ✅ badge update in same tab
-    window.dispatchEvent(new Event("cart:changed"));
-    if (typeof window.updateCartBadges === "function") window.updateCartBadges();
-  }
+  // 🔔 notify header badges + other pages
+  window.dispatchEvent(new Event("cart:changed"));
+}
+
 
   function money(n) {
     return `$${(Number(n || 0)).toFixed(2)}`;

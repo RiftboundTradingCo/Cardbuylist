@@ -49,10 +49,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function saveCart(cart) {
-    localStorage.setItem("buyCart", JSON.stringify(cart));
-    // force badge refresh (cart-badge.js can listen for this)
-    window.dispatchEvent(new Event("cart:changed"));
-  }
+  localStorage.setItem("buyCart", JSON.stringify(cart));
+
+  // 🔔 notify header badges + mini cart
+  window.dispatchEvent(new Event("cart:changed"));
+}
+
 
   function normalizeImagePath(p) {
     const s = String(p || "").trim();
