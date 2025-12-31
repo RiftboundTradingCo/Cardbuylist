@@ -42,23 +42,23 @@
 
 
 
+<h1 class="page-title">Sell Your Cards</h1>
+<p class="page-subtitle">Search our buylist, add your cards, and submit your sell order.</p>
 
-  <h1>Sell Your Cards</h1>
-  <p>Search our buylist, add your cards, and submit your sell order.</p>
+<div class="sell-controls">
+  <div class="sell-search">
+    <input id="sellSearch" type="search" placeholder="Search cards to sell…" autocomplete="off" />
+    <button id="sellSearchClear" type="button">Clear</button>
+  </div>
+</div>
 
-  <!-- BUYLIST SEARCH -->
-  <h2>Search Our Buylist</h2>
+<!-- ✅ ONE class attribute -->
+<div id="sellGrid" class="buy-grid"></div>
 
-<!-- SELL CATALOG -->
-<input
-  type="text"
-  id="sellSearch"
-  class="buy-search"
-  placeholder="Search cards to sell..."
->
-
-<div class="store-grid" id="sellGrid" class="product-grid"></div>
-
+<div id="imageModal" class="image-modal hidden">
+  <button id="imageModalClose" class="image-modal-close" type="button">×</button>
+  <img id="imageModalImg" alt="">
+</div>
 
 
   <!-- SEARCH RESULTS -->
