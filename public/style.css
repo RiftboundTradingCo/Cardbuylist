@@ -1005,3 +1005,116 @@ body {
   background-position: center top;
   background-attachment: fixed;
 }
+/* ===== Shared cart layout (sell + buy) ===== */
+.cart-page .cart-topbar{
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 18px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.12);
+  padding: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  margin: 18px 0 18px;
+}
+
+.cart-top-left{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 260px;
+}
+
+.cart-total-line{
+  font-size: 18px;
+  font-weight: 800;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.cart-total-label{ opacity: .85; }
+.cart-total-value{ color: #111; }
+
+.cart-email{
+  display: grid;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.cart-email input{
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.15);
+  padding: 0 14px;
+  background: rgba(255,255,255,.95);
+  outline: none;
+}
+
+.cart-top-right{
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+  min-width: 220px;
+}
+
+.cart-primary,
+.cart-secondary,
+.cart-danger{
+  width: 220px;
+  height: 42px;
+  border-radius: 12px;
+  border: 0;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.cart-primary{
+  background: #1a7f37;
+  color: #fff;
+}
+
+.cart-secondary{
+  background: #eef2f7;
+  color: #111;
+  border: 1px solid rgba(0,0,0,.10);
+}
+
+.cart-danger{
+  background: #fff;
+  color: #d11a2a;
+  border: 1px solid rgba(209,26,42,.35);
+}
+
+.cart-msg{
+  margin: 0;
+  font-weight: 700;
+  font-size: 13px;
+  opacity: .9;
+}
+
+/* list spacing */
+.cart-list{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 16px;
+}
+
+/* mobile */
+@media (max-width: 900px){
+  .cart-page .cart-topbar{
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cart-top-right{
+    justify-items: stretch;
+  }
+  .cart-primary,
+  .cart-secondary,
+  .cart-danger{
+    width: 100%;
+  }
+}

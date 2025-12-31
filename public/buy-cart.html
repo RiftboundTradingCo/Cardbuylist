@@ -35,54 +35,53 @@
 
 
 
+<main class="page cart-page">
 
-<main class="page">
-  <h1>Your Buy Cart</h1>
-  <p>Review your cart items below.</p>
+  <h1 class="page-title">Your Buy Cart</h1>
+  <p class="page-subtitle">Review your cart items below.</p>
 
-  <div class="cart-layout">
-    <!-- LEFT: items -->
-    <section class="cart-left">
-      <ul id="buyCartList" class="cart-list"></ul>
-    </section>
-
-    <!-- RIGHT: summary box -->
-    <aside class="cart-rightbar">
-      <div class="cart-summary-box">
-        <h3 class="summary-title">
-          Cart Summary (<span id="buyCartCount">0</span>)
-        </h3>
-
-        <div class="summary-row">
-          <span>Subtotal:</span>
-          <strong>$<span id="buyCartTotal">0.00</span></strong>
-        </div>
-
-        <label class="summary-label" for="buyEmail">Email for receipt</label>
-        <input
-          type="email"
-          id="buyEmail"
-          placeholder="you@example.com"
-          autocomplete="email"
-          class="summary-input"
-        />
-
-        <button id="checkoutBtn" type="button" class="summary-btn primary">
-          Checkout
-        </button>
-
-        <button id="shippingCalcBtn" type="button" class="summary-btn secondary">
-          Shipping Calculator
-        </button>
-
-        <button id="buyClearCartBtn" type="button" class="summary-btn danger">
-          Empty Cart
-        </button>
-
-        <p id="checkoutMsg" class="cart-message"></p>
+  <!-- TOP PANEL (like sell cart) -->
+  <section class="cart-topbar">
+    <div class="cart-top-left">
+      <div class="cart-total-line">
+        <span class="cart-total-label">Subtotal:</span>
+        <span class="cart-total-value">$<span id="buyCartTotal">0.00</span></span>
       </div>
-    </aside>
-  </div>
+
+      <label class="cart-email">
+        Email for receipt
+        <input type="email" id="buyEmail" placeholder="you@example.com" />
+      </label>
+    </div>
+
+    <div class="cart-top-right">
+      <button id="checkoutBtn" class="cart-primary" type="button">
+        Checkout
+      </button>
+
+      <button id="shippingCalcBtn" class="cart-secondary" type="button">
+        Shipping Calculator
+      </button>
+
+      <button id="buyClearCartBtn" class="cart-danger" type="button">
+        Empty Cart
+      </button>
+
+      <p id="checkoutMsg" class="cart-msg"></p>
+    </div>
+  </section>
+
+  <!-- LIST -->
+  <ul id="buyCartList" class="cart-list"></ul>
+
+</main>
+
+<!-- image modal (if you use it on cart pages too) -->
+<div id="imageModal" class="image-modal hidden">
+  <button id="imageModalClose" class="image-modal-close" type="button">×</button>
+  <img id="imageModalImg" alt="">
+</div>
+
 </main>
 
 
