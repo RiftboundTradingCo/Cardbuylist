@@ -116,20 +116,38 @@ document.addEventListener("DOMContentLoaded", () => {
   // -------------------------
   // Image Modal
   // -------------------------
-  function openModal(src) {
-    if (!modal || !modalImg) return;
-    modalImg.src = src;
-    modal.classList.remove("hidden");
-  }
+ // IMAGE MODAL ZOOM HANDLING
+const modal = document.getElementById("imageModal");
+const modalImg = document.getElementById("imageModalImg");
+const modalClose = document.getElementById("imageModalClose");
 
-  function closeModal() {
-    if (!modal || !modalImg) return;
-    modal.classList.add("hidden");
-    modalImg.src = "";
-  }
+function openModal(src){
+  if (!modal || !modalImg) return;
+  modalImg.src = src;
+  modal.classList.remove("hidden");
+}
 
-  if (modalClose) modalClose.addEventListener("click", closeModal);
-  if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+function closeModal(){
+  if (!modal) return;
+  modal.classList.add("hidden");
+  modalImg.src = "";
+}
+
+// close buttons
+if (modalClose) modalClose.addEventListener("click", closeModal);
+if (modal) modal.addEventListener("click", (e) => {
+  if (e.target === modal) closeModal();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeModal();
+});
+
+// card image click → zoom
+document.addEventListener("click", (e) => {
+  const imgEl = e.target.closest(".card-zoom-img");
+  if (!imgEl) return;
+  openModal(imgEl.src);
+});
 
   // -------------------------
   // API
