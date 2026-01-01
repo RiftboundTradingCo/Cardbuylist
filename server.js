@@ -269,10 +269,13 @@ Riftbound Trading Co
 );
 
 /* =========================
-   NORMAL MIDDLEWARE
+   NORMAL MIDDLEWARE + HEALTH
 ========================= */
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+
+app.get("/health", (req, res) => res.send("OK"));
+
 
 /* =========================
    API ROUTES
