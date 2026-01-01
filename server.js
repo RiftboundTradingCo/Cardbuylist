@@ -46,8 +46,9 @@ function ensureDirForFile(filePath) {
 function readJsonSafe(filePath) {
   try {
     if (!fs.existsSync(filePath)) return {};
-    return JSON.parse(fs.readFileSync(filePath, "utf8"));
-  } catch {
+    return JSON.parse(fs.readFileSync(filePath, "utf8") || "{}");
+  } catch (e) {
+    console.error("readJsonSafe failed:", filePath, e);
     return {};
   }
 }
@@ -55,10 +56,10 @@ function readJsonSafe(filePath) {
 function writeJsonSafe(filePath, obj) {
   try {
     ensureDirForFile(filePath);
-    fs.writeFileSync(filePath, JSON.stringify(obj, null, 2));
+    fs.writeFileSync(filePath, JSON.stringify(obj, null, 2), "utf8");
     return true;
   } catch (e) {
-    console.error("Write failed:", filePath, e);
+    console.error("writeJsonSafe failed:", filePath, e);
     return false;
   }
 }
@@ -68,10 +69,12 @@ function makeOrderId() {
 }
 
 function appendOrder(order) {
-  const db = readJsonSafe(ORDERS_PATH) || { orders: [] };
-  db.orders = Array.isArray(db.orders) ? db.orders : [];
-  db.orders.unshift(order);
-  writeJsonSafe(ORDERS_PATH, db);
+  const db = readJsonSafe(ORDERS_PATH);
+  const out = {
+    orders: Array.isArray(db.orders) ? db.orders : []
+  };
+  out.orders.unshift(order);
+  writeJsonSafe(ORDERS_PATH, out);
 }
 
 const CONDITION_MULT = {
@@ -82,200 +85,194 @@ const CONDITION_MULT = {
 };
 
 function normalizeCondition(c) {
-  return CONDITION_MULT[c] ? c : "Near Mint";
+  const s = String(c || "").trim();
+  return CONDITION_MULT[s] ? s : "Near Mint";
 }
 
 function centsForCondition(base, cond) {
-  return Math.round(base * (CONDITION_MULT[normalizeCondition(cond)] || 1));
-}
-
-function getStockForCondition(p, cond) {
-  return Number(p?.stock?.[normalizeCondition(cond)] || 0);
+  const b = Number(base || 0);
+  return Math.round(b * (CONDITION_MULT[normalizeCondition(cond)] || 1));
 }
 
 function decrementStock(catalog, sku, cond, qty) {
-  if (!catalog[sku]) return { ok: false };
-  if (catalog[sku].stock[cond] < qty) return { ok: false };
-  catalog[sku].stock[cond] -= qty;
+  const sSku = String(sku || "").trim();
+  const condition = normalizeCondition(cond);
+  const nQty = Number(qty || 0);
+
+  const product = catalog?.[sSku];
+  if (!product) return { ok: false, error: `Unknown SKU: ${sSku}` };
+
+  if (!product.stock || typeof product.stock !== "object") {
+    return { ok: false, error: `SKU ${sSku} missing stock object` };
+  }
+
+  const cur = Number(product.stock[condition] ?? 0);
+  if (nQty <= 0) return { ok: false, error: "Invalid qty" };
+  if (cur < nQty) return { ok: false, error: `Insufficient stock for ${sSku} (${condition})` };
+
+  product.stock[condition] = cur - nQty;
   return { ok: true };
+}
+
+function requireAdmin(req, res, next) {
+  const token = String(req.headers["x-admin-token"] || "").trim();
+  if (!ADMIN_TOKEN) return res.status(500).json({ ok: false, error: "ADMIN_TOKEN not set" });
+  if (token !== ADMIN_TOKEN) return res.status(401).json({ ok: false, error: "Unauthorized" });
+  next();
 }
 
 /* =========================
    STRIPE WEBHOOK (RAW BODY)
+   NOTE: must be BEFORE express.json()
 ========================= */
-app.post(
-  "/api/stripe/webhook",
-  express.raw({ type: "application/json" }),
-  async (req, res) => {
-    if (!stripe) return res.sendStatus(500);
+app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+  if (!stripe) return res.sendStatus(500);
 
-    let event;
-    try {
-      event = stripe.webhooks.constructEvent(
-        req.body,
-        req.headers["stripe-signature"],
-        STRIPE_WEBHOOK_SECRET
-      );
-    } catch (err) {
-      return res.status(400).send("Webhook error");
-    }
-
-    if (event.type === "checkout.session.completed") {
-  const session = event.data.object;
-
-  const orderId = String(session?.metadata?.orderId || "").trim() || makeOrderId();
-
-  let cart = [];
+  let event;
   try {
-    cart = JSON.parse(session?.metadata?.cart || "[]");
-  } catch {
-    cart = [];
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      req.headers["stripe-signature"],
+      STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    console.error("Webhook signature verify failed:", err?.message || err);
+    return res.status(400).send("Webhook error");
   }
 
-  const catalog = readJsonSafe(CATALOG_PATH);
+  try {
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
 
-  const customerEmail =
-    session.customer_details?.email ||
-    session.customer_email ||
-    String(session?.metadata?.email || "").trim() ||
-    "";
+      const orderId = String(session?.metadata?.orderId || "").trim() || makeOrderId();
 
-  const shipName = session.customer_details?.name || "";
+      let cart = [];
+      try {
+        cart = JSON.parse(session?.metadata?.cart || "[]");
+      } catch {
+        cart = [];
+      }
 
-  const lines = [];
-  const emailLines = [];
+      const catalog = readJsonSafe(CATALOG_PATH);
 
-  let totalCents = 0;
+      const customerEmail =
+        session.customer_details?.email ||
+        session.customer_email ||
+        String(session?.metadata?.email || "").trim() ||
+        "";
 
-  // ---- inventory update + price calc (server-side truth) ----
-  for (const it of cart) {
-    const sku = String(it?.sku || "").trim();
-    const condition = normalizeCondition(it?.condition);
-    const qty = Math.max(1, Number(it?.qty || 0));
+      const shipName = session.customer_details?.name || "";
 
-    if (!sku || !Number.isFinite(qty) || qty <= 0) continue;
+      const lines = [];
+      const emailLines = [];
 
-    const product = catalog[sku];
-    if (!product) {
-      console.warn("Unknown SKU in cart:", sku);
-      continue;
-    }
+      let totalCents = 0;
 
-    const unitCents = centsForCondition(Number(product.price_cents || 0), condition);
-    const lineCents = unitCents * qty;
-    totalCents += lineCents;
+      for (const it of cart) {
+        const sku = String(it?.sku || "").trim();
+        const condition = normalizeCondition(it?.condition);
+        const qty = Math.max(1, Number(it?.qty || 0));
 
-    // decrement stock (must succeed)
-    const dec = decrementStock(catalog, sku, condition, qty);
-    if (!dec.ok) {
-      console.error("Inventory decrement failed:", dec.error);
+        if (!sku || !Number.isFinite(qty) || qty <= 0) continue;
 
-      // still save the order as "needs_review" so you see it in admin
+        const product = catalog[sku];
+        if (!product) {
+          console.warn("Unknown SKU in cart:", sku);
+          continue;
+        }
+
+        const unitCents = centsForCondition(Number(product.price_cents || 0), condition);
+        const lineCents = unitCents * qty;
+        totalCents += lineCents;
+
+        const dec = decrementStock(catalog, sku, condition, qty);
+        if (!dec.ok) {
+          console.error("Inventory decrement failed:", dec.error);
+
+          appendOrder({
+            id: orderId,
+            type: "buy",
+            status: "needs_review",
+            createdAt: new Date().toISOString(),
+            customer: { name: shipName, email: customerEmail },
+            lines: cart.map(x => ({
+              sku: String(x?.sku || ""),
+              condition: normalizeCondition(x?.condition),
+              qty: Math.max(1, Number(x?.qty || 0))
+            })),
+            totalCents,
+            stripeSessionId: session.id,
+            error: dec.error || "Inventory decrement failed"
+          });
+
+          // respond 200 so Stripe does not retry forever
+          return res.json({ received: true });
+        }
+
+        lines.push({ sku, condition, qty });
+
+        const name = String(product.name || sku);
+        emailLines.push(
+          `${qty}x ${name} — ${condition} — $${(unitCents / 100).toFixed(2)} each = $${(lineCents / 100).toFixed(2)}`
+        );
+      }
+
+      // persist updated inventory
+      writeJsonSafe(CATALOG_PATH, catalog);
+
+      // save order
       appendOrder({
         id: orderId,
         type: "buy",
-        status: "needs_review",
+        status: "paid",
         createdAt: new Date().toISOString(),
         customer: { name: shipName, email: customerEmail },
-        lines: cart.map(x => ({
-          sku: String(x?.sku || ""),
-          condition: normalizeCondition(x?.condition),
-          qty: Math.max(1, Number(x?.qty || 0))
-        })),
+        lines,
         totalCents,
-        stripeSessionId: session.id,
-        error: dec.error || "Inventory decrement failed"
+        stripeSessionId: session.id
       });
 
-      // IMPORTANT: still respond 200 to Stripe or it retries forever
-      writeJsonSafe(CATALOG_PATH, catalog); // optional: you may skip writing if you want strictness
-      return res.json({ received: true });
+      // optional emails
+      if (resend && EMAIL_FROM) {
+        const totalNice = `$${(totalCents / 100).toFixed(2)}`;
+
+        if (OWNER_EMAIL) {
+          await resend.emails.send({
+            from: EMAIL_FROM,
+            to: OWNER_EMAIL,
+            subject: `New order ${orderId}`,
+            text: `Order ${orderId}\nCustomer: ${shipName} <${customerEmail}>\nTotal: ${totalNice}\n\n${emailLines.join("\n")}`
+          });
+        }
+
+        if (customerEmail) {
+          await resend.emails.send({
+            from: EMAIL_FROM,
+            to: customerEmail,
+            subject: `Your Riftbound order receipt (${orderId})`,
+            text: `Thanks for your purchase!\nOrder: ${orderId}\nTotal: ${totalNice}\n\n${emailLines.join("\n")}`
+          });
+        }
+      }
     }
 
-    lines.push({ sku, condition, qty });
-
-    const name = String(product.name || sku);
-    emailLines.push(
-      `${qty}x ${name} — ${condition} — $${(unitCents / 100).toFixed(2)} each = $${(lineCents / 100).toFixed(2)}`
-    );
+    return res.json({ received: true });
+  } catch (e) {
+    console.error("Webhook handler error:", e);
+    return res.status(500).send("Webhook handler error");
   }
-
-  // write updated catalog
-  writeJsonSafe(CATALOG_PATH, catalog);
-
-  // ✅ SAVE ORDER
-  appendOrder({
-    id: orderId,
-    type: "buy",
-    status: "paid",
-    createdAt: new Date().toISOString(),
-    customer: { name: shipName, email: customerEmail },
-    lines,
-    totalCents,
-    stripeSessionId: session.id
-  });
-
-  // ---- emails (owner + customer recap) ----
-  if (resend && EMAIL_FROM) {
-    const totalNice = `$${(totalCents / 100).toFixed(2)}`;
-
-    const ownerText =
-`New order received: ${orderId}
-
-Customer: ${shipName || "(no name)"} <${customerEmail || "no email"}>
-Total: ${totalNice}
-
-Items:
-${emailLines.map(l => `- ${l}`).join("\n")}
-
-Stripe session: ${session.id}
-`;
-
-    const customerText =
-`Thanks for your purchase!
-
-Order: ${orderId}
-Total: ${totalNice}
-
-Items:
-${emailLines.map(l => `- ${l}`).join("\n")}
-
-Riftbound Trading Co
-`;
-
-    if (OWNER_EMAIL) {
-      await resend.emails.send({
-        from: EMAIL_FROM,
-        to: OWNER_EMAIL,
-        subject: `New order ${orderId}`,
-        text: ownerText
-      });
-    }
-
-    if (customerEmail) {
-      await resend.emails.send({
-        from: EMAIL_FROM,
-        to: customerEmail,
-        subject: `Your Riftbound order receipt (${orderId})`,
-        text: customerText
-      });
-    }
-  }
-}
-
-
-    res.json({ received: true });
-  }
-);
+});
 
 /* =========================
-   NORMAL MIDDLEWARE + HEALTH
+   NORMAL MIDDLEWARE + STATIC
 ========================= */
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+/* =========================
+   HEALTH
+========================= */
 app.get("/health", (req, res) => res.send("OK"));
-
 
 /* =========================
    API ROUTES
@@ -288,25 +285,53 @@ app.get("/api/selllist", (req, res) => {
   res.json({ ok: true, selllist: readJsonSafe(SELLLIST_PATH) });
 });
 
+/* =========================
+   SELL SUBMIT (basic)
+   NOTE: this currently just records an order.
+   You can extend it to also decrement selllist max, etc.
+========================= */
+app.post("/api/submit", async (req, res) => {
+  try {
+    const name = String(req.body?.name || "").trim();
+    const email = String(req.body?.email || "").trim();
+    const totalCents = Math.round(Number(req.body?.totalCents || 0));
+    const order = Array.isArray(req.body?.order) ? req.body.order : [];
 
-function requireAdmin(req, res, next) {
-  const token = String(req.headers["x-admin-token"] || "").trim();
-  if (!process.env.ADMIN_TOKEN) {
-    return res.status(500).json({ ok: false, error: "ADMIN_TOKEN not set" });
+    if (!order.length) return res.status(400).json({ ok: false, error: "Empty sell order" });
+
+    const orderId = makeOrderId();
+
+    // Save sell order so admin can check it in
+    appendOrder({
+      id: orderId,
+      type: "sell",
+      status: "submitted",
+      createdAt: new Date().toISOString(),
+      customer: { name, email },
+      lines: order.map(l => ({
+        sku: String(l.sku || l.name || "").trim(),
+        condition: normalizeCondition(l.condition),
+        qty: Math.max(1, Number(l.qty || 0))
+      })),
+      totalCents
+    });
+
+    return res.json({ ok: true, orderId });
+  } catch (e) {
+    console.error("Sell submit error:", e);
+    return res.status(500).json({ ok: false, error: e.message || "Could not submit" });
   }
-  if (token !== process.env.ADMIN_TOKEN) {
-    return res.status(401).json({ ok: false, error: "Unauthorized" });
-  }
-  next();
-}
-// List orders
+});
+
+/* =========================
+   ADMIN ROUTES
+========================= */
 app.get("/api/admin/orders", requireAdmin, (req, res) => {
   const db = readJsonSafe(ORDERS_PATH) || { orders: [] };
   const orders = Array.isArray(db.orders) ? db.orders : [];
   res.json({ ok: true, orders });
 });
 
-// Approve (sell = check-in stock, buy = approve)
 app.post("/api/admin/orders/:id/approve", requireAdmin, (req, res) => {
   const id = String(req.params.id || "").trim();
   const db = readJsonSafe(ORDERS_PATH) || { orders: [] };
@@ -315,12 +340,10 @@ app.post("/api/admin/orders/:id/approve", requireAdmin, (req, res) => {
   const order = db.orders.find(o => o.id === id);
   if (!order) return res.status(404).json({ ok: false, error: "Order not found" });
 
-  // Idempotent: if already checked-in/approved, do nothing
   if (order.status === "approved" || order.status === "checked_in" || order.status === "fulfilled") {
     return res.json({ ok: true, order });
   }
 
-  // If this is a SELL order, approving means: add inventory into catalog stock
   if (order.type === "sell") {
     const catalog = readJsonSafe(CATALOG_PATH);
 
@@ -328,20 +351,19 @@ app.post("/api/admin/orders/:id/approve", requireAdmin, (req, res) => {
       const sku = String(l.sku || "").trim();
       const cond = normalizeCondition(l.condition);
       const qty = Math.max(0, Number(l.qty || 0));
-
       if (!sku || qty <= 0) continue;
       if (!catalog[sku]) continue;
-      if (!catalog[sku].stock || typeof catalog[sku].stock !== "object") continue;
 
-      const cur = Number(catalog[sku].stock[cond] || 0);
-      catalog[sku].stock[cond] = cur + qty;
+      if (!catalog[sku].stock || typeof catalog[sku].stock !== "object") {
+        catalog[sku].stock = { "Near Mint": 0, "Lightly Played": 0, "Moderately Played": 0, "Heavily Played": 0 };
+      }
+      catalog[sku].stock[cond] = Number(catalog[sku].stock[cond] || 0) + qty;
     }
 
     writeJsonSafe(CATALOG_PATH, catalog);
     order.status = "checked_in";
     order.checkedInAt = new Date().toISOString();
   } else {
-    // BUY order approval just marks approved
     order.status = "approved";
     order.approvedAt = new Date().toISOString();
   }
@@ -350,7 +372,6 @@ app.post("/api/admin/orders/:id/approve", requireAdmin, (req, res) => {
   res.json({ ok: true, order });
 });
 
-// Mark fulfilled (shipping complete)
 app.post("/api/admin/orders/:id/fulfill", requireAdmin, (req, res) => {
   const id = String(req.params.id || "").trim();
   const db = readJsonSafe(ORDERS_PATH) || { orders: [] };
@@ -372,7 +393,5 @@ app.post("/api/admin/orders/:id/fulfill", requireAdmin, (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
-
-
 
 
