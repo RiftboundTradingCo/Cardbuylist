@@ -269,6 +269,71 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+
+app.post("/api/create-checkout-session", async (req, res) => {
+  try {
+    if (!stripe) return res.status(500).json({ ok: false, error: "Stripe not configured" });
+
+    const email = String(req.body?.email || "").trim();
+    const cart = Array.isArray(req.body?.cart) ? req.body.cart : [];
+
+    if (!cart.length) return res.status(400).json({ ok: false, error: "Cart is empty" });
+
+    const catalog = readJsonSafe(CATALOG_PATH);
+    const line_items = [];
+
+    for (const item of cart) {
+      const sku = String(item?.sku || "").trim();
+      const condition = normalizeCondition(item?.condition);
+      const qty = Math.max(1, Number(item?.qty || 0));
+
+      const product = catalog[sku];
+      if (!product) return res.status(400).json({ ok: false, error: `Unknown SKU: ${sku}` });
+
+      // Stock check
+      const curStock = Number(product?.stock?.[condition] ?? 0);
+      if (qty > curStock) {
+        return res.status(400).json({
+          ok: false,
+          error: `Not enough stock for ${product.name || sku} (${condition}). Have ${curStock}, requested ${qty}`
+        });
+      }
+
+      const unitCents = centsForCondition(Number(product.price_cents || 0), condition);
+
+      line_items.push({
+        quantity: qty,
+        price_data: {
+          currency: "usd",
+          unit_amount: unitCents,
+          product_data: { name: `${product.name || sku} (${condition})` }
+        }
+      });
+    }
+
+    const orderId = makeOrderId();
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      customer_email: email || undefined,
+      line_items,
+      shipping_address_collection: { allowed_countries: ["US"] },
+      success_url: `${PUBLIC_BASE_URL}/success.html?order=${encodeURIComponent(orderId)}`,
+      cancel_url: `${PUBLIC_BASE_URL}/buy-cart.html`,
+      metadata: {
+        orderId,
+        cart: JSON.stringify(cart),
+        email: email || ""
+      }
+    });
+
+    return res.json({ ok: true, url: session.url, id: session.id, orderId });
+  } catch (e) {
+    console.error("Create checkout session error:", e);
+    return res.status(500).json({ ok: false, error: e.message || "Could not create checkout session" });
+  }
+});
+
 /* =========================
    HEALTH
 ========================= */
