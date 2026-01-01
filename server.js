@@ -121,72 +121,148 @@ app.post(
     }
 
     if (event.type === "checkout.session.completed") {
-      const session = event.data.object;
-      const orderId = session.metadata.orderId;
-      const cart = JSON.parse(session.metadata.cart || "[]");
+  const session = event.data.object;
 
-      const catalog = readJsonSafe(CATALOG_PATH);
+  const orderId = String(session?.metadata?.orderId || "").trim() || makeOrderId();
 
-      let totalCents = 0;
-      const lines = [];
+  let cart = [];
+  try {
+    cart = JSON.parse(session?.metadata?.cart || "[]");
+  } catch {
+    cart = [];
+  }
 
-      for (const it of cart) {
-        const product = catalog[it.sku];
-        const unit = centsForCondition(product.price_cents, it.condition);
-        totalCents += unit * it.qty;
+  const catalog = readJsonSafe(CATALOG_PATH);
 
-        decrementStock(catalog, it.sku, it.condition, it.qty);
+  const customerEmail =
+    session.customer_details?.email ||
+    session.customer_email ||
+    String(session?.metadata?.email || "").trim() ||
+    "";
 
-        lines.push({
-          sku: it.sku,
-          condition: it.condition,
-          qty: it.qty
-        });
-      }
+  const shipName = session.customer_details?.name || "";
 
-      writeJsonSafe(CATALOG_PATH, catalog);
+  const lines = [];
+  const emailLines = [];
 
-      const customerEmail =
-        session.customer_details?.email ||
-        session.customer_email ||
-        session.metadata.email ||
-        "";
+  let totalCents = 0;
 
-      const shipName = session.customer_details?.name || "";
+  // ---- inventory update + price calc (server-side truth) ----
+  for (const it of cart) {
+    const sku = String(it?.sku || "").trim();
+    const condition = normalizeCondition(it?.condition);
+    const qty = Math.max(1, Number(it?.qty || 0));
 
-      // ✅ SAVE ORDER HERE (FIX)
+    if (!sku || !Number.isFinite(qty) || qty <= 0) continue;
+
+    const product = catalog[sku];
+    if (!product) {
+      console.warn("Unknown SKU in cart:", sku);
+      continue;
+    }
+
+    const unitCents = centsForCondition(Number(product.price_cents || 0), condition);
+    const lineCents = unitCents * qty;
+    totalCents += lineCents;
+
+    // decrement stock (must succeed)
+    const dec = decrementStock(catalog, sku, condition, qty);
+    if (!dec.ok) {
+      console.error("Inventory decrement failed:", dec.error);
+
+      // still save the order as "needs_review" so you see it in admin
       appendOrder({
         id: orderId,
         type: "buy",
-        status: "paid",
+        status: "needs_review",
         createdAt: new Date().toISOString(),
         customer: { name: shipName, email: customerEmail },
-        lines,
+        lines: cart.map(x => ({
+          sku: String(x?.sku || ""),
+          condition: normalizeCondition(x?.condition),
+          qty: Math.max(1, Number(x?.qty || 0))
+        })),
         totalCents,
-        stripeSessionId: session.id
+        stripeSessionId: session.id,
+        error: dec.error || "Inventory decrement failed"
       });
 
-      // emails (optional but already correct)
-      if (resend && EMAIL_FROM) {
-        if (OWNER_EMAIL) {
-          await resend.emails.send({
-            from: EMAIL_FROM,
-            to: OWNER_EMAIL,
-            subject: `New order ${orderId}`,
-            text: `Order total: $${(totalCents / 100).toFixed(2)}`
-          });
-        }
-
-        if (customerEmail) {
-          await resend.emails.send({
-            from: EMAIL_FROM,
-            to: customerEmail,
-            subject: `Your Riftbound order (${orderId})`,
-            text: `Thanks for your order!`
-          });
-        }
-      }
+      // IMPORTANT: still respond 200 to Stripe or it retries forever
+      writeJsonSafe(CATALOG_PATH, catalog); // optional: you may skip writing if you want strictness
+      return res.json({ received: true });
     }
+
+    lines.push({ sku, condition, qty });
+
+    const name = String(product.name || sku);
+    emailLines.push(
+      `${qty}x ${name} — ${condition} — $${(unitCents / 100).toFixed(2)} each = $${(lineCents / 100).toFixed(2)}`
+    );
+  }
+
+  // write updated catalog
+  writeJsonSafe(CATALOG_PATH, catalog);
+
+  // ✅ SAVE ORDER
+  appendOrder({
+    id: orderId,
+    type: "buy",
+    status: "paid",
+    createdAt: new Date().toISOString(),
+    customer: { name: shipName, email: customerEmail },
+    lines,
+    totalCents,
+    stripeSessionId: session.id
+  });
+
+  // ---- emails (owner + customer recap) ----
+  if (resend && EMAIL_FROM) {
+    const totalNice = `$${(totalCents / 100).toFixed(2)}`;
+
+    const ownerText =
+`New order received: ${orderId}
+
+Customer: ${shipName || "(no name)"} <${customerEmail || "no email"}>
+Total: ${totalNice}
+
+Items:
+${emailLines.map(l => `- ${l}`).join("\n")}
+
+Stripe session: ${session.id}
+`;
+
+    const customerText =
+`Thanks for your purchase!
+
+Order: ${orderId}
+Total: ${totalNice}
+
+Items:
+${emailLines.map(l => `- ${l}`).join("\n")}
+
+Riftbound Trading Co
+`;
+
+    if (OWNER_EMAIL) {
+      await resend.emails.send({
+        from: EMAIL_FROM,
+        to: OWNER_EMAIL,
+        subject: `New order ${orderId}`,
+        text: ownerText
+      });
+    }
+
+    if (customerEmail) {
+      await resend.emails.send({
+        from: EMAIL_FROM,
+        to: customerEmail,
+        subject: `Your Riftbound order receipt (${orderId})`,
+        text: customerText
+      });
+    }
+  }
+}
+
 
     res.json({ received: true });
   }
@@ -207,6 +283,84 @@ app.get("/api/catalog", (req, res) => {
 
 app.get("/api/selllist", (req, res) => {
   res.json({ ok: true, selllist: readJsonSafe(SELLLIST_PATH) });
+});
+
+
+function requireAdmin(req, res, next) {
+  const token = String(req.headers["x-admin-token"] || "").trim();
+  if (!process.env.ADMIN_TOKEN) {
+    return res.status(500).json({ ok: false, error: "ADMIN_TOKEN not set" });
+  }
+  if (token !== process.env.ADMIN_TOKEN) {
+    return res.status(401).json({ ok: false, error: "Unauthorized" });
+  }
+  next();
+}
+// List orders
+app.get("/api/admin/orders", requireAdmin, (req, res) => {
+  const db = readJsonSafe(ORDERS_PATH) || { orders: [] };
+  const orders = Array.isArray(db.orders) ? db.orders : [];
+  res.json({ ok: true, orders });
+});
+
+// Approve (sell = check-in stock, buy = approve)
+app.post("/api/admin/orders/:id/approve", requireAdmin, (req, res) => {
+  const id = String(req.params.id || "").trim();
+  const db = readJsonSafe(ORDERS_PATH) || { orders: [] };
+  db.orders = Array.isArray(db.orders) ? db.orders : [];
+
+  const order = db.orders.find(o => o.id === id);
+  if (!order) return res.status(404).json({ ok: false, error: "Order not found" });
+
+  // Idempotent: if already checked-in/approved, do nothing
+  if (order.status === "approved" || order.status === "checked_in" || order.status === "fulfilled") {
+    return res.json({ ok: true, order });
+  }
+
+  // If this is a SELL order, approving means: add inventory into catalog stock
+  if (order.type === "sell") {
+    const catalog = readJsonSafe(CATALOG_PATH);
+
+    for (const l of (order.lines || [])) {
+      const sku = String(l.sku || "").trim();
+      const cond = normalizeCondition(l.condition);
+      const qty = Math.max(0, Number(l.qty || 0));
+
+      if (!sku || qty <= 0) continue;
+      if (!catalog[sku]) continue;
+      if (!catalog[sku].stock || typeof catalog[sku].stock !== "object") continue;
+
+      const cur = Number(catalog[sku].stock[cond] || 0);
+      catalog[sku].stock[cond] = cur + qty;
+    }
+
+    writeJsonSafe(CATALOG_PATH, catalog);
+    order.status = "checked_in";
+    order.checkedInAt = new Date().toISOString();
+  } else {
+    // BUY order approval just marks approved
+    order.status = "approved";
+    order.approvedAt = new Date().toISOString();
+  }
+
+  writeJsonSafe(ORDERS_PATH, db);
+  res.json({ ok: true, order });
+});
+
+// Mark fulfilled (shipping complete)
+app.post("/api/admin/orders/:id/fulfill", requireAdmin, (req, res) => {
+  const id = String(req.params.id || "").trim();
+  const db = readJsonSafe(ORDERS_PATH) || { orders: [] };
+  db.orders = Array.isArray(db.orders) ? db.orders : [];
+
+  const order = db.orders.find(o => o.id === id);
+  if (!order) return res.status(404).json({ ok: false, error: "Order not found" });
+
+  order.status = "fulfilled";
+  order.fulfilledAt = new Date().toISOString();
+
+  writeJsonSafe(ORDERS_PATH, db);
+  res.json({ ok: true, order });
 });
 
 /* =========================
