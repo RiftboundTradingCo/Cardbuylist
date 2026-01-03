@@ -359,34 +359,52 @@ app.post("/api/submit", async (req, res) => {
   try {
     const name = String(req.body?.name || "").trim();
     const email = String(req.body?.email || "").trim();
-    const totalCents = Math.round(Number(req.body?.totalCents || 0));
     const order = Array.isArray(req.body?.order) ? req.body.order : [];
 
     if (!order.length) return res.status(400).json({ ok: false, error: "Empty sell order" });
 
-    const orderId = makeOrderId();
+    // Load selllist (buylist caps)
+    const selllist = readJsonSafe(SELLLIST_PATH);
 
-    // Save sell order so admin can check it in
+    // Decrement remaining/max for each item
+    for (const l of order) {
+      const sku = String(l.sku || "").trim();
+      const tab = String(l.tab || "").trim().toUpperCase(); // NM/LP/MP
+      const qty = Math.max(0, Number(l.qty || 0));
+
+      if (!sku || !qty) continue;
+      if (!selllist[sku]) continue;
+
+      // Ensure structure exists
+      selllist[sku].max = selllist[sku].max || {};
+      const cur = Number(selllist[sku].max[tab] ?? 0);
+      selllist[sku].max[tab] = Math.max(0, cur - qty);
+    }
+
+    writeJsonSafe(SELLLIST_PATH, selllist);
+
+    // (optional) append an order for admin view
     appendOrder({
-      id: orderId,
+      id: makeOrderId(),
       type: "sell",
       status: "submitted",
       createdAt: new Date().toISOString(),
       customer: { name, email },
       lines: order.map(l => ({
-        sku: String(l.sku || l.name || "").trim(),
-        condition: normalizeCondition(l.condition),
+        sku: String(l.sku || ""),
+        condition: String(l.condition || "Near Mint"),
         qty: Math.max(1, Number(l.qty || 0))
       })),
-      totalCents
+      totalCents: 0
     });
 
-    return res.json({ ok: true, orderId });
+    return res.json({ ok: true });
   } catch (e) {
     console.error("Sell submit error:", e);
     return res.status(500).json({ ok: false, error: e.message || "Could not submit" });
   }
 });
+
 
 /* =========================
    ADMIN ROUTES
