@@ -6,441 +6,455 @@
   <title>Admin – Orders</title>
 
   <style>
-    :root{
-      --bg: #0b1220;
-      --panel: rgba(255,255,255,.92);
-      --panel2: rgba(255,255,255,.85);
-      --text: #0f172a;
-      --muted: #64748b;
-      --shadow: 0 14px 40px rgba(0,0,0,.25);
-      --border: rgba(15,23,42,.12);
-      --green: #166534;
-      --green2:#22c55e;
-      --red:#991b1b;
-      --blue:#2563eb;
-      --gold:#f59e0b;
-    }
-
+    /* ===== Page background ===== */
+    html, body { height: 100%; }
     body{
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color: var(--text);
-      background: #111;
+      color:#0f172a;
+      background:
+        linear-gradient(rgba(0,0,0,.08), rgba(0,0,0,.08)),
+        url("/images/wooden-shelves.jpg") center / cover fixed no-repeat;
     }
 
-    /* optional: match your wood vibe if you want */
-    body{
-      background-image: url("/images/wooden-shelves.jpg");
-      background-size: cover;
-      background-attachment: fixed;
-      background-position: center;
-    }
-
-    .wrap{
-      max-width: 1180px;
-      margin: 24px auto 80px;
-      padding: 0 16px;
-    }
-
-    .topbar{
-      display:flex;
-      gap: 12px;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
+    .page{
+      max-width: 1200px;
+      margin: 26px auto 60px;
+      padding: 0 18px;
     }
 
     h1{
-      margin: 0;
-      font-size: 34px;
+      margin: 0 0 12px;
+      font-size: 40px;
       letter-spacing: .2px;
-      color: #0f172a;
-      text-shadow: 0 2px 10px rgba(255,255,255,.35);
+      text-shadow: 0 2px 10px rgba(0,0,0,.12);
     }
 
-    .controls{
+    /* ===== Top controls bar ===== */
+    .bar{
       display:flex;
       gap: 10px;
-      align-items: center;
+      align-items:center;
       flex-wrap: wrap;
-      justify-content: flex-end;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.90);
+      box-shadow: 0 10px 25px rgba(0,0,0,.15);
+      border: 1px solid rgba(0,0,0,.08);
+      margin-bottom: 14px;
     }
 
-    input, select, button{
+    .bar input[type="password"], .bar select{
       height: 40px;
       border-radius: 12px;
       border: 1px solid rgba(0,0,0,.18);
       padding: 0 12px;
-      font-size: 14px;
       background: rgba(255,255,255,.95);
+      font-weight: 600;
       outline: none;
     }
 
-    input{
-      width: 220px;
-    }
-
-    button{
-      cursor:pointer;
-      font-weight: 800;
+    .bar input[type="password"]{
+      width: min(360px, 100%);
     }
 
     .btn{
+      height: 40px;
+      padding: 0 14px;
+      border-radius: 12px;
       border: 0;
-      box-shadow: 0 8px 18px rgba(0,0,0,.12);
-    }
-
-    .btn-refresh{
-      background: #e2e8f0;
-    }
-
-    .banner{
-      background: rgba(255,255,255,.9);
-      border: 1px solid rgba(0,0,0,.12);
-      border-radius: 14px;
-      padding: 10px 12px;
-      margin: 10px 0 18px;
-      box-shadow: 0 10px 22px rgba(0,0,0,.14);
-    }
-
-    .error{
-      color: #b91c1c;
       font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(0,0,0,.10);
+    }
+    .btn:disabled{ opacity:.5; cursor:not-allowed; }
+
+    .btn-refresh{ background:#111827; color:#fff; }
+
+    .tip{
+      font-size: 13px;
+      opacity: .85;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+    @media (max-width: 760px){
+      .tip{ width: 100%; margin-left: 0; }
     }
 
+    /* ===== Message ===== */
+    .msg{
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.90);
+      border: 1px solid rgba(0,0,0,.08);
+      box-shadow: 0 10px 25px rgba(0,0,0,.12);
+      margin-bottom: 14px;
+      display:none;
+    }
+    .msg.ok{ color:#166534; }
+    .msg.err{ color:#b00020; }
+    .msg.show{ display:block; }
+
+    /* ===== Order cards ===== */
     .orders{
       display:flex;
       flex-direction: column;
       gap: 14px;
     }
 
-    .card{
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-      padding: 16px;
+    .order{
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(0,0,0,.08);
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.15);
+      padding: 14px;
     }
 
-    .card-head{
+    .order-head{
       display:flex;
-      align-items: flex-start;
       justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .idline{
-      display:flex;
-      align-items:center;
-      gap: 10px;
+      align-items:flex-start;
+      gap: 14px;
       flex-wrap: wrap;
-      font-weight: 900;
     }
 
-    .pill{
-      display:inline-flex;
+    .order-id{
+      font-weight: 900;
+      font-size: 18px;
+    }
+
+    .chips{
+      display:flex;
+      gap: 8px;
       align-items:center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 999px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .chip{
       font-size: 12px;
       font-weight: 900;
-      border: 1px solid rgba(0,0,0,.12);
-      background: rgba(255,255,255,.85);
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,.08);
+      background: rgba(15,23,42,.06);
+    }
+    .chip.buy{ background: rgba(59,130,246,.15); }
+    .chip.sell{ background: rgba(245,158,11,.18); }
+    .chip.paid{ background: rgba(16,185,129,.18); }
+    .chip.submitted{ background: rgba(100,116,139,.16); }
+    .chip.checked_in{ background: rgba(34,197,94,.18); }
+    .chip.shipped{ background: rgba(147,51,234,.18); }
+    .chip.needs_review{ background: rgba(239,68,68,.18); }
+
+    .meta{
+      font-size: 13px;
+      opacity: .9;
+      margin-top: 6px;
+      line-height: 1.35;
     }
 
-    .pill.buy{ background: rgba(59,130,246,.14); color:#1d4ed8; }
-    .pill.sell{ background: rgba(245,158,11,.18); color:#92400e; }
-    .pill.paid{ background: rgba(34,197,94,.18); color:#166534; }
-    .pill.submitted{ background: rgba(148,163,184,.24); color:#334155; }
-    .pill.checked_in{ background: rgba(34,197,94,.18); color:#166534; }
-    .pill.needs_review{ background: rgba(239,68,68,.18); color:#7f1d1d; }
-
-    .rightmeta{
-      text-align:right;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.4;
+    .right{
+      text-align: right;
+      min-width: 160px;
     }
 
     .total{
-      font-size: 18px;
-      font-weight: 1000;
-      color: #0f172a;
+      font-weight: 900;
+      font-size: 20px;
+    }
+    .date{
+      font-size: 12px;
+      opacity: .8;
+      margin-top: 4px;
     }
 
     .lines{
-      margin: 10px 0 12px;
+      margin: 12px 0 0;
       padding-left: 18px;
-      color:#0f172a;
-      font-weight: 700;
-    }
-
-    .lines li{
-      margin: 6px 0;
+      line-height: 1.45;
+      font-weight: 600;
     }
 
     .actions{
+      margin-top: 12px;
       display:flex;
       gap: 10px;
       flex-wrap: wrap;
-      align-items:center;
     }
 
-    .btn-green{
-      background: linear-gradient(180deg, #22c55e, #16a34a);
-      color: #fff;
-    }
+    .btn-green{ background:#16a34a; color:#fff; }
+    .btn-purple{ background:#7c3aed; color:#fff; }
+    .btn-red{ background:#dc2626; color:#fff; }
 
-    .btn-red{
-      background: linear-gradient(180deg, #ef4444, #b91c1c);
-      color: #fff;
-    }
-
-    .muted{
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    @media (max-width: 720px){
-      .topbar{ flex-direction: column; align-items: flex-start; }
-      .controls{ justify-content: flex-start; }
-      input{ width: 100%; }
-      .rightmeta{ text-align:left; }
+    .empty{
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.9);
+      border: 1px solid rgba(0,0,0,.08);
+      box-shadow: 0 10px 25px rgba(0,0,0,.12);
+      font-weight: 700;
     }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <h1>Admin – Orders</h1>
+  <main class="page">
+    <h1>Admin – Orders</h1>
 
-      <div class="controls">
-        <input id="tokenInput" type="password" placeholder="Admin token" />
+    <div class="bar">
+      <input id="tokenInput" type="password" placeholder="Admin token" autocomplete="off" />
+      <select id="typeFilter">
+        <option value="">All types</option>
+        <option value="buy">Buy</option>
+        <option value="sell">Sell</option>
+      </select>
+      <select id="statusFilter">
+        <option value="">All statuses</option>
+        <option value="paid">Paid</option>
+        <option value="submitted">Submitted</option>
+        <option value="checked_in">Checked in</option>
+        <option value="shipped">Shipped</option>
+        <option value="needs_review">Needs review</option>
+        <option value="approved">Approved</option>
+        <option value="fulfilled">Fulfilled</option>
+      </select>
+      <button id="refreshBtn" class="btn btn-refresh" type="button">Refresh</button>
 
-        <select id="typeFilter">
-          <option value="">All types</option>
-          <option value="buy">BUY</option>
-          <option value="sell">SELL</option>
-        </select>
-
-        <select id="statusFilter">
-          <option value="">All statuses</option>
-          <option value="paid">paid</option>
-          <option value="submitted">submitted</option>
-          <option value="checked_in">checked_in</option>
-          <option value="approved">approved</option>
-          <option value="fulfilled">fulfilled</option>
-          <option value="needs_review">needs_review</option>
-        </select>
-
-        <button id="refreshBtn" class="btn btn-refresh" type="button">Refresh</button>
-      </div>
+      <div class="tip">Tip: open as <strong>/admin.html?token=YOUR_TOKEN</strong></div>
     </div>
 
-    <div class="banner">
-      <div id="err" class="error"></div>
-      <div class="muted">
-        Tip: you can also load this page as <b>/admin.html?token=YOUR_TOKEN</b>.
-      </div>
-    </div>
+    <div id="msg" class="msg"></div>
 
-    <div id="orders" class="orders"></div>
-  </div>
+    <section id="orders" class="orders"></section>
+  </main>
 
   <script>
     const tokenInput = document.getElementById("tokenInput");
     const typeFilter = document.getElementById("typeFilter");
     const statusFilter = document.getElementById("statusFilter");
     const refreshBtn = document.getElementById("refreshBtn");
-    const errEl = document.getElementById("err");
     const ordersEl = document.getElementById("orders");
+    const msgEl = document.getElementById("msg");
 
-    let SKU_NAME_MAP = {}; // ✅ NEW
-
-    function showError(msg) {
-      errEl.textContent = msg || "";
+    function showMsg(text, ok = true){
+      msgEl.textContent = text || "";
+      msgEl.className = "msg show " + (ok ? "ok" : "err");
+      if (!text) msgEl.classList.remove("show");
     }
 
-    function money(cents) {
-      return `$${(Number(cents || 0) / 100).toFixed(2)}`;
+    function moneyFromCents(cents){
+      const n = Number(cents || 0);
+      return "$" + (n / 100).toFixed(2);
     }
 
-    function pillClass(v) {
-      return String(v || "").toLowerCase().replace(/\s+/g, "_");
+    function fmtDate(iso){
+      try{
+        if (!iso) return "";
+        return new Date(iso).toLocaleString();
+      }catch{
+        return String(iso || "");
+      }
     }
 
-    function getToken() {
-      return String(tokenInput.value || "").trim();
+    function chipClass(value){
+      return String(value || "").toLowerCase().replace(/\s+/g, "_");
     }
 
-    async function apiFetch(url, opts = {}) {
+    async function apiFetch(url, opts={}){
+      const token = tokenInput.value.trim();
       const headers = Object.assign({}, opts.headers || {});
-      headers["x-admin-token"] = getToken();
-
-      const res = await fetch(url, Object.assign({}, opts, { headers }));
-      let json = null;
-      try { json = await res.json(); } catch {}
-
-      if (!res.ok) {
-        const msg = (json && (json.error || json.message)) ? (json.error || json.message) : `HTTP ${res.status}`;
-        throw new Error(msg);
-      }
-      return json;
+      if (token) headers["x-admin-token"] = token;
+      const res = await fetch(url, { ...opts, headers });
+      return res;
     }
 
-    // ✅ NEW: load SKU -> name mapping so admin shows names
-    async function loadSkuNames() {
-      try {
-        const [catRes, sellRes] = await Promise.all([
-          fetch("/api/catalog").then(r => r.json()),
-          fetch("/api/selllist").then(r => r.json())
-        ]);
+    async function loadOrders(){
+      showMsg("");
+      ordersEl.innerHTML = "";
+      refreshBtn.disabled = true;
 
-        const map = {};
-
-        if (catRes?.catalog) {
-          for (const [sku, p] of Object.entries(catRes.catalog)) {
-            map[sku] = p.name || sku;
-          }
+      try{
+        const res = await apiFetch("/api/admin/orders", { cache: "no-store" });
+        if (!res.ok){
+          const txt = await res.text().catch(()=> "");
+          throw new Error(`HTTP ${res.status} ${txt || ""}`.trim());
         }
-        if (sellRes?.selllist) {
-          for (const [sku, p] of Object.entries(sellRes.selllist)) {
-            map[sku] = p.name || map[sku] || sku;
-          }
-        }
+        const data = await res.json();
+        if (!data || !data.ok) throw new Error("Bad response");
 
-        SKU_NAME_MAP = map;
-      } catch (e) {
-        console.warn("Failed to load SKU name map:", e);
-        SKU_NAME_MAP = {};
-      }
-    }
-
-    function renderOrder(o) {
-      const type = String(o.type || "").toLowerCase();
-      const status = String(o.status || "").toLowerCase();
-      const created = o.createdAt ? new Date(o.createdAt).toLocaleString() : "";
-      const email = o.customer?.email || "";
-      const name = o.customer?.name || "";
-
-      const lines = Array.isArray(o.lines) ? o.lines : [];
-
-      const liHtml = lines.map(l => {
-        const sku = String(l.sku || "");
-        const nm = SKU_NAME_MAP[sku] || sku; // ✅ use name map
-        const cond = String(l.condition || "");
-        const qty = Number(l.qty || 0);
-
-        return `<li>${qty} × ${nm} <span style="color:#64748b;">(${cond})</span></li>`;
-      }).join("");
-
-      const showApprove = (status === "submitted" || status === "paid" || status === "needs_review");
-      const approveLabel = (type === "sell") ? "Mark received (add to stock)" : "Approve";
-
-      return `
-        <div class="card" data-id="${o.id}">
-          <div class="card-head">
-            <div>
-              <div class="idline">
-                <span>${o.id}</span>
-                <span class="pill ${type}">${type.toUpperCase()}</span>
-                <span class="pill ${pillClass(status)}">${status || "unknown"}</span>
-              </div>
-              <div class="muted" style="margin-top:6px;">
-                ${name ? `<b>${name}</b> — ` : ""}${email ? `Email: ${email}` : ""}
-              </div>
-            </div>
-
-            <div class="rightmeta">
-              <div class="total">${money(o.totalCents)}</div>
-              <div>${created}</div>
-            </div>
-          </div>
-
-          <ol class="lines">${liHtml || `<li class="muted">No line items</li>`}</ol>
-
-          <div class="actions">
-            ${
-              showApprove
-                ? `<button class="btn btn-green" data-action="approve" type="button">${approveLabel}</button>`
-                : ""
-            }
-          </div>
-        </div>
-      `;
-    }
-
-    async function loadOrders() {
-      try {
-        showError("");
-        ordersEl.innerHTML = "";
-
-        await loadSkuNames(); // ✅ NEW
-
-        const data = await apiFetch("/api/admin/orders");
         let orders = Array.isArray(data.orders) ? data.orders : [];
 
-        const tf = String(typeFilter.value || "").toLowerCase();
-        const sf = String(statusFilter.value || "").toLowerCase();
+        const type = typeFilter.value;
+        const status = statusFilter.value;
 
-        if (tf) orders = orders.filter(o => String(o.type || "").toLowerCase() === tf);
-        if (sf) orders = orders.filter(o => String(o.status || "").toLowerCase() === sf);
+        if (type) orders = orders.filter(o => String(o.type||"").toLowerCase() === type);
+        if (status) orders = orders.filter(o => String(o.status||"").toLowerCase() === status);
 
-        if (!orders.length) {
-          ordersEl.innerHTML = `<div class="card">No orders found.</div>`;
+        if (!orders.length){
+          ordersEl.innerHTML = `<div class="empty">No orders match your filters.</div>`;
           return;
         }
 
         ordersEl.innerHTML = orders.map(renderOrder).join("");
-      } catch (e) {
-        showError(e.message || "Failed to fetch");
+
+      }catch(err){
+        console.error(err);
+        showMsg("Failed to fetch orders. Check token + server routes.", false);
+      }finally{
+        refreshBtn.disabled = false;
       }
     }
 
-    ordersEl.addEventListener("click", async (e) => {
-      const btn = e.target.closest("button[data-action]");
-      if (!btn) return;
+    function renderLineText(line){
+      // Prefer name (if saved), else sku
+      const name = (line && (line.name || line.title || line.sku)) ? (line.name || line.title || line.sku) : "Unknown";
+      const cond = line?.condition ? ` (${line.condition})` : "";
+      const qty = Number(line?.qty || 0) || 0;
+      return `${qty} × ${name}${cond}`;
+    }
 
-      const card = e.target.closest(".card");
-      const id = card?.dataset?.id;
-      if (!id) return;
+    function renderOrder(o){
+      const id = o.id || "";
+      const type = (o.type || "").toLowerCase();
+      const status = (o.status || "").toLowerCase();
 
-      const action = btn.dataset.action;
+      const custName = o.customer?.name || (type === "sell" ? "Sell Customer" : "");
+      const custEmail = o.customer?.email || "";
 
-      try {
-        btn.disabled = true;
-        showError("");
+      const created = o.createdAt || o.shippedAt || o.checkedInAt || "";
+      const total = (o.totalCents != null) ? moneyFromCents(o.totalCents) : (o.total ? `$${o.total}` : "$0.00");
 
-        if (action === "approve") {
-          await apiFetch(`/api/admin/orders/${encodeURIComponent(id)}/approve`, {
-            method: "POST"
-          });
+      const lines = Array.isArray(o.lines) ? o.lines : [];
+      const linesHtml = lines.map((l, i) => `<li>${renderLineText(l)}</li>`).join("");
+
+      const chips = `
+        <div class="chips">
+          <span class="chip ${type}">${type.toUpperCase()}</span>
+          <span class="chip ${chipClass(status)}">${status || "unknown"}</span>
+          ${o.error ? `<span class="chip needs_review">ERROR</span>` : ""}
+        </div>
+      `;
+
+      const actionsHtml = renderActions(o);
+
+      return `
+        <article class="order" data-id="${escapeHtml(id)}">
+          <div class="order-head">
+            <div>
+              <div class="order-id">${escapeHtml(id)}</div>
+              ${chips}
+              <div class="meta">
+                ${custName ? `<div><strong>${escapeHtml(custName)}</strong></div>` : ""}
+                ${custEmail ? `<div>Email: ${escapeHtml(custEmail)}</div>` : ""}
+              </div>
+            </div>
+
+            <div class="right">
+              <div class="total">${escapeHtml(total)}</div>
+              <div class="date">${escapeHtml(fmtDate(created))}</div>
+            </div>
+          </div>
+
+          <ol class="lines">
+            ${linesHtml || `<li>(no lines)</li>`}
+          </ol>
+
+          <div class="actions">
+            ${actionsHtml}
+          </div>
+        </article>
+      `;
+    }
+
+    function renderActions(o){
+      const id = o.id;
+      const type = (o.type || "").toLowerCase();
+      const status = (o.status || "").toLowerCase();
+
+      // SELL: allow "mark received" when submitted
+      if (type === "sell" && status === "submitted"){
+        return `
+          <button class="btn btn-green act-receive" data-id="${escapeHtml(id)}" type="button">
+            Mark received (add to stock)
+          </button>
+        `;
+      }
+
+      // BUY: allow "mark shipped" when paid (or approved, depending on your flow)
+      if (type === "buy" && (status === "paid" || status === "approved")){
+        return `
+          <button class="btn btn-purple act-ship" data-id="${escapeHtml(id)}" type="button">
+            Mark as shipped
+          </button>
+        `;
+      }
+
+      // If already shipped/checked_in, no actions
+      return `<span style="opacity:.75;font-weight:700;">No actions</span>`;
+    }
+
+    function escapeHtml(str){
+      return String(str || "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    // Click handlers
+    document.addEventListener("click", async (e) => {
+      const receiveBtn = e.target.closest(".act-receive");
+      const shipBtn = e.target.closest(".act-ship");
+
+      if (receiveBtn){
+        const id = receiveBtn.dataset.id;
+        receiveBtn.disabled = true;
+        try{
+          const res = await apiFetch(`/api/admin/orders/${encodeURIComponent(id)}/approve`, { method:"POST" });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          await loadOrders();
+        }catch(err){
+          console.error(err);
+          showMsg("Failed to mark received (check server route + token).", false);
+        }finally{
+          receiveBtn.disabled = false;
         }
+      }
 
-        await loadOrders();
-      } catch (err) {
-        showError(err.message || "Action failed");
-      } finally {
-        btn.disabled = false;
+      if (shipBtn){
+        const id = shipBtn.dataset.id;
+        shipBtn.disabled = true;
+        try{
+          const res = await apiFetch(`/api/admin/orders/${encodeURIComponent(id)}/fulfill`, { method:"POST" });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          // after marking shipped, it will disappear from Paid list.
+          await loadOrders();
+        }catch(err){
+          console.error(err);
+          showMsg("Failed to mark as shipped (check /fulfill route + token).", false);
+        }finally{
+          shipBtn.disabled = false;
+        }
       }
     });
+
+    // Prefill token from URL
+    (function initFromQuery(){
+      const params = new URLSearchParams(location.search);
+      const t = params.get("token");
+      if (t) tokenInput.value = t;
+    })();
 
     refreshBtn.addEventListener("click", loadOrders);
     typeFilter.addEventListener("change", loadOrders);
     statusFilter.addEventListener("change", loadOrders);
 
-    // token via query string
-    (function initTokenFromUrl() {
-      const u = new URL(window.location.href);
-      const t = u.searchParams.get("token");
-      if (t) tokenInput.value = t;
-    })();
-
+    // Initial load
     loadOrders();
   </script>
 </body>
 </html>
+
 

@@ -463,8 +463,9 @@ app.post("/api/admin/orders/:id/fulfill", requireAdmin, (req, res) => {
   const order = db.orders.find(o => o.id === id);
   if (!order) return res.status(404).json({ ok: false, error: "Order not found" });
 
-  order.status = "fulfilled";
-  order.fulfilledAt = new Date().toISOString();
+  order.status = "shipped";
+  order.shippedAt = new Date().toISOString();
+
 
   writeJsonSafe(ORDERS_PATH, db);
   res.json({ ok: true, order });
