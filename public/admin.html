@@ -2,123 +2,302 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Admin – Orders</title>
+  <title>Riftbound Admin – Orders</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <style>
-    body {
+    :root{
+      --purple:#6b3fa0;
+      --gold:#f59e0b;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --panel: rgba(255,255,255,.92);
+      --panel2: rgba(255,255,255,.86);
+      --shadow: 0 12px 30px rgba(0,0,0,.20);
+      --radius: 16px;
+    }
+
+    /* Page background like your store */
+    html, body { height: 100%; }
+    body{
+      margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background: #f4f4f5;
+      color: var(--ink);
+      background:
+        url("/images/wooden-shelves.jpg") center/cover no-repeat fixed;
     }
 
-    h1 {
-      margin-bottom: 12px;
+    /* Top stripe */
+    .topbar{
+      height: 10px;
+      background: var(--purple);
+      box-shadow: 0 6px 18px rgba(0,0,0,.25);
+      position: sticky;
+      top: 0;
+      z-index: 5;
     }
 
-    .toolbar {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 16px;
+    .wrap{
+      max-width: 1150px;
+      margin: 26px auto 60px;
+      padding: 0 18px;
+    }
+
+    .header{
+      display:flex;
+      align-items:flex-end;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
       flex-wrap: wrap;
     }
 
-    input, select, button {
-      padding: 8px 12px;
-      font-size: 14px;
+    h1{
+      margin: 0;
+      font-size: 44px;
+      line-height: 1;
+      letter-spacing: .2px;
+      color: var(--gold);
+      text-shadow: 0 4px 18px rgba(0,0,0,.35);
     }
 
-    button {
+    .subtitle{
+      margin: 6px 0 0;
+      color: rgba(255,255,255,.8);
+      font-weight: 600;
+    }
+
+    .toolbar{
+      width: 100%;
+      background: var(--panel2);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 1fr 140px 160px 120px;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid rgba(0,0,0,.08);
+      backdrop-filter: blur(6px);
+    }
+
+    .toolbar input,
+    .toolbar select{
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,.15);
+      padding: 0 12px;
+      font-size: 14px;
+      outline: none;
+      background: rgba(255,255,255,.96);
+    }
+
+    .toolbar input:focus,
+    .toolbar select:focus{
+      border-color: rgba(37,99,235,.65);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.18);
+    }
+
+    .toolbar button{
+      height: 42px;
+      border: 0;
+      border-radius: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      background: #111827;
+      color: #fff;
+    }
+
+    .toolbar button:hover{ opacity: .92; }
+
+    .error{
+      margin-top: 12px;
+      background: rgba(220, 38, 38, .12);
+      border: 1px solid rgba(220,38,38,.35);
+      color: #991b1b;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-weight: 800;
+      display:none;
+    }
+
+    .grid{
+      margin-top: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .card{
+      background: var(--panel);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(0,0,0,.08);
+      padding: 14px;
+      backdrop-filter: blur(6px);
+    }
+
+    .card-head{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .idline{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .order-id{
+      font-weight: 1000;
+      letter-spacing: .2px;
+    }
+
+    .pill{
+      font-size: 12px;
+      font-weight: 900;
+      padding: 5px 10px;
+      border-radius: 999px;
+      display:inline-flex;
+      align-items:center;
+      gap: 6px;
+      border: 1px solid rgba(0,0,0,.08);
+    }
+    .pill.buy{ background: #e0f2fe; color:#075985; }
+    .pill.sell{ background: #fef3c7; color:#92400e; }
+
+    .status{
+      font-size: 12px;
+      font-weight: 900;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #eef2f7;
+      color: #334155;
+      border: 1px solid rgba(0,0,0,.08);
+      text-transform: lowercase;
+    }
+
+    .meta{
+      display:grid;
+      grid-template-columns: 1fr 220px;
+      gap: 10px;
+      align-items:start;
+      margin-top: 8px;
+    }
+
+    .meta .left{
+      color: #0f172a;
+      font-weight: 700;
+    }
+
+    .kv{
+      font-size: 14px;
+      color: #0f172a;
+      display:grid;
+      gap: 4px;
+    }
+    .kv span{
+      color: var(--muted);
+      font-weight: 800;
+      margin-right: 6px;
+    }
+
+    .total{
+      text-align:right;
+      font-size: 18px;
+      font-weight: 1000;
+    }
+
+    ul{
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: #0f172a;
+      font-weight: 700;
+    }
+    li{ margin: 4px 0; color:#334155; font-weight:800; }
+
+    .actions{
+      margin-top: 12px;
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn{
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-weight: 1000;
       cursor: pointer;
     }
 
-    .error {
-      color: #b00020;
-      margin-bottom: 12px;
-    }
+    .btn-green{ background:#15803d; color:#fff; }
+    .btn-green:hover{ background:#166534; }
 
-    .order {
-      background: #fff;
-      border-radius: 10px;
-      padding: 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 6px 16px rgba(0,0,0,.08);
-    }
+    .btn-blue{ background:#2563eb; color:#fff; }
+    .btn-blue:hover{ background:#1d4ed8; }
 
-    .order-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
+    .btn-gray{ background:#111827; color:#fff; }
+    .btn-gray:hover{ opacity:.92; }
 
-    .badge {
-      padding: 4px 8px;
-      border-radius: 999px;
-      font-size: 12px;
+    .hint{
+      margin-top: 10px;
+      color: rgba(255,255,255,.75);
       font-weight: 700;
+      text-shadow: 0 2px 10px rgba(0,0,0,.35);
     }
 
-    .badge.buy { background: #e0f2fe; color: #0369a1; }
-    .badge.sell { background: #fef3c7; color: #92400e; }
-
-    .status {
-      font-size: 12px;
-      font-weight: 700;
-      color: #555;
-    }
-
-    ul {
-      padding-left: 18px;
-    }
-
-    .actions {
-      margin-top: 12px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .approve {
-      background: #15803d;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-    }
-
-    .approve:hover {
-      background: #166534;
+    @media (max-width: 860px){
+      .toolbar{ grid-template-columns: 1fr 1fr; }
+      .meta{ grid-template-columns: 1fr; }
+      .total{ text-align:left; }
+      h1{ font-size: 36px; }
     }
   </style>
 </head>
+
 <body>
+  <div class="topbar"></div>
 
-  <h1>Admin – Orders</h1>
+  <div class="wrap">
+    <div class="header">
+      <div>
+        <h1>Admin – Orders</h1>
+        <div class="subtitle">View incoming buy/sell orders and update stock.</div>
+      </div>
+    </div>
 
-  <div class="toolbar">
-    <input id="tokenInput" type="password" placeholder="Admin token" />
-    <select id="typeFilter">
-      <option value="">All types</option>
-      <option value="buy">Buy</option>
-      <option value="sell">Sell</option>
-    </select>
-    <select id="statusFilter">
-      <option value="">All statuses</option>
-      <option value="submitted">submitted</option>
-      <option value="paid">paid</option>
-      <option value="checked_in">checked_in</option>
-      <option value="approved">approved</option>
-      <option value="fulfilled">fulfilled</option>
-      <option value="needs_review">needs_review</option>
-    </select>
-    <button id="refreshBtn">Refresh</button>
+    <div class="toolbar">
+      <input id="tokenInput" type="password" placeholder="Admin token" />
+      <select id="typeFilter">
+        <option value="">All types</option>
+        <option value="buy">Buy</option>
+        <option value="sell">Sell</option>
+      </select>
+      <select id="statusFilter">
+        <option value="">All statuses</option>
+        <option value="submitted">submitted</option>
+        <option value="paid">paid</option>
+        <option value="checked_in">checked_in</option>
+        <option value="approved">approved</option>
+        <option value="fulfilled">fulfilled</option>
+        <option value="needs_review">needs_review</option>
+      </select>
+      <button id="refreshBtn" type="button">Refresh</button>
+    </div>
+
+    <div id="error" class="error"></div>
+
+    <div class="hint">
+      Tip: you can open <strong>/admin.html?token=YOUR_ADMIN_TOKEN</strong> to auto-fill the token.
+    </div>
+
+    <div id="orders" class="grid"></div>
   </div>
-
-  <div id="error" class="error"></div>
-  <div id="orders"></div>
 
   <script>
     const ordersEl = document.getElementById("orders");
@@ -126,8 +305,14 @@
     const tokenInput = document.getElementById("tokenInput");
     const typeFilter = document.getElementById("typeFilter");
     const statusFilter = document.getElementById("statusFilter");
+    const refreshBtn = document.getElementById("refreshBtn");
 
-    document.getElementById("refreshBtn").addEventListener("click", loadOrders);
+    refreshBtn.addEventListener("click", loadOrders);
+
+    function showError(msg){
+      errorEl.textContent = msg || "";
+      errorEl.style.display = msg ? "block" : "none";
+    }
 
     async function apiFetch(url, options = {}) {
       const token = tokenInput.value.trim();
@@ -138,90 +323,113 @@
       const res = await fetch(url, options);
       if (!res.ok) {
         const text = await res.text().catch(() => "");
-        throw new Error(`HTTP ${res.status} ${text}`);
+        throw new Error(`HTTP ${res.status} ${text}`.trim());
       }
       return res.json();
     }
 
+    function money(cents){
+      return `$${(Number(cents || 0) / 100).toFixed(2)}`;
+    }
+
     async function loadOrders() {
-      errorEl.textContent = "";
+      showError("");
       ordersEl.innerHTML = "";
 
       try {
         const data = await apiFetch("/api/admin/orders");
         let orders = data.orders || [];
 
-        if (typeFilter.value) {
-          orders = orders.filter(o => o.type === typeFilter.value);
-        }
-
-        if (statusFilter.value) {
-          orders = orders.filter(o => o.status === statusFilter.value);
-        }
-
-        for (const o of orders) {
-          renderOrder(o);
-        }
+        if (typeFilter.value) orders = orders.filter(o => o.type === typeFilter.value);
+        if (statusFilter.value) orders = orders.filter(o => o.status === statusFilter.value);
 
         if (!orders.length) {
-          ordersEl.textContent = "No orders found.";
+          ordersEl.innerHTML = `<div class="card">No orders found.</div>`;
+          return;
         }
+
+        for (const o of orders) renderOrder(o);
+
       } catch (err) {
-        errorEl.textContent = err.message;
+        showError(err.message || String(err));
       }
     }
 
-    function renderOrder(order) {
-      const div = document.createElement("div");
-      div.className = "order";
+    function renderOrder(o){
+      const card = document.createElement("div");
+      card.className = "card";
 
-      div.innerHTML = `
-        <div class="order-header">
-          <div>
-            <strong>${order.id}</strong>
-            <span class="badge ${order.type}">${order.type.toUpperCase()}</span>
+      const typePill = o.type === "sell"
+        ? `<span class="pill sell">SELL</span>`
+        : `<span class="pill buy">BUY</span>`;
+
+      const status = `<span class="status">${o.status || "unknown"}</span>`;
+      const email = (o.customer && o.customer.email) ? o.customer.email : "";
+      const name = (o.customer && o.customer.name) ? o.customer.name : "";
+      const createdAt = o.createdAt ? new Date(o.createdAt).toLocaleString() : "";
+
+      const lines = Array.isArray(o.lines) ? o.lines : [];
+
+      // Button label depends on order type
+      const approveLabel = (o.type === "sell")
+        ? "Mark received (add to stock)"
+        : "Approve (mark ok)";
+
+      const canApprove =
+        o.status === "submitted" || o.status === "paid" || o.status === "needs_review";
+
+      card.innerHTML = `
+        <div class="card-head">
+          <div class="idline">
+            <span class="order-id">${o.id}</span>
+            ${typePill}
+            ${status}
           </div>
-          <div class="status">${order.status}</div>
+          <div class="total">${money(o.totalCents)}</div>
         </div>
 
-        <div>
-          <div><strong>Email:</strong> ${order.customer?.email || ""}</div>
-          <div><strong>Total:</strong> $${(order.totalCents / 100).toFixed(2)}</div>
-        </div>
+        <div class="meta">
+          <div class="left">
+            <div class="kv">
+              <div><span>Email:</span> ${email || "(none)"}</div>
+              ${name ? `<div><span>Name:</span> ${name}</div>` : ""}
+              ${createdAt ? `<div><span>Created:</span> ${createdAt}</div>` : ""}
+              ${o.error ? `<div style="color:#991b1b;"><span>Error:</span> ${o.error}</div>` : ""}
+            </div>
 
-        <ul>
-          ${(order.lines || []).map(l =>
-            `<li>${l.qty} × ${l.sku} (${l.condition})</li>`
-          ).join("")}
-        </ul>
+            <ul>
+              ${lines.map(l => `<li>${l.qty} × ${l.sku} (${l.condition})</li>`).join("")}
+            </ul>
+          </div>
 
-        <div class="actions">
-          ${
-            order.status === "submitted" || order.status === "paid"
-              ? `<button class="approve" onclick="approveOrder('${order.id}')">
-                   Mark received (add to stock)
-                 </button>`
-              : ""
-          }
+          <div class="actions">
+            ${canApprove ? `<button class="btn btn-green" type="button" data-approve="${o.id}">${approveLabel}</button>` : ""}
+            <button class="btn btn-gray" type="button" data-refresh>Refresh</button>
+          </div>
         </div>
       `;
 
-      ordersEl.appendChild(div);
-    }
+      // Wire up buttons
+      card.querySelector("[data-refresh]")?.addEventListener("click", loadOrders);
 
-    async function approveOrder(id) {
-      errorEl.textContent = "";
-      try {
-        await apiFetch(`/api/admin/orders/${encodeURIComponent(id)}/approve`, {
-          method: "POST"
+      const approveBtn = card.querySelector("[data-approve]");
+      if (approveBtn){
+        approveBtn.addEventListener("click", async () => {
+          try{
+            showError("");
+            const id = approveBtn.getAttribute("data-approve");
+            await apiFetch(`/api/admin/orders/${encodeURIComponent(id)}/approve`, { method: "POST" });
+            await loadOrders();
+          }catch(err){
+            showError(err.message || String(err));
+          }
         });
-        loadOrders();
-      } catch (err) {
-        errorEl.textContent = err.message;
       }
+
+      ordersEl.appendChild(card);
     }
 
-    // Auto-load if token is in URL
+    // auto-fill token from URL
     const params = new URLSearchParams(location.search);
     if (params.get("token")) {
       tokenInput.value = params.get("token");
