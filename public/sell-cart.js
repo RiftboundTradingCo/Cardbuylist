@@ -409,23 +409,27 @@ document.addEventListener("DOMContentLoaded", async () => {
         const groups = groupCart(cart);
         const order = [];
 
-        for (const g of groups) {
-          const { item } = resolveSellItem(g.key, g.name);
-          if (!item) continue;
+     for (const g of groups) {
+  const { sku, item } = resolveSellItem(g.key, g.name);
+  if (!item) continue;              // must exist in selllist to price/limit
+  if (!sku) continue;               // REQUIRED for server to decrement caps
 
-          for (const tab of TAB_ORDER) {
-            const q = Number(g.condQty[tab] || 0);
-            if (q <= 0) continue;
+  for (const tab of TAB_ORDER) {
+    const q = Number(g.condQty[tab] || 0);
+    if (q <= 0) continue;
 
-            const unit = getPriceFor(item, tab); // dollars
-            order.push({
-              name: item.name,
-              condition: tab, // NM/LP/MP
-              qty: q,
-              unitPrice: unit
-            });
-          }
-        }
+    const unit = getPriceFor(item, tab); // dollars
+
+    order.push({
+      sku,                 // ✅ REQUIRED
+      name: item.name,     // ✅ nice for admin display
+      tab,                 // ✅ REQUIRED (NM/LP/MP)
+      qty: q,
+      unitPrice: unit
+    });
+  }
+}
+
 
         if (!order.length) {
           showMsg("Could not build your order (missing selllist pricing).", false);
@@ -459,11 +463,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // ✅ Save recap payload for recap.html
         sessionStorage.setItem("sellOrderRecap", JSON.stringify({
-          name: "Sell Customer",
-          email,
-          order,
-          computedTotal: total.toFixed(2)
-        }));
+  name: "Sell Customer",
+  email,
+  order,
+  computedTotal: total.toFixed(2)
+}));
+
 
         // ✅ Clear cart (updates badge)
         saveCart([]);
