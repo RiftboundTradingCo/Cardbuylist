@@ -30,13 +30,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     return safeParse(localStorage.getItem(CART_KEY) || "[]", []);
   }
 
- function saveCart(cart) {
-  localStorage.setItem(CART_KEY, JSON.stringify(cart));
-
-  // 🔔 notify header badges + other pages
-  window.dispatchEvent(new Event("cart:changed"));
-}
-
+  function saveCart(cart) {
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    window.dispatchEvent(new Event("cart:changed"));
+  }
 
   function money(n) {
     return `$${(Number(n || 0)).toFixed(2)}`;
@@ -54,15 +51,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     return `name:${String(item.name || "").trim().toLowerCase()}`;
   }
 
-  function normalizeCond(c) {
-    const t = normalizeTab(c);
-    return TAB_TO_COND[t]; // "NM" | "LP" | "MP"
-  }
-
   function condFromCart(item) {
-    const c = String(item.condition || "").trim();
-    if (TAB_TO_COND[c]) return TAB_TO_COND[c]; // already NM/LP/MP
-    return normalizeCond(c);
+    const c = String(item.condition || "").trim().toUpperCase();
+    if (TAB_TO_COND[c]) return c;
+    return "NM";
   }
 
   async function fetchSellList() {
@@ -73,7 +65,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     return data.selllist;
   }
 
-  // groupKey -> item
+  let selllist = {};
+  try {
+    selllist = await fetchSellList();
+  } catch (e) {
+    console.error("sell-cart selllist error:", e);
+    showMsg("Could not load sell prices right now.", false);
+    selllist = {};
+  }
+
   function resolveSellItem(groupKey, fallbackName) {
     const sku = groupKey.startsWith("name:") ? "" : groupKey;
     const item = sku ? selllist[sku] : null;
@@ -94,7 +94,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // ----- cart grouping (stable) -----
-  // cart lines stored as: [{sku?, name?, condition:"NM", qty: 2}, ...]
   function groupCart(cart) {
     const groups = new Map();
 
@@ -117,7 +116,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       g.condQty[cond] = (g.condQty[cond] || 0) + qty;
     }
 
-    // choose active tab = first condition with qty > 0
     for (const g of groups.values()) {
       for (const tab of TAB_ORDER) {
         if ((g.condQty[tab] || 0) > 0) {
@@ -127,7 +125,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    // ✅ IMPORTANT: keep stable sort
     const arr = [...groups.values()];
     arr.sort((a, b) => String(a.name).localeCompare(String(b.name)));
     return arr;
@@ -136,11 +133,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   function getQty(groupKey, tab) {
     const cart = loadCart();
     let sum = 0;
+    const t = normalizeTab(tab);
 
     for (const it of cart) {
       if (getItemKey(it) !== groupKey) continue;
       const c = condFromCart(it);
-      if (c === tab) sum += Math.max(0, Number(it.qty || 0));
+      if (c === t) sum += Math.max(0, Number(it.qty || 0));
     }
     return sum;
   }
@@ -150,14 +148,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const q = Math.max(0, Number(nextQty || 0));
 
     let cart = loadCart();
-
-    // remove existing lines for this key/tab
     cart = cart.filter((it) => !(getItemKey(it) === groupKey && condFromCart(it) === t));
 
     if (q > 0) {
-      // re-add single consolidated line
       if (groupKey.startsWith("name:")) {
-        // we only have a name fallback
         const name = groupKey.slice(5);
         cart.push({ name, condition: t, qty: q });
       } else {
@@ -170,14 +164,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     saveCart(cart);
   }
 
-  // keep scroll fixed when rerender
   function renderWithScroll(fn) {
     const prev = window.scrollY;
     fn();
     requestAnimationFrame(() => window.scrollTo(0, prev));
   }
 
-  // ----- image modal (optional) -----
+  // ----- image modal -----
   const modal = document.getElementById("imageModal");
   const modalImg = document.getElementById("imageModalImg");
   const modalClose = document.getElementById("imageModalClose");
@@ -194,16 +187,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   if (modalClose) modalClose.addEventListener("click", closeModal);
   if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
-
-  // ---------- DATA ----------
-  let selllist = {};
-  try {
-    selllist = await fetchSellList();
-  } catch (e) {
-    console.error("sell-cart selllist error:", e);
-    showMsg("Could not load sell prices right now.", false);
-    selllist = {};
-  }
 
   // ----- render -----
   function render() {
@@ -308,14 +291,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         </div>
       `;
 
-      // clamp buttons based on max
       const plus = li.querySelector(".qty-plus");
       const minus = li.querySelector(".qty-minus");
 
       if (minus) minus.disabled = activeQty <= 0;
       if (plus) plus.disabled = !item ? true : (maxCap > 0 ? activeQty >= maxCap : true);
 
-      // image zoom
       const thumb = li.querySelector(".cart-thumb");
       if (thumb) thumb.addEventListener("click", () => openModal(thumb.getAttribute("src")));
 
@@ -327,7 +308,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   render();
 
-  // ===== click handlers (delegation) =====
+  // ===== click handlers =====
   document.addEventListener("click", (e) => {
     const itemEl = e.target.closest(".cart-item");
     if (!itemEl) return;
@@ -335,31 +316,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     const groupKey = itemEl.dataset.groupKey;
     const activeTab = normalizeTab(itemEl.dataset.activeTab || "NM");
 
-    // tabs
     const tabBtn = e.target.closest(".cond-tab");
     if (tabBtn) {
       if (tabBtn.getAttribute("aria-disabled") === "true") return;
       if (tabBtn.classList.contains("disabled")) return;
-
       itemEl.dataset.activeTab = normalizeTab(tabBtn.dataset.tab || "NM");
       renderWithScroll(render);
       return;
     }
 
-    // plus
     if (e.target.closest(".qty-plus")) {
       const { item } = resolveSellItem(groupKey, "");
       const maxCap = item ? getMaxFor(item, activeTab) : 0;
 
       const cur = getQty(groupKey, activeTab);
-      const next = maxCap > 0 ? Math.min(cur + 1, maxCap) : cur; // if max is 0, don't increase
+      const next = maxCap > 0 ? Math.min(cur + 1, maxCap) : cur;
 
       setQty(groupKey, activeTab, next);
       renderWithScroll(render);
       return;
     }
 
-    // minus
     if (e.target.closest(".qty-minus")) {
       const cur = getQty(groupKey, activeTab);
       const next = Math.max(0, cur - 1);
@@ -369,7 +346,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    // remove condition
     if (e.target.closest(".remove-cond-btn")) {
       setQty(groupKey, activeTab, 0);
       renderWithScroll(render);
@@ -386,99 +362,94 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // ===== submit sell order (redirect to recap.html) =====
- // ===== submit sell order =====
-if (submitBtn) {
-  submitBtn.addEventListener("click", async () => {
-    const email = String(emailInput?.value || "").trim();
-    if (!email || !email.includes("@")) {
-      showMsg("Please enter a valid email for confirmation.", false);
-      return;
-    }
-
-    const cart = loadCart();
-    if (!cart.length) {
-      showMsg("Your sell cart is empty.", false);
-      return;
-    }
-
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Submitting...";
-
-    try {
-      const groups = groupCart(cart);
-
-      // Build detailed order lines INCLUDING sku so server/admin can update max caps + display names
-      const order = [];
-
-      for (const g of groups) {
-        const { sku, item } = resolveSellItem(g.key, g.name);
-        if (!item) continue;
-
-        for (const tab of TAB_ORDER) {
-          const qty = Number(g.condQty[tab] || 0);
-          if (qty <= 0) continue;
-
-          const unitPriceDollars = getPriceFor(item, tab);
-          const unitPriceCents = Math.round(unitPriceDollars * 100);
-          const lineTotalCents = unitPriceCents * qty;
-
-          order.push({
-            sku: sku || item.sku || g.key,     // ✅ important
-            name: item.name,
-            condition: tab,                   // NM/LP/MP
-            qty,
-            unitPriceCents,
-            lineTotalCents
-          });
-        }
-      }
-
-      if (!order.length) {
-        showMsg("Could not build your order (missing selllist pricing).", false);
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Submit Sell Order";
+  // ===== submit sell order =====
+  if (submitBtn) {
+    submitBtn.addEventListener("click", async () => {
+      const email = String(emailInput?.value || "").trim();
+      if (!email || !email.includes("@")) {
+        showMsg("Please enter a valid email for confirmation.", false);
         return;
       }
 
-      const totalCents = order.reduce((sum, l) => sum + (Number(l.lineTotalCents || 0)), 0);
-
-      const res = await fetch("/api/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: "Sell Customer",
-          email,
-          totalCents,     // ✅ no “total” variable
-          order
-        })
-      });
-
-      const text = await res.text();
-      let data = null;
-      try { data = JSON.parse(text); } catch {}
-
-      if (!res.ok || !data?.ok) {
-        throw new Error((data && data.error) || text || `HTTP ${res.status}`);
+      const cart = loadCart();
+      if (!cart.length) {
+        showMsg("Your sell cart is empty.", false);
+        return;
       }
 
-      // Recap page data
-      sessionStorage.setItem("sellOrderRecap", JSON.stringify({
-        name: "Sell Customer",
-        email,
-        order,
-        totalCents
-      }));
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submitting...";
 
-      // Clear cart + update badge
-      saveCart([]);
+      try {
+        const groups = groupCart(cart);
+        const order = [];
 
-      window.location.href = "/recap.html";
-    } catch (err) {
-      console.error("Sell submit error:", err);
-      showMsg(String(err.message || "Error submitting sell order. Try again."), false);
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Submit Sell Order";
-    }
-  });
-}
+        for (const g of groups) {
+          const { sku, item } = resolveSellItem(g.key, g.name);
+          if (!item) continue;
+
+          for (const tab of TAB_ORDER) {
+            const qty = Number(g.condQty[tab] || 0);
+            if (qty <= 0) continue;
+
+            const unitPriceDollars = getPriceFor(item, tab);
+            const unitPriceCents = Math.round(unitPriceDollars * 100);
+            const lineTotalCents = unitPriceCents * qty;
+
+            order.push({
+              sku: sku || g.key,
+              name: item.name,
+              condition: tab,
+              qty,
+              unitPriceCents,
+              lineTotalCents
+            });
+          }
+        }
+
+        if (!order.length) {
+          showMsg("Could not build your order (missing selllist pricing).", false);
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Submit Sell Order";
+          return;
+        }
+
+        const totalCents = order.reduce((sum, l) => sum + Number(l.lineTotalCents || 0), 0);
+
+        const res = await fetch("/api/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: "Sell Customer",
+            email,
+            totalCents,
+            order
+          })
+        });
+
+        const text = await res.text();
+        let data = null;
+        try { data = JSON.parse(text); } catch {}
+
+        if (!res.ok || !data?.ok) {
+          throw new Error((data && data.error) || text || `HTTP ${res.status}`);
+        }
+
+        sessionStorage.setItem("sellOrderRecap", JSON.stringify({
+          name: "Sell Customer",
+          email,
+          order,
+          totalCents
+        }));
+
+        saveCart([]);
+        window.location.href = "/recap.html";
+      } catch (err) {
+        console.error("Sell submit error:", err);
+        showMsg(String(err.message || "Error submitting sell order. Try again."), false);
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Submit Sell Order";
+      }
+    });
+  }
+});
