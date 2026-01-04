@@ -357,35 +357,52 @@ app.get("/api/selllist", (req, res) => {
 ========================= */
 app.post("/api/submit", async (req, res) => {
   try {
-    const name = String(req.body?.name || "").trim() || "Sell Customer";
+    const name = String(req.body?.name || "Sell Customer").trim();
     const email = String(req.body?.email || "").trim();
     const order = Array.isArray(req.body?.order) ? req.body.order : [];
 
-    if (!order.length) return res.status(400).json({ ok: false, error: "Empty sell order" });
+    if (!email || !email.includes("@")) {
+      return res.status(400).json({ ok: false, error: "Missing/invalid email" });
+    }
+    if (!order.length) {
+      return res.status(400).json({ ok: false, error: "Empty sell order" });
+    }
 
-    // ✅ compute + save full priced lines
+    // Load selllist
+    const selllist = readJsonSafe(SELLLIST_PATH);
+    const lines = [];
     let totalCents = 0;
 
-    const lines = order.map((l) => {
+    for (const l of order) {
       const sku = String(l.sku || "").trim();
-      const fallbackName = String(l.name || sku || "Unknown").trim();
-      const condition = String(l.condition || "NM").trim();
-      const qty = Math.max(1, Number(l.qty || 0));
-      const unitPriceDollars = Number(l.unitPrice || 0);
-      const unitPriceCents = Math.round(unitPriceDollars * 100);
-      const lineTotalCents = unitPriceCents * qty;
+      const cardName = String(l.name || "").trim();
+      const condition = String(l.condition || "NM").trim(); // NM/LP/MP
+      const qty = Math.max(0, Number(l.qty || 0));
 
-      totalCents += lineTotalCents;
+      const unitPriceCents = Number(l.unitPriceCents || 0);
+      const lineTotalCents = Number(l.lineTotalCents || (unitPriceCents * qty));
 
-      return {
+      if (!sku || !qty) continue;
+
+      // decrement remaining/max in selllist
+      if (selllist?.[sku]?.max && selllist[sku].max[condition] != null) {
+        const cur = Number(selllist[sku].max[condition] || 0);
+        selllist[sku].max[condition] = Math.max(0, cur - qty);
+      }
+
+      lines.push({
         sku,
-        name: fallbackName,           // keep fallback name for safety
+        name: cardName || (selllist?.[sku]?.name || sku),
         condition,
         qty,
         unitPriceCents,
         lineTotalCents
-      };
-    });
+      });
+
+      totalCents += lineTotalCents;
+    }
+
+    writeJsonSafe(SELLLIST_PATH, selllist);
 
     const orderId = makeOrderId();
 
@@ -398,17 +415,6 @@ app.post("/api/submit", async (req, res) => {
       lines,
       totalCents
     });
-
-    // ✅ OPTIONAL: if you want to decrement selllist max immediately, do it here too
-    // (only works if sku present)
-    const selllist = readJsonSafe(SELLLIST_PATH);
-    for (const l of lines) {
-      if (!l.sku) continue;
-      const tab = String(l.condition || "NM").toUpperCase(); // NM/LP/MP
-      const cur = Number(selllist?.[l.sku]?.max?.[tab] ?? 0);
-      if (selllist?.[l.sku]?.max) selllist[l.sku].max[tab] = Math.max(0, cur - l.qty);
-    }
-    writeJsonSafe(SELLLIST_PATH, selllist);
 
     return res.json({ ok: true, orderId });
   } catch (e) {

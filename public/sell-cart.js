@@ -420,13 +420,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const unit = getPriceFor(item, tab); // dollars
 
-    order.push({
-  sku: item.sku || "",          // 
-  name: item.name,              // 
-  condition: tab,               // NM/LP/MP
+    const unitPriceCents = Math.round(Number(unit || 0) * 100);
+order.push({
+  sku: String(item.sku || g.key || "").trim(),     // ✅ required
+  name: item.name,                                 // ✅ required
+  condition: tab,                                  // NM/LP/MP
   qty: q,
-  unitPrice: unit              // dollars
+  unitPriceCents,                                  // ✅ required
+  lineTotalCents: unitPriceCents * q               // ✅ required
 });
+
   }
 }
 
@@ -438,20 +441,17 @@ document.addEventListener("DOMContentLoaded", async () => {
           return;
         }
 
-        const total = order.reduce(
-          (sum, l) => sum + (Number(l.qty || 0) * Number(l.unitPrice || 0)),
-          0
-        );
+        const totalCents = order.reduce((sum, l) => sum + Number(l.lineTotalCents || 0), 0);
 
         const res = await fetch("/api/submit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            name: "Sell Customer",
-            email,
-            total: total.toFixed(2),
-            order
-          })
+  name: "Sell Customer",
+  email,
+  totalCents,      // ✅
+  order
+})
         });
 
         let data = {};

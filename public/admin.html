@@ -115,6 +115,21 @@ async function loadAdmin() {
       = <strong>$${lineTotal}</strong>
     </li>`;
   }
+if (order.type === "sell" && order.status === "submitted") {
+  actionHtml = `
+    <button onclick="markReceived('${order.id}')">
+      Mark received (add to stock)
+    </button>
+  `;
+}
+async function markReceived(id) {
+  const token = tokenInput.value.trim();
+  await fetch(`/api/admin/orders/${id}/approve`, {
+    method: "POST",
+    headers: { "x-admin-token": token }
+  });
+  loadAdmin();
+}
 
   // BUY: normal
   return `<li>${l.qty} × ${displayName} (${l.condition})</li>`;
