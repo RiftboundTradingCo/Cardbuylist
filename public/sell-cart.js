@@ -454,12 +454,21 @@ order.push({
 })
         });
 
-        let data = {};
-        try { data = await res.json(); } catch {}
+        let payloadText = "";
+let data = null;
 
-        if (!res.ok || !data.ok) {
-          throw new Error(data.error || res.statusText || "Submit failed");
-        }
+try { payloadText = await res.text(); } catch {}
+
+try { data = JSON.parse(payloadText); } catch { data = null; }
+
+if (!res.ok || !data?.ok) {
+  const msg =
+    (data && data.error) ||
+    payloadText ||
+    `HTTP ${res.status}`;
+  throw new Error(msg);
+}
+
 
         // ✅ Save recap payload for recap.html
         sessionStorage.setItem("sellOrderRecap", JSON.stringify({
