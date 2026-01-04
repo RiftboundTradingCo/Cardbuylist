@@ -1,459 +1,154 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8" />
   <title>Admin – Orders</title>
-
+  <link rel="stylesheet" href="/style.css" />
   <style>
-    /* ===== Page background ===== */
-    html, body { height: 100%; }
-    body{
-      margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color:#0f172a;
-      background:
-        linear-gradient(rgba(0,0,0,.08), rgba(0,0,0,.08)),
-        url("/images/wooden-shelves.jpg") center / cover fixed no-repeat;
+    body {
+      background: url("/images/wooden-shelves.jpg") repeat;
+      padding: 24px;
     }
-
-    .page{
-      max-width: 1200px;
-      margin: 26px auto 60px;
-      padding: 0 18px;
+    .admin-toolbar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
     }
-
-    h1{
-      margin: 0 0 12px;
-      font-size: 40px;
-      letter-spacing: .2px;
-      text-shadow: 0 2px 10px rgba(0,0,0,.12);
-    }
-
-    /* ===== Top controls bar ===== */
-    .bar{
-      display:flex;
-      gap: 10px;
-      align-items:center;
-      flex-wrap: wrap;
-      padding: 12px;
+    .order-card {
+      background: rgba(255,255,255,0.95);
       border-radius: 14px;
-      background: rgba(255,255,255,.90);
+      padding: 16px;
+      margin-bottom: 18px;
       box-shadow: 0 10px 25px rgba(0,0,0,.15);
-      border: 1px solid rgba(0,0,0,.08);
-      margin-bottom: 14px;
     }
-
-    .bar input[type="password"], .bar select{
-      height: 40px;
-      border-radius: 12px;
-      border: 1px solid rgba(0,0,0,.18);
-      padding: 0 12px;
-      background: rgba(255,255,255,.95);
-      font-weight: 600;
-      outline: none;
-    }
-
-    .bar input[type="password"]{
-      width: min(360px, 100%);
-    }
-
-    .btn{
-      height: 40px;
-      padding: 0 14px;
-      border-radius: 12px;
-      border: 0;
-      font-weight: 800;
-      cursor: pointer;
-      box-shadow: 0 8px 18px rgba(0,0,0,.10);
-    }
-    .btn:disabled{ opacity:.5; cursor:not-allowed; }
-
-    .btn-refresh{ background:#111827; color:#fff; }
-
-    .tip{
-      font-size: 13px;
-      opacity: .85;
-      margin-left: auto;
-      white-space: nowrap;
-    }
-    @media (max-width: 760px){
-      .tip{ width: 100%; margin-left: 0; }
-    }
-
-    /* ===== Message ===== */
-    .msg{
-      padding: 10px 12px;
-      border-radius: 12px;
-      background: rgba(255,255,255,.90);
-      border: 1px solid rgba(0,0,0,.08);
-      box-shadow: 0 10px 25px rgba(0,0,0,.12);
-      margin-bottom: 14px;
-      display:none;
-    }
-    .msg.ok{ color:#166534; }
-    .msg.err{ color:#b00020; }
-    .msg.show{ display:block; }
-
-    /* ===== Order cards ===== */
-    .orders{
-      display:flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .order{
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(0,0,0,.08);
-      border-radius: 16px;
-      box-shadow: 0 10px 25px rgba(0,0,0,.15);
-      padding: 14px;
-    }
-
-    .order-head{
-      display:flex;
+    .order-header {
+      display: flex;
       justify-content: space-between;
-      align-items:flex-start;
-      gap: 14px;
-      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 8px;
     }
-
-    .order-id{
-      font-weight: 900;
-      font-size: 18px;
-    }
-
-    .chips{
-      display:flex;
-      gap: 8px;
-      align-items:center;
-      flex-wrap: wrap;
-      margin-top: 6px;
-    }
-
-    .chip{
-      font-size: 12px;
-      font-weight: 900;
+    .pill {
       padding: 4px 10px;
       border-radius: 999px;
-      border: 1px solid rgba(0,0,0,.08);
-      background: rgba(15,23,42,.06);
-    }
-    .chip.buy{ background: rgba(59,130,246,.15); }
-    .chip.sell{ background: rgba(245,158,11,.18); }
-    .chip.paid{ background: rgba(16,185,129,.18); }
-    .chip.submitted{ background: rgba(100,116,139,.16); }
-    .chip.checked_in{ background: rgba(34,197,94,.18); }
-    .chip.shipped{ background: rgba(147,51,234,.18); }
-    .chip.needs_review{ background: rgba(239,68,68,.18); }
-
-    .meta{
-      font-size: 13px;
-      opacity: .9;
-      margin-top: 6px;
-      line-height: 1.35;
-    }
-
-    .right{
-      text-align: right;
-      min-width: 160px;
-    }
-
-    .total{
-      font-weight: 900;
-      font-size: 20px;
-    }
-    .date{
       font-size: 12px;
-      opacity: .8;
-      margin-top: 4px;
-    }
-
-    .lines{
-      margin: 12px 0 0;
-      padding-left: 18px;
-      line-height: 1.45;
       font-weight: 600;
     }
+    .pill.buy { background:#dbeafe; color:#1e40af; }
+    .pill.sell { background:#fde68a; color:#92400e; }
+    .pill.paid { background:#dcfce7; color:#166534; }
+    .pill.shipped { background:#e9d5ff; color:#6b21a8; }
 
-    .actions{
-      margin-top: 12px;
-      display:flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .btn-green{ background:#16a34a; color:#fff; }
-    .btn-purple{ background:#7c3aed; color:#fff; }
-    .btn-red{ background:#dc2626; color:#fff; }
-
-    .empty{
-      padding: 16px;
-      border-radius: 16px;
-      background: rgba(255,255,255,.9);
-      border: 1px solid rgba(0,0,0,.08);
-      box-shadow: 0 10px 25px rgba(0,0,0,.12);
-      font-weight: 700;
+    .actions button {
+      margin-top: 10px;
     }
   </style>
 </head>
 
 <body>
-  <main class="page">
-    <h1>Admin – Orders</h1>
+<h1>Admin – Orders</h1>
 
-    <div class="bar">
-      <input id="tokenInput" type="password" placeholder="Admin token" autocomplete="off" />
-      <select id="typeFilter">
-        <option value="">All types</option>
-        <option value="buy">Buy</option>
-        <option value="sell">Sell</option>
-      </select>
-      <select id="statusFilter">
-        <option value="">All statuses</option>
-        <option value="paid">Paid</option>
-        <option value="submitted">Submitted</option>
-        <option value="checked_in">Checked in</option>
-        <option value="shipped">Shipped</option>
-        <option value="needs_review">Needs review</option>
-        <option value="approved">Approved</option>
-        <option value="fulfilled">Fulfilled</option>
-      </select>
-      <button id="refreshBtn" class="btn btn-refresh" type="button">Refresh</button>
+<div class="admin-toolbar">
+  <input id="tokenInput" placeholder="Admin token" />
+  <select id="statusFilter">
+    <option value="">All</option>
+    <option value="paid">Paid</option>
+    <option value="submitted">Submitted</option>
+    <option value="shipped">Shipped</option>
+  </select>
+  <button id="refreshBtn">Refresh</button>
+</div>
 
-      <div class="tip">Tip: open as <strong>/admin.html?token=YOUR_TOKEN</strong></div>
-    </div>
+<div id="orders"></div>
 
-    <div id="msg" class="msg"></div>
+<script>
+const ordersEl = document.getElementById("orders");
+const tokenInput = document.getElementById("tokenInput");
 
-    <section id="orders" class="orders"></section>
-  </main>
+async function loadAdmin() {
+  ordersEl.innerHTML = "Loading…";
 
-  <script>
-    const tokenInput = document.getElementById("tokenInput");
-    const typeFilter = document.getElementById("typeFilter");
-    const statusFilter = document.getElementById("statusFilter");
-    const refreshBtn = document.getElementById("refreshBtn");
-    const ordersEl = document.getElementById("orders");
-    const msgEl = document.getElementById("msg");
+  const token = tokenInput.value.trim();
+  if (!token) return;
 
-    function showMsg(text, ok = true){
-      msgEl.textContent = text || "";
-      msgEl.className = "msg show " + (ok ? "ok" : "err");
-      if (!text) msgEl.classList.remove("show");
-    }
+  const [ordersRes, catalogRes] = await Promise.all([
+    fetch("/api/admin/orders", {
+      headers: { "x-admin-token": token }
+    }),
+    fetch("/api/catalog")
+  ]);
 
-    function moneyFromCents(cents){
-      const n = Number(cents || 0);
-      return "$" + (n / 100).toFixed(2);
-    }
+  if (!ordersRes.ok) {
+    ordersEl.textContent = "Unauthorized or error loading orders";
+    return;
+  }
 
-    function fmtDate(iso){
-      try{
-        if (!iso) return "";
-        return new Date(iso).toLocaleString();
-      }catch{
-        return String(iso || "");
-      }
-    }
+  const ordersData = await ordersRes.json();
+  const catalogData = await catalogRes.json();
 
-    function chipClass(value){
-      return String(value || "").toLowerCase().replace(/\s+/g, "_");
-    }
+  const catalog = catalogData.catalog || {};
+  const orders = ordersData.orders || [];
 
-    async function apiFetch(url, opts={}){
-      const token = tokenInput.value.trim();
-      const headers = Object.assign({}, opts.headers || {});
-      if (token) headers["x-admin-token"] = token;
-      const res = await fetch(url, { ...opts, headers });
-      return res;
-    }
+  ordersEl.innerHTML = "";
 
-    async function loadOrders(){
-      showMsg("");
-      ordersEl.innerHTML = "";
-      refreshBtn.disabled = true;
+  orders.forEach(order => {
+    const div = document.createElement("div");
+    div.className = "order-card";
 
-      try{
-        const res = await apiFetch("/api/admin/orders", { cache: "no-store" });
-        if (!res.ok){
-          const txt = await res.text().catch(()=> "");
-          throw new Error(`HTTP ${res.status} ${txt || ""}`.trim());
-        }
-        const data = await res.json();
-        if (!data || !data.ok) throw new Error("Bad response");
+    const typeClass = order.type === "sell" ? "sell" : "buy";
+    const statusClass = order.status || "";
 
-        let orders = Array.isArray(data.orders) ? data.orders : [];
+    const lines = (order.lines || []).map(l => {
+      const product = catalog[l.sku];
+      const name = product?.name || l.sku;
+      return `<li>${l.qty} × ${name} (${l.condition})</li>`;
+    }).join("");
 
-        const type = typeFilter.value;
-        const status = statusFilter.value;
+    let actionHtml = "<em>No actions</em>";
 
-        if (type) orders = orders.filter(o => String(o.type||"").toLowerCase() === type);
-        if (status) orders = orders.filter(o => String(o.status||"").toLowerCase() === status);
-
-        if (!orders.length){
-          ordersEl.innerHTML = `<div class="empty">No orders match your filters.</div>`;
-          return;
-        }
-
-        ordersEl.innerHTML = orders.map(renderOrder).join("");
-
-      }catch(err){
-        console.error(err);
-        showMsg("Failed to fetch orders. Check token + server routes.", false);
-      }finally{
-        refreshBtn.disabled = false;
-      }
-    }
-
-    function renderLineText(line){
-      // Prefer name (if saved), else sku
-      const name = (line && (line.name || line.title || line.sku)) ? (line.name || line.title || line.sku) : "Unknown";
-      const cond = line?.condition ? ` (${line.condition})` : "";
-      const qty = Number(line?.qty || 0) || 0;
-      return `${qty} × ${name}${cond}`;
-    }
-
-    function renderOrder(o){
-      const id = o.id || "";
-      const type = (o.type || "").toLowerCase();
-      const status = (o.status || "").toLowerCase();
-
-      const custName = o.customer?.name || (type === "sell" ? "Sell Customer" : "");
-      const custEmail = o.customer?.email || "";
-
-      const created = o.createdAt || o.shippedAt || o.checkedInAt || "";
-      const total = (o.totalCents != null) ? moneyFromCents(o.totalCents) : (o.total ? `$${o.total}` : "$0.00");
-
-      const lines = Array.isArray(o.lines) ? o.lines : [];
-      const linesHtml = lines.map((l, i) => `<li>${renderLineText(l)}</li>`).join("");
-
-      const chips = `
-        <div class="chips">
-          <span class="chip ${type}">${type.toUpperCase()}</span>
-          <span class="chip ${chipClass(status)}">${status || "unknown"}</span>
-          ${o.error ? `<span class="chip needs_review">ERROR</span>` : ""}
-        </div>
-      `;
-
-      const actionsHtml = renderActions(o);
-
-      return `
-        <article class="order" data-id="${escapeHtml(id)}">
-          <div class="order-head">
-            <div>
-              <div class="order-id">${escapeHtml(id)}</div>
-              ${chips}
-              <div class="meta">
-                ${custName ? `<div><strong>${escapeHtml(custName)}</strong></div>` : ""}
-                ${custEmail ? `<div>Email: ${escapeHtml(custEmail)}</div>` : ""}
-              </div>
-            </div>
-
-            <div class="right">
-              <div class="total">${escapeHtml(total)}</div>
-              <div class="date">${escapeHtml(fmtDate(created))}</div>
-            </div>
-          </div>
-
-          <ol class="lines">
-            ${linesHtml || `<li>(no lines)</li>`}
-          </ol>
-
-          <div class="actions">
-            ${actionsHtml}
-          </div>
-        </article>
+    if (order.type === "buy" && order.status === "paid") {
+      actionHtml = `
+        <button onclick="markShipped('${order.id}')">
+          Mark as shipped
+        </button>
       `;
     }
 
-    function renderActions(o){
-      const id = o.id;
-      const type = (o.type || "").toLowerCase();
-      const status = (o.status || "").toLowerCase();
+    div.innerHTML = `
+      <div class="order-header">
+        <strong>${order.id}</strong>
+        <strong>$${(order.totalCents/100).toFixed(2)}</strong>
+      </div>
 
-      // SELL: allow "mark received" when submitted
-      if (type === "sell" && status === "submitted"){
-        return `
-          <button class="btn btn-green act-receive" data-id="${escapeHtml(id)}" type="button">
-            Mark received (add to stock)
-          </button>
-        `;
-      }
+      <div>
+        <span class="pill ${typeClass}">${order.type.toUpperCase()}</span>
+        <span class="pill ${statusClass}">${order.status}</span>
+      </div>
 
-      // BUY: allow "mark shipped" when paid (or approved, depending on your flow)
-      if (type === "buy" && (status === "paid" || status === "approved")){
-        return `
-          <button class="btn btn-purple act-ship" data-id="${escapeHtml(id)}" type="button">
-            Mark as shipped
-          </button>
-        `;
-      }
+      <p>
+        ${order.customer?.name || "Customer"} —
+        ${order.customer?.email || ""}
+      </p>
 
-      // If already shipped/checked_in, no actions
-      return `<span style="opacity:.75;font-weight:700;">No actions</span>`;
-    }
+      <ul>${lines}</ul>
 
-    function escapeHtml(str){
-      return String(str || "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
+      <div class="actions">${actionHtml}</div>
+    `;
 
-    // Click handlers
-    document.addEventListener("click", async (e) => {
-      const receiveBtn = e.target.closest(".act-receive");
-      const shipBtn = e.target.closest(".act-ship");
+    ordersEl.appendChild(div);
+  });
+}
 
-      if (receiveBtn){
-        const id = receiveBtn.dataset.id;
-        receiveBtn.disabled = true;
-        try{
-          const res = await apiFetch(`/api/admin/orders/${encodeURIComponent(id)}/approve`, { method:"POST" });
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          await loadOrders();
-        }catch(err){
-          console.error(err);
-          showMsg("Failed to mark received (check server route + token).", false);
-        }finally{
-          receiveBtn.disabled = false;
-        }
-      }
+async function markShipped(id) {
+  const token = tokenInput.value.trim();
+  await fetch(`/api/admin/orders/${id}/fulfill`, {
+    method: "POST",
+    headers: { "x-admin-token": token }
+  });
+  loadAdmin();
+}
 
-      if (shipBtn){
-        const id = shipBtn.dataset.id;
-        shipBtn.disabled = true;
-        try{
-          const res = await apiFetch(`/api/admin/orders/${encodeURIComponent(id)}/fulfill`, { method:"POST" });
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          // after marking shipped, it will disappear from Paid list.
-          await loadOrders();
-        }catch(err){
-          console.error(err);
-          showMsg("Failed to mark as shipped (check /fulfill route + token).", false);
-        }finally{
-          shipBtn.disabled = false;
-        }
-      }
-    });
-
-    // Prefill token from URL
-    (function initFromQuery(){
-      const params = new URLSearchParams(location.search);
-      const t = params.get("token");
-      if (t) tokenInput.value = t;
-    })();
-
-    refreshBtn.addEventListener("click", loadOrders);
-    typeFilter.addEventListener("change", loadOrders);
-    statusFilter.addEventListener("change", loadOrders);
-
-    // Initial load
-    loadOrders();
-  </script>
+document.getElementById("refreshBtn").onclick = loadAdmin;
+</script>
 </body>
 </html>
 
