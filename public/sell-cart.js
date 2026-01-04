@@ -387,110 +387,98 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // ===== submit sell order (redirect to recap.html) =====
-  if (submitBtn) {
-    submitBtn.addEventListener("click", async () => {
-      const email = String(emailInput?.value || "").trim();
-      if (!email || !email.includes("@")) {
-        showMsg("Please enter a valid email for confirmation.", false);
-        return;
-      }
+ // ===== submit sell order =====
+if (submitBtn) {
+  submitBtn.addEventListener("click", async () => {
+    const email = String(emailInput?.value || "").trim();
+    if (!email || !email.includes("@")) {
+      showMsg("Please enter a valid email for confirmation.", false);
+      return;
+    }
 
-      const cart = loadCart();
-      if (!cart.length) {
-        showMsg("Your sell cart is empty.", false);
-        return;
-      }
+    const cart = loadCart();
+    if (!cart.length) {
+      showMsg("Your sell cart is empty.", false);
+      return;
+    }
 
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Submitting...";
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Submitting...";
 
-      try {
-        // Build order from grouped cart (with selllist pricing)
-        const groups = groupCart(cart);
-        const order = [];
+    try {
+      const groups = groupCart(cart);
 
-     for (const g of groups) {
-  const { sku, item } = resolveSellItem(g.key, g.name);
-  if (!item) continue;              // must exist in selllist to price/limit
-  if (!sku) continue;               // REQUIRED for server to decrement caps
+      // Build detailed order lines INCLUDING sku so server/admin can update max caps + display names
+      const order = [];
 
-  for (const tab of TAB_ORDER) {
-    const q = Number(g.condQty[tab] || 0);
-    if (q <= 0) continue;
+      for (const g of groups) {
+        const { sku, item } = resolveSellItem(g.key, g.name);
+        if (!item) continue;
 
-    const unit = getPriceFor(item, tab); // dollars
+        for (const tab of TAB_ORDER) {
+          const qty = Number(g.condQty[tab] || 0);
+          if (qty <= 0) continue;
 
-    const unitPriceCents = Math.round(Number(unit || 0) * 100);
-order.push({
-  sku: String(item.sku || g.key || "").trim(),     // ✅ required
-  name: item.name,                                 // ✅ required
-  condition: tab,                                  // NM/LP/MP
-  qty: q,
-  unitPriceCents,                                  // ✅ required
-  lineTotalCents: unitPriceCents * q               // ✅ required
-});
+          const unitPriceDollars = getPriceFor(item, tab);
+          const unitPriceCents = Math.round(unitPriceDollars * 100);
+          const lineTotalCents = unitPriceCents * qty;
 
-  }
-}
-
-
-        if (!order.length) {
-          showMsg("Could not build your order (missing selllist pricing).", false);
-          submitBtn.disabled = false;
-          submitBtn.textContent = "Submit Sell Order";
-          return;
+          order.push({
+            sku: sku || item.sku || g.key,     // ✅ important
+            name: item.name,
+            condition: tab,                   // NM/LP/MP
+            qty,
+            unitPriceCents,
+            lineTotalCents
+          });
         }
+      }
 
-        const totalCents = order.reduce((sum, l) => sum + Number(l.lineTotalCents || 0), 0);
-
-        const res = await fetch("/api/submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-  name: "Sell Customer",
-  email,
-  totalCents,      // ✅
-  order
-})
-        });
-
-        let payloadText = "";
-let data = null;
-
-try { payloadText = await res.text(); } catch {}
-
-try { data = JSON.parse(payloadText); } catch { data = null; }
-
-if (!res.ok || !data?.ok) {
-  const msg =
-    (data && data.error) ||
-    payloadText ||
-    `HTTP ${res.status}`;
-  throw new Error(msg);
-}
-
-
-        // ✅ Save recap payload for recap.html
-        sessionStorage.setItem("sellOrderRecap", JSON.stringify({
-  name: "Sell Customer",
-  email,
-  order,
-  computedTotal: total.toFixed(2)
-}));
-
-
-        // ✅ Clear cart (updates badge)
-        saveCart([]);
-
-        // ✅ Redirect
-        window.location.href = "/recap.html";
-      } catch (err) {
-        console.error("Sell submit error:", err);
-        showMsg("Error submitting sell order. Try again.", false);
+      if (!order.length) {
+        showMsg("Could not build your order (missing selllist pricing).", false);
         submitBtn.disabled = false;
         submitBtn.textContent = "Submit Sell Order";
+        return;
       }
-    });
-  }
-});
 
+      const totalCents = order.reduce((sum, l) => sum + (Number(l.lineTotalCents || 0)), 0);
+
+      const res = await fetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Sell Customer",
+          email,
+          totalCents,     // ✅ no “total” variable
+          order
+        })
+      });
+
+      const text = await res.text();
+      let data = null;
+      try { data = JSON.parse(text); } catch {}
+
+      if (!res.ok || !data?.ok) {
+        throw new Error((data && data.error) || text || `HTTP ${res.status}`);
+      }
+
+      // Recap page data
+      sessionStorage.setItem("sellOrderRecap", JSON.stringify({
+        name: "Sell Customer",
+        email,
+        order,
+        totalCents
+      }));
+
+      // Clear cart + update badge
+      saveCart([]);
+
+      window.location.href = "/recap.html";
+    } catch (err) {
+      console.error("Sell submit error:", err);
+      showMsg(String(err.message || "Error submitting sell order. Try again."), false);
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit Sell Order";
+    }
+  });
+}
