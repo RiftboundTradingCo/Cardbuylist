@@ -357,48 +357,60 @@ app.get("/api/selllist", (req, res) => {
 ========================= */
 app.post("/api/submit", async (req, res) => {
   try {
-    const name = String(req.body?.name || "").trim();
+    const name = String(req.body?.name || "").trim() || "Sell Customer";
     const email = String(req.body?.email || "").trim();
     const order = Array.isArray(req.body?.order) ? req.body.order : [];
 
     if (!order.length) return res.status(400).json({ ok: false, error: "Empty sell order" });
 
-    // Load selllist (buylist caps)
-    const selllist = readJsonSafe(SELLLIST_PATH);
+    // ✅ compute + save full priced lines
+    let totalCents = 0;
 
-    // Decrement remaining/max for each item
-    for (const l of order) {
+    const lines = order.map((l) => {
       const sku = String(l.sku || "").trim();
-      const tab = String(l.tab || "").trim().toUpperCase(); // NM/LP/MP
-      const qty = Math.max(0, Number(l.qty || 0));
+      const fallbackName = String(l.name || sku || "Unknown").trim();
+      const condition = String(l.condition || "NM").trim();
+      const qty = Math.max(1, Number(l.qty || 0));
+      const unitPriceDollars = Number(l.unitPrice || 0);
+      const unitPriceCents = Math.round(unitPriceDollars * 100);
+      const lineTotalCents = unitPriceCents * qty;
 
-      if (!sku || !qty) continue;
-      if (!selllist[sku]) continue;
+      totalCents += lineTotalCents;
 
-      // Ensure structure exists
-      selllist[sku].max = selllist[sku].max || {};
-      const cur = Number(selllist[sku].max[tab] ?? 0);
-      selllist[sku].max[tab] = Math.max(0, cur - qty);
-    }
+      return {
+        sku,
+        name: fallbackName,           // keep fallback name for safety
+        condition,
+        qty,
+        unitPriceCents,
+        lineTotalCents
+      };
+    });
 
-    writeJsonSafe(SELLLIST_PATH, selllist);
+    const orderId = makeOrderId();
 
-    // (optional) append an order for admin view
     appendOrder({
-      id: makeOrderId(),
+      id: orderId,
       type: "sell",
       status: "submitted",
       createdAt: new Date().toISOString(),
       customer: { name, email },
-      lines: order.map(l => ({
-        sku: String(l.sku || ""),
-        condition: String(l.condition || "Near Mint"),
-        qty: Math.max(1, Number(l.qty || 0))
-      })),
-      totalCents: 0
+      lines,
+      totalCents
     });
 
-    return res.json({ ok: true });
+    // ✅ OPTIONAL: if you want to decrement selllist max immediately, do it here too
+    // (only works if sku present)
+    const selllist = readJsonSafe(SELLLIST_PATH);
+    for (const l of lines) {
+      if (!l.sku) continue;
+      const tab = String(l.condition || "NM").toUpperCase(); // NM/LP/MP
+      const cur = Number(selllist?.[l.sku]?.max?.[tab] ?? 0);
+      if (selllist?.[l.sku]?.max) selllist[l.sku].max[tab] = Math.max(0, cur - l.qty);
+    }
+    writeJsonSafe(SELLLIST_PATH, selllist);
+
+    return res.json({ ok: true, orderId });
   } catch (e) {
     console.error("Sell submit error:", e);
     return res.status(500).json({ ok: false, error: e.message || "Could not submit" });

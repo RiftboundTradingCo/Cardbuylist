@@ -421,12 +421,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const unit = getPriceFor(item, tab); // dollars
 
     order.push({
-      sku,                 // ✅ REQUIRED
-      name: item.name,     // ✅ nice for admin display
-      tab,                 // ✅ REQUIRED (NM/LP/MP)
-      qty: q,
-      unitPrice: unit
-    });
+  sku: item.sku || "",          // 
+  name: item.name,              // 
+  condition: tab,               // NM/LP/MP
+  qty: q,
+  unitPrice: unit              // dollars
+});
   }
 }
 

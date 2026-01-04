@@ -98,10 +98,27 @@ async function loadAdmin() {
     const statusClass = order.status || "";
 
     const lines = (order.lines || []).map(l => {
-      const product = catalog[l.sku];
-      const name = product?.name || l.sku;
-      return `<li>${l.qty} × ${name} (${l.condition})</li>`;
-    }).join("");
+  const sku = String(l.sku || "").trim();
+  const product = sku ? catalog[sku] : null;
+
+  // prefer catalog name, fallback to saved line name, then sku
+  const displayName = product?.name || l.name || sku || "Unknown";
+
+  // SELL: show payout per card + line total
+  if (order.type === "sell") {
+    const unit = (Number(l.unitPriceCents || 0) / 100).toFixed(2);
+    const lineTotal = (Number(l.lineTotalCents || 0) / 100).toFixed(2);
+
+    return `<li>
+      ${l.qty} × ${displayName} (${l.condition})
+      — <strong>$${unit}</strong> each
+      = <strong>$${lineTotal}</strong>
+    </li>`;
+  }
+
+  // BUY: normal
+  return `<li>${l.qty} × ${displayName} (${l.condition})</li>`;
+}).join("");
 
     let actionHtml = "<em>No actions</em>";
 
@@ -116,7 +133,7 @@ async function loadAdmin() {
     div.innerHTML = `
       <div class="order-header">
         <strong>${order.id}</strong>
-        <strong>$${(order.totalCents/100).toFixed(2)}</strong>
+        <strong>$${(Number(order.totalCents || 0) / 100).toFixed(2)}</strong>
       </div>
 
       <div>
