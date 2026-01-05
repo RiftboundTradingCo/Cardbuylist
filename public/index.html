@@ -111,10 +111,23 @@
   <p id="message"></p>
 
 <!-- IMAGE MODAL -->
-<div id="imageModal" class="image-modal hidden" aria-hidden="true">
-  <button id="imageModalClose" class="image-modal-close" type="button" aria-label="Close">×</button>
-  <img id="imageModalImg" src="" alt="Card image enlarged" />
+<!-- Image Modal -->
+<div id="imageModal" class="hidden" style="
+  position:fixed; inset:0; background:rgba(0,0,0,.75);
+  display:flex; align-items:center; justify-content:center;
+  z-index:9999; padding:24px;
+">
+  <button id="imageModalClose" style="
+    position:absolute; top:16px; right:16px;
+    font-size:28px; background:transparent; border:0; color:#fff; cursor:pointer;
+  " aria-label="Close">×</button>
+
+  <img id="imageModalImg" alt="Card image large view" style="
+    max-width:min(92vw, 900px); max-height:88vh;
+    border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,.5);
+  ">
 </div>
+
 
   <!-- Link JavaScript (must be last) -->
 <!-- Load scripts at the bottom (order matters) -->
