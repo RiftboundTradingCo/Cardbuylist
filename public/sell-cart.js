@@ -384,8 +384,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const groups = groupCart(cart);
         const order = [];
 
-// (1) build order lines 
-
+        // ✅ Build order lines WITH cents fields (this is the key change)
         for (const g of groups) {
           const { sku, item } = resolveSellItem(g.key, g.name);
           if (!item) continue;
@@ -418,6 +417,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const totalCents = order.reduce((sum, l) => sum + Number(l.lineTotalCents || 0), 0);
 
+        // ✅ Send cents to server
         const res = await fetch("/api/submit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -437,31 +437,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           throw new Error((data && data.error) || text || `HTTP ${res.status}`);
         }
 
-// Save recap payload
-
-const orderForRecap = order.map(l => {
-  const unitPriceCents = Math.round(Number(l.unitPrice || 0) * 100);
-  const lineTotalCents = unitPriceCents * Math.max(0, Number(l.qty || 0));
-  return {
-    name: l.name,
-    condition: l.condition,     // NM/LP/MP
-    qty: Number(l.qty || 0),
-    unitPriceCents,
-    lineTotalCents
-  };
-});
-
-const totalCents = orderForRecap.reduce((s, l) => s + (l.lineTotalCents || 0), 0);
-
-sessionStorage.setItem("sellOrderRecap", JSON.stringify({
-  name: "Sell Customer",
-  email,
-  order: orderForRecap,
-  totalCents
-}));
-
- // Save recap payload (in cents)
-
+        // ✅ STEP A: Save the same cents payload for recap.html
         sessionStorage.setItem("sellOrderRecap", JSON.stringify({
           name: "Sell Customer",
           email,
@@ -469,7 +445,7 @@ sessionStorage.setItem("sellOrderRecap", JSON.stringify({
           totalCents
         }));
 
-// (4) clear + redirect
+        // ✅ Clear cart + redirect
         saveCart([]);
         window.location.href = "/recap.html";
       } catch (err) {
