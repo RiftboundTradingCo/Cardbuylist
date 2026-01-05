@@ -211,6 +211,32 @@
       font-size: 14px;
       min-height: 18px;
     }
+
+    .brand-panel {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .brand-center {
+      flex: 1;
+      display: grid;
+      place-items: center;
+      pointer-events: none; /* purely decorative */
+    }
+
+    .brand-center img {
+      max-width: 260px;
+      width: 60%;
+      opacity: 0.92;
+      filter: drop-shadow(0 12px 25px rgba(0,0,0,.45));
+    }
+
+    .brand-center img {
+      opacity: 1;
+      filter: drop-shadow(0 18px 35px rgba(0,0,0,.6));
+    }
   </style>
 </head>
 
@@ -218,18 +244,18 @@
   <div class="auth-wrap">
     <section class="brand-panel" aria-hidden="true">
       <div class="brand-top">
-        <div class="logo">
-          <!-- If you have a logo image, use it. Otherwise leave blank. -->
-          <img src="/images/riftbound-logo.png" alt="" onerror="this.remove()" />
-        </div>
         <div class="brand-title">
-          <h1>Riftbound Trading Co</h1>
-          <p>Log in to track buy & sell orders, receipts, and shipping status.</p>
+          <h1>Account Login</h1>
+          <p>Log in to track buy & sell orders, check receipts, and shipping status.</p>
         </div>
       </div>
 
+     <div class="brand-center">
+          <img src="/images/riftbound-logo.png" alt="Riftbound Trading Co Logo">
+      </div>
+
       <div class="brand-foot">
-        <div><strong>Tip:</strong> Use the same email you checkout / submit sells with.</div>
+        <div><strong>Tip:</strong> Use the email you would like to checkout / submit with.</div>
         <div style="opacity:.9; margin-top:6px;">Need help? Contact us from the site menu.</div>
       </div>
     </section>
