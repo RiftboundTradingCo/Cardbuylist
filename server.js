@@ -291,7 +291,6 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
          lineTotalCents: lineCents
        });
 
-        const name = String(product.name || sku);
         emailLines.push(
           `${qty}x ${name} — ${condition} — $${(unitCents / 100).toFixed(2)} each = $${(
             lineCents / 100
