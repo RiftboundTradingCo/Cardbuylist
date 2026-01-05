@@ -67,3 +67,44 @@ document.addEventListener("DOMContentLoaded", async () => {
     grid.innerHTML = "<p>Catalog load error.</p>";
   }
 });
+
+// ===== Image zoom modal (SELL CARDS page only) =====
+const modal = document.getElementById("imageModal");
+const modalImg = document.getElementById("imageModalImg");
+const modalClose = document.getElementById("imageModalClose");
+
+function openModal(src) {
+  if (!modal || !modalImg) return;
+  modalImg.src = src;
+  modal.classList.remove("hidden");
+}
+
+function closeModal() {
+  if (!modal || !modalImg) return;
+  modal.classList.add("hidden");
+  modalImg.src = "";
+}
+
+if (modalClose) modalClose.addEventListener("click", closeModal);
+if (modal) modal.addEventListener("click", (e) => {
+  if (e.target === modal) closeModal();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeModal();
+});
+
+// IMPORTANT: prevent links from navigating to the image
+document.addEventListener("click", (e) => {
+  // Change ".card-img" to whatever class your sell page uses for card images
+  const img = e.target.closest(".card-img, .card-zoom-img, img[data-zoom]");
+  if (!img) return;
+
+  // If the image is inside <a href="...">, prevent navigation
+  const a = img.closest("a");
+  if (a) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  openModal(img.src);
+});
