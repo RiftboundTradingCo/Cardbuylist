@@ -384,6 +384,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const groups = groupCart(cart);
         const order = [];
 
+// (1) build order lines 
         for (const g of groups) {
           const { sku, item } = resolveSellItem(g.key, g.name);
           if (!item) continue;
@@ -435,6 +436,29 @@ document.addEventListener("DOMContentLoaded", async () => {
           throw new Error((data && data.error) || text || `HTTP ${res.status}`);
         }
 
+// ✅ Save recap payload for recap.html (use cents to avoid $0.00 bugs)
+const orderForRecap = order.map(l => {
+  const unitPriceCents = Math.round(Number(l.unitPrice || 0) * 100);
+  const lineTotalCents = unitPriceCents * Math.max(0, Number(l.qty || 0));
+  return {
+    name: l.name,
+    condition: l.condition,     // NM/LP/MP
+    qty: Number(l.qty || 0),
+    unitPriceCents,
+    lineTotalCents
+  };
+});
+
+const totalCents = orderForRecap.reduce((s, l) => s + (l.lineTotalCents || 0), 0);
+
+sessionStorage.setItem("sellOrderRecap", JSON.stringify({
+  name: "Sell Customer",
+  email,
+  order: orderForRecap,
+  totalCents
+}));
+
+ // Save recap payload (in cents) for recap.html
         sessionStorage.setItem("sellOrderRecap", JSON.stringify({
           name: "Sell Customer",
           email,
@@ -442,6 +466,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           totalCents
         }));
 
+// (4) clear + redirect
         saveCart([]);
         window.location.href = "/recap.html";
       } catch (err) {

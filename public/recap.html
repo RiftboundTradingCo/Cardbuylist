@@ -1,65 +1,320 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Sell Order Recap</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    :root{
+      --card-bg: rgba(255,255,255,.92);
+      --border: rgba(0,0,0,.12);
+      --shadow: 0 18px 40px rgba(0,0,0,.22);
+      --text: #0f172a;
+      --muted: #475569;
+      --accent: #2563eb;
+    }
+
+    body{
+      background: url("/images/wooden-shelves.jpg") repeat;
+      padding: 24px;
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    .wrap{
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .hero{
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px 18px 14px;
+      margin-bottom: 18px;
+      backdrop-filter: blur(4px);
+    }
+
+    .hero-top{
+      display:flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    h1{
+      margin: 0;
+      font-size: 34px;
+      letter-spacing: -0.5px;
+    }
+
+    .sub{
+      margin-top: 6px;
+      color: var(--muted);
+      line-height: 1.4;
+      max-width: 720px;
+    }
+
+    .meta{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(37,99,235,.10);
+      border: 1px solid rgba(37,99,235,.25);
+      color: #1e3a8a;
+      font-weight: 700;
+    }
+
+    .actions{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .btn{
+      appearance: none;
+      border: 1px solid var(--border);
+      background: white;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .btn.primary{
+      background: var(--accent);
+      color: white;
+      border-color: rgba(0,0,0,.0);
+    }
+
+    .card{
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+      margin-bottom: 18px;
+      backdrop-filter: blur(4px);
+    }
+
+    .card h2{
+      margin: 0 0 10px;
+      font-size: 20px;
+      letter-spacing: -0.2px;
+    }
+
+    table{
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.85);
+    }
+
+    th, td{
+      padding: 10px 10px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th{
+      background: rgba(15,23,42,.06);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #0f172a;
+    }
+
+    td.num, th.num{ text-align: right; white-space: nowrap; }
+    td.cond{ width: 70px; text-align:center; }
+    td.qty{ width: 70px; text-align:center; }
+
+    .total-row{
+      display:flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 12px;
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .muted{
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .shipbox{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .addr{
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px dashed rgba(0,0,0,.2);
+      background: rgba(255,255,255,.75);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 13px;
+      white-space: pre-line;
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{ background: white; padding: 0; }
+      .hero, .card{ box-shadow: none; border: 1px solid #ddd; background: white; }
+      .actions{ display:none; }
+    }
+  </style>
 </head>
-<header class="topbar">
-  <a class="brand" href="/index.html">
-    <img src="/images/riftbound-logo.jpg" alt="Riftbound Trading Co" class="site-logo" />
-    <span class="brand-name">Riftbound Trading Co</span>
-  </a>
-
-  <nav class="navlinks">
-    <a class="nav-sell" href="/index.html">Sell Cards</a>
-    <a class="nav-link" href="/sell-cart.html">
-  Sell Cart
-  <span class="cart-badge cart-badge--gem hidden" data-cart="sell" data-count="0">
-    <img src="/images/yellow-badge.png" alt="">
-    <span class="cart-badge__count">0</span>
-  </span>
-</a>
-    <a class="nav-buy" href="/buy.html">Buy Cards</a>
-    <a class="nav-link" href="/buy-cart.html">
-  Buy Cart
-  <span class="cart-badge cart-badge--gem hidden" data-cart="buy" data-count="0">
-    <img src="/images/red-badge.png" alt="">
-    <span class="cart-badge__count">0</span>
-  </span>
-</a>
-    <a class="nav-contact" href="/contact.html">Contact</a>
-  </nav>
-</header>
-
-
-
-
 
 <body>
+  <div class="wrap">
+    <div class="hero">
+      <div class="hero-top">
+        <div>
+          <h1>Sell Order Recap</h1>
+          <div class="sub">
+            Print this recap and include it in your package so we can match your shipment quickly.
+	    An copy of this recap has been emailed to you as well.
+          </div>
+          <div class="meta">
+            <span class="pill" id="recapName">Name: —</span>
+            <span class="pill" id="recapEmail">Email: —</span>
+          </div>
+          <div class="actions">
+            <button class="btn primary" onclick="window.print()">Print</button>
+            <button class="btn" onclick="window.location.href='/sell-cards.html'">Back to Sell Cards</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <h1>Sell Order Recap</h1>
-  <p>This is your sell order. Please print this recap to include in the package so we can easily identfy your buylist.</p>
+    <div class="card">
+      <h2>Cards</h2>
+      <div class="muted" id="emptyMsg" style="display:none;">
+        No recap data found. Please submit a sell order again.
+      </div>
 
-  <div id="recapBox"></div>
+      <table id="cardsTable" style="display:none;">
+        <thead>
+          <tr>
+            <th class="qty">Qty</th>
+            <th>Card</th>
+            <th class="cond">Cond</th>
+            <th class="num">Unit</th>
+            <th class="num">Line Total</th>
+          </tr>
+        </thead>
+        <tbody id="cardsBody"></tbody>
+      </table>
 
-  <h2>Shipping Instructions</h2>
-  <div class="shipping-box">
-    <p><strong>Make sure to pack securely:</strong> Please refrain from sleeving cards (It is okay to sleeve/topload more expensive cards, E.g. Signature/ON), use a team bag, and protect with cardboard. It is highly recommended to ship in one rows if shipping larger orders. (200 ct-900ct)</p>
-    <p><strong>Include:</strong> This recap, if you you can not add the recap please add a piece of paper with your email that you used to submit the order.</p>
-    <p><strong>Ship to:</strong></p>
-    <pre id="shipTo">
+      <div class="total-row">
+        <div>Total:</div>
+        <div id="totalOut">$0.00</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Shipping Instructions</h2>
+      <div class="shipbox">
+        <div class="muted">
+          Please make sure to pack your cards in the same order as this recap.
+          Please make sure to pack cards your cards securely. 
+	  Avoid sleeves on individual cards. (it’s okay for higher-end cards). 
+          Use a team bag and cardboard protection.
+          If you can’t print this recap, include a note with the email you used to submit the order.
+        </div>
+        <div class="addr">
 Riftbound Trading Co
-325 priest point drive NW
-Tulalip, WA 98271
-USA
-    </pre>
+1010 State Ave #1023
+Marysville, WA 98270
+        </div>
+      </div>
+    </div>
 
-    <p><strong>After we receive your cards:</strong> We will inspect condition and confirm totals, then pay you via your preferred payment. If you wish to recieve a recap of conditions/ discrepencies before payment please include a note in your package. We will send you an email for approval before final payment is sent.  </p>
+    <div class="card">
+      <h2>What happens next</h2>
+      <div class="muted">
+        After we receive your cards, we’ll inspect condition and confirm totals, then pay you via your preferred method.
+        If you want a condition approval before payment, include a note in your package. We will email you before finalizing your order.
+      </div>
+    </div>
   </div>
 
-  <p><a href="/">Back to Buylist</a></p>
+  <script>
+    function moneyFromCents(cents){
+      return `$${(Number(cents || 0) / 100).toFixed(2)}`;
+    }
 
-  <script src="recap.js"></script>
+    function safeParse(raw){
+      try { return JSON.parse(raw); } catch { return null; }
+    }
+
+    const data = safeParse(sessionStorage.getItem("sellOrderRecap") || "");
+
+    const nameEl = document.getElementById("recapName");
+    const emailEl = document.getElementById("recapEmail");
+    const emptyMsg = document.getElementById("emptyMsg");
+    const table = document.getElementById("cardsTable");
+    const body = document.getElementById("cardsBody");
+    const totalOut = document.getElementById("totalOut");
+
+    if (!data || !Array.isArray(data.order) || data.order.length === 0) {
+      emptyMsg.style.display = "block";
+    } else {
+      table.style.display = "table";
+
+      nameEl.textContent = `Name: ${data.name || "Sell Customer"}`;
+      emailEl.textContent = `Email: ${data.email || ""}`;
+
+      let totalCents = Number(data.totalCents || 0);
+
+      // If totalCents missing, compute from lines
+      if (!Number.isFinite(totalCents) || totalCents <= 0) {
+        totalCents = data.order.reduce((sum, l) => sum + Number(l.lineTotalCents || 0), 0);
+      }
+
+      body.innerHTML = "";
+
+      for (const l of data.order) {
+        const qty = Number(l.qty || 0);
+        const card = String(l.name || "");
+        const cond = String(l.condition || "");
+        const unitCents = Number(l.unitPriceCents || 0);
+        const lineCents = Number(l.lineTotalCents || (unitCents * qty));
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="qty">${qty}</td>
+          <td><strong>${card}</strong></td>
+          <td class="cond">${cond}</td>
+          <td class="num">${moneyFromCents(unitCents)}</td>
+          <td class="num"><strong>${moneyFromCents(lineCents)}</strong></td>
+        `;
+        body.appendChild(tr);
+      }
+
+      totalOut.textContent = moneyFromCents(totalCents);
+    }
+  </script>
 </body>
 </html>
 
