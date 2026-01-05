@@ -8,8 +8,11 @@ const fs = require("fs");
 const crypto = require("crypto");
 const Stripe = require("stripe");
 const { Resend } = require("resend");
+const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
 
 const app = express();
+app.use(cookieParser());
 
 /* =========================
    ENV
@@ -34,6 +37,7 @@ const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 const CATALOG_PATH = path.join(__dirname, "catalog.json");
 const SELLLIST_PATH = path.join(__dirname, "selllist.json");
 const ORDERS_PATH = path.join(__dirname, "data", "orders.json");
+const USERS_PATH = path.join(__dirname, "data", "users.json"); // ✅ FIX
 
 /* =========================
    HELPERS
@@ -71,7 +75,7 @@ function makeOrderId() {
 function appendOrder(order) {
   const db = readJsonSafe(ORDERS_PATH);
   const out = {
-    orders: Array.isArray(db.orders) ? db.orders : []
+    orders: Array.isArray(db.orders) ? db.orders : [],
   };
   out.orders.unshift(order);
   writeJsonSafe(ORDERS_PATH, out);
@@ -81,12 +85,23 @@ const CONDITION_MULT = {
   "Near Mint": 1,
   "Lightly Played": 0.9,
   "Moderately Played": 0.8,
-  "Heavily Played": 0.65
+  "Heavily Played": 0.65,
 };
 
 function normalizeCondition(c) {
   const s = String(c || "").trim();
   return CONDITION_MULT[s] ? s : "Near Mint";
+}
+
+function normalizeSellCondition(c) {
+  // ✅ FIX: SELL orders store NM/LP/MP (sometimes HP)
+  const s = String(c || "").trim().toUpperCase();
+  if (s === "NM") return "Near Mint";
+  if (s === "LP") return "Lightly Played";
+  if (s === "MP") return "Moderately Played";
+  if (s === "HP") return "Heavily Played";
+  // If someone accidentally sends full names, accept them too:
+  return normalizeCondition(c);
 }
 
 function centsForCondition(base, cond) {
@@ -122,6 +137,60 @@ function requireAdmin(req, res, next) {
 }
 
 /* =========================
+   USERS DB + SESSION HELPERS
+========================= */
+function readUsersDb() {
+  const db = readJsonSafe(USERS_PATH);
+  if (!db || typeof db !== "object") return { users: [] };
+  if (!Array.isArray(db.users)) db.users = [];
+  return db;
+}
+
+function writeUsersDb(db) {
+  return writeJsonSafe(USERS_PATH, db);
+}
+
+function makeUserId() {
+  return `usr_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
+}
+
+// Simple signed cookie session
+function setSession(res, userId) {
+  const secret = process.env.SESSION_SECRET || "dev_secret";
+  const sig = crypto.createHmac("sha256", secret).update(userId).digest("hex");
+
+  res.cookie("sid", `${userId}.${sig}`, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+  });
+}
+
+function clearSession(res) {
+  res.clearCookie("sid");
+}
+
+function getSessionUserId(req) {
+  const raw = String(req.cookies?.sid || "");
+  const [userId, sig] = raw.split(".");
+  if (!userId || !sig) return null;
+
+  const secret = process.env.SESSION_SECRET || "dev_secret";
+  const expected = crypto.createHmac("sha256", secret).update(userId).digest("hex");
+
+  if (sig !== expected) return null;
+  return userId;
+}
+
+function requireAuth(req, res, next) {
+  const userId = getSessionUserId(req);
+  if (!userId) return res.status(401).json({ ok: false, error: "Not logged in" });
+  req.userId = userId;
+  next();
+}
+
+/* =========================
    STRIPE WEBHOOK (RAW BODY)
    NOTE: must be BEFORE express.json()
 ========================= */
@@ -146,6 +215,8 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
 
       const orderId = String(session?.metadata?.orderId || "").trim() || makeOrderId();
 
+      const userId = String(session?.metadata?.userId || "").trim() || null; // ✅ used in all paths
+
       let cart = [];
       try {
         cart = JSON.parse(session?.metadata?.cart || "[]");
@@ -165,7 +236,6 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
 
       const lines = [];
       const emailLines = [];
-
       let totalCents = 0;
 
       for (const it of cart) {
@@ -191,29 +261,41 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
 
           appendOrder({
             id: orderId,
+            userId, // ✅ FIX: include userId on needs_review too
             type: "buy",
             status: "needs_review",
             createdAt: new Date().toISOString(),
             customer: { name: shipName, email: customerEmail },
-            lines: cart.map(x => ({
+            lines: cart.map((x) => ({
               sku: String(x?.sku || ""),
               condition: normalizeCondition(x?.condition),
-              qty: Math.max(1, Number(x?.qty || 0))
+              qty: Math.max(1, Number(x?.qty || 0)),
             })),
             totalCents,
             stripeSessionId: session.id,
-            error: dec.error || "Inventory decrement failed"
+            error: dec.error || "Inventory decrement failed",
           });
 
           // respond 200 so Stripe does not retry forever
           return res.json({ received: true });
         }
 
-        lines.push({ sku, condition, qty });
+        const name = String(product.name || sku);
+
+         lines.push({
+         sku,
+         name,
+         condition,
+         qty,
+         unitPriceCents: unitCents,
+         lineTotalCents: lineCents
+       });
 
         const name = String(product.name || sku);
         emailLines.push(
-          `${qty}x ${name} — ${condition} — $${(unitCents / 100).toFixed(2)} each = $${(lineCents / 100).toFixed(2)}`
+          `${qty}x ${name} — ${condition} — $${(unitCents / 100).toFixed(2)} each = $${(
+            lineCents / 100
+          ).toFixed(2)}`
         );
       }
 
@@ -223,13 +305,14 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
       // save order
       appendOrder({
         id: orderId,
+        userId,
         type: "buy",
         status: "paid",
         createdAt: new Date().toISOString(),
         customer: { name: shipName, email: customerEmail },
         lines,
         totalCents,
-        stripeSessionId: session.id
+        stripeSessionId: session.id,
       });
 
       // optional emails
@@ -241,7 +324,9 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
             from: EMAIL_FROM,
             to: OWNER_EMAIL,
             subject: `New order ${orderId}`,
-            text: `Order ${orderId}\nCustomer: ${shipName} <${customerEmail}>\nTotal: ${totalNice}\n\n${emailLines.join("\n")}`
+            text: `Order ${orderId}\nCustomer: ${shipName} <${customerEmail}>\nTotal: ${totalNice}\n\n${emailLines.join(
+              "\n"
+            )}`,
           });
         }
 
@@ -250,7 +335,9 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
             from: EMAIL_FROM,
             to: customerEmail,
             subject: `Your Riftbound order receipt (${orderId})`,
-            text: `Thanks for your purchase!\nOrder: ${orderId}\nTotal: ${totalNice}\n\n${emailLines.join("\n")}`
+            text: `Thanks for your purchase!\nOrder: ${orderId}\nTotal: ${totalNice}\n\n${emailLines.join(
+              "\n"
+            )}`,
           });
         }
       }
@@ -269,7 +356,9 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-
+/* =========================
+   STRIPE CHECKOUT SESSION
+========================= */
 app.post("/api/create-checkout-session", async (req, res) => {
   try {
     if (!stripe) return res.status(500).json({ ok: false, error: "Stripe not configured" });
@@ -295,7 +384,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
       if (qty > curStock) {
         return res.status(400).json({
           ok: false,
-          error: `Not enough stock for ${product.name || sku} (${condition}). Have ${curStock}, requested ${qty}`
+          error: `Not enough stock for ${product.name || sku} (${condition}). Have ${curStock}, requested ${qty}`,
         });
       }
 
@@ -306,12 +395,13 @@ app.post("/api/create-checkout-session", async (req, res) => {
         price_data: {
           currency: "usd",
           unit_amount: unitCents,
-          product_data: { name: `${product.name || sku} (${condition})` }
-        }
+          product_data: { name: `${product.name || sku} (${condition})` },
+        },
       });
     }
 
     const orderId = makeOrderId();
+    const userId = getSessionUserId(req); // ✅ userId into Stripe metadata
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -323,8 +413,9 @@ app.post("/api/create-checkout-session", async (req, res) => {
       metadata: {
         orderId,
         cart: JSON.stringify(cart),
-        email: email || ""
-      }
+        email,
+        userId: userId || "",
+      },
     });
 
     return res.json({ ok: true, url: session.url, id: session.id, orderId });
@@ -340,7 +431,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
 app.get("/health", (req, res) => res.send("OK"));
 
 /* =========================
-   API ROUTES
+   PUBLIC API ROUTES
 ========================= */
 app.get("/api/catalog", (req, res) => {
   res.json({ ok: true, catalog: readJsonSafe(CATALOG_PATH) });
@@ -351,9 +442,7 @@ app.get("/api/selllist", (req, res) => {
 });
 
 /* =========================
-   SELL SUBMIT (basic)
-   NOTE: this currently just records an order.
-   You can extend it to also decrement selllist max, etc.
+   SELL SUBMIT
 ========================= */
 app.post("/api/submit", async (req, res) => {
   try {
@@ -376,11 +465,11 @@ app.post("/api/submit", async (req, res) => {
     for (const l of order) {
       const sku = String(l.sku || "").trim();
       const cardName = String(l.name || "").trim();
-      const condition = String(l.condition || "NM").trim(); // NM/LP/MP
+      const condition = String(l.condition || "NM").trim().toUpperCase(); // NM/LP/MP
       const qty = Math.max(0, Number(l.qty || 0));
 
       const unitPriceCents = Number(l.unitPriceCents || 0);
-      const lineTotalCents = Number(l.lineTotalCents || (unitPriceCents * qty));
+      const lineTotalCents = Number(l.lineTotalCents || unitPriceCents * qty);
 
       if (!sku || !qty) continue;
 
@@ -392,11 +481,11 @@ app.post("/api/submit", async (req, res) => {
 
       lines.push({
         sku,
-        name: cardName || (selllist?.[sku]?.name || sku),
-        condition,
+        name: cardName || selllist?.[sku]?.name || sku,
+        condition, // keep NM/LP/MP in sell orders
         qty,
         unitPriceCents,
-        lineTotalCents
+        lineTotalCents,
       });
 
       totalCents += lineTotalCents;
@@ -404,16 +493,18 @@ app.post("/api/submit", async (req, res) => {
 
     writeJsonSafe(SELLLIST_PATH, selllist);
 
-    const orderId = makeOrderId();
+    const orderId = makeOrderId(); // ✅ FIX: one orderId used everywhere
+    const userId = getSessionUserId(req);
 
     appendOrder({
-      id: orderId,
+      id: orderId, // ✅ FIX (was makeOrderId() again)
+      userId: userId || null,
       type: "sell",
       status: "submitted",
       createdAt: new Date().toISOString(),
       customer: { name, email },
       lines,
-      totalCents
+      totalCents,
     });
 
     return res.json({ ok: true, orderId });
@@ -423,6 +514,100 @@ app.post("/api/submit", async (req, res) => {
   }
 });
 
+/* =========================
+   AUTH
+========================= */
+app.post("/api/auth/signup", async (req, res) => {
+  try {
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const password = String(req.body?.password || "");
+    const name = String(req.body?.name || "").trim();
+
+    if (!email || !email.includes("@")) {
+      return res.status(400).json({ ok: false, error: "Valid email required" });
+    }
+    if (!password || password.length < 8) {
+      return res.status(400).json({ ok: false, error: "Password must be 8+ characters" });
+    }
+
+    const db = readUsersDb();
+    const exists = db.users.find((u) => u.email === email);
+    if (exists) return res.status(409).json({ ok: false, error: "Email already in use" });
+
+    const hash = await bcrypt.hash(password, 12);
+
+    const user = {
+      id: makeUserId(),
+      email,
+      name,
+      passwordHash: hash,
+      createdAt: new Date().toISOString(),
+    };
+
+    db.users.unshift(user);
+    writeUsersDb(db);
+
+    setSession(res, user.id);
+    return res.json({ ok: true, user: { id: user.id, email: user.email, name: user.name } });
+  } catch (e) {
+    console.error("signup error:", e);
+    return res.status(500).json({ ok: false, error: "Signup failed" });
+  }
+});
+
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const password = String(req.body?.password || "");
+
+    const db = readUsersDb();
+    const user = db.users.find((u) => u.email === email);
+    if (!user) return res.status(401).json({ ok: false, error: "Invalid credentials" });
+
+    const ok = await bcrypt.compare(password, user.passwordHash);
+    if (!ok) return res.status(401).json({ ok: false, error: "Invalid credentials" });
+
+    setSession(res, user.id);
+    return res.json({ ok: true, user: { id: user.id, email: user.email, name: user.name } });
+  } catch (e) {
+    console.error("login error:", e);
+    return res.status(500).json({ ok: false, error: "Login failed" });
+  }
+});
+
+app.post("/api/auth/logout", (req, res) => {
+  clearSession(res);
+  res.json({ ok: true });
+});
+
+app.get("/api/me", (req, res) => {
+  const userId = getSessionUserId(req);
+  if (!userId) return res.json({ ok: true, user: null });
+
+  const db = readUsersDb();
+  const user = db.users.find((u) => u.id === userId);
+  if (!user) return res.json({ ok: true, user: null });
+
+  res.json({ ok: true, user: { id: user.id, email: user.email, name: user.name } });
+});
+
+app.get("/api/my/orders", requireAuth, (req, res) => {
+  const db = readJsonSafe(ORDERS_PATH) || { orders: [] };
+  const orders = Array.isArray(db.orders) ? db.orders : [];
+
+  // Optional fallback: also match by account email (useful if user checked out while logged out)
+  const usersDb = readUsersDb();
+  const me = usersDb.users.find((u) => u.id === req.userId);
+  const myEmail = String(me?.email || "").toLowerCase();
+
+  const mine = orders.filter(
+    (o) =>
+      o.userId === req.userId ||
+      (myEmail && String(o.customer?.email || "").toLowerCase() === myEmail)
+  );
+
+  res.json({ ok: true, orders: mine });
+});
 
 /* =========================
    ADMIN ROUTES
@@ -438,9 +623,10 @@ app.post("/api/admin/orders/:id/approve", requireAdmin, (req, res) => {
   const db = readJsonSafe(ORDERS_PATH) || { orders: [] };
   db.orders = Array.isArray(db.orders) ? db.orders : [];
 
-  const order = db.orders.find(o => o.id === id);
+  const order = db.orders.find((o) => o.id === id);
   if (!order) return res.status(404).json({ ok: false, error: "Order not found" });
 
+  // Idempotent
   if (order.status === "approved" || order.status === "checked_in" || order.status === "fulfilled") {
     return res.json({ ok: true, order });
   }
@@ -448,16 +634,22 @@ app.post("/api/admin/orders/:id/approve", requireAdmin, (req, res) => {
   if (order.type === "sell") {
     const catalog = readJsonSafe(CATALOG_PATH);
 
-    for (const l of (order.lines || [])) {
+    for (const l of order.lines || []) {
       const sku = String(l.sku || "").trim();
-      const cond = normalizeCondition(l.condition);
+      const cond = normalizeSellCondition(l.condition); // ✅ FIX for NM/LP/MP
       const qty = Math.max(0, Number(l.qty || 0));
       if (!sku || qty <= 0) continue;
       if (!catalog[sku]) continue;
 
       if (!catalog[sku].stock || typeof catalog[sku].stock !== "object") {
-        catalog[sku].stock = { "Near Mint": 0, "Lightly Played": 0, "Moderately Played": 0, "Heavily Played": 0 };
+        catalog[sku].stock = {
+          "Near Mint": 0,
+          "Lightly Played": 0,
+          "Moderately Played": 0,
+          "Heavily Played": 0,
+        };
       }
+
       catalog[sku].stock[cond] = Number(catalog[sku].stock[cond] || 0) + qty;
     }
 
@@ -478,12 +670,11 @@ app.post("/api/admin/orders/:id/fulfill", requireAdmin, (req, res) => {
   const db = readJsonSafe(ORDERS_PATH) || { orders: [] };
   db.orders = Array.isArray(db.orders) ? db.orders : [];
 
-  const order = db.orders.find(o => o.id === id);
+  const order = db.orders.find((o) => o.id === id);
   if (!order) return res.status(404).json({ ok: false, error: "Order not found" });
 
   order.status = "shipped";
   order.shippedAt = new Date().toISOString();
-
 
   writeJsonSafe(ORDERS_PATH, db);
   res.json({ ok: true, order });
@@ -495,5 +686,3 @@ app.post("/api/admin/orders/:id/fulfill", requireAdmin, (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
-
-

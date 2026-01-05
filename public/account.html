@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>My Account</title>
+  <link rel="stylesheet" href="/style.css"/>
+
+  <style>
+    /* Make wood background readable */
+    body{
+      background: url("/images/wooden-shelves.jpg") repeat;
+      padding: 18px;
+    }
+
+    .page-wrap{
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .panel{
+      background: rgba(255,255,255,.94);
+      backdrop-filter: blur(3px);
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.18);
+      padding: 16px;
+      margin: 14px 0;
+    }
+
+    .row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    h1{ margin: 0; }
+    .muted{ opacity:.78; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+
+    .btn{
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-ghost{
+      background: rgba(0,0,0,.06);
+    }
+    .btn-ghost:hover{ background: rgba(0,0,0,.10); }
+
+    /* Tabs */
+    .tabs{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 10px;
+    }
+    .tab{
+      border: 1px solid rgba(0,0,0,.12);
+      background: rgba(255,255,255,.75);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .tab.active{
+      background: #111827;
+      color: #fff;
+      border-color: #111827;
+    }
+
+    /* Order cards */
+    .order{
+      border-top: 1px solid rgba(0,0,0,.10);
+      padding-top: 12px;
+      margin-top: 12px;
+    }
+    .pill{
+      display:inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      margin-left: 8px;
+    }
+    .pill.buy{ background:#dbeafe; color:#1e40af; }
+    .pill.sell{ background:#fde68a; color:#92400e; }
+    .pill.paid{ background:#dcfce7; color:#166534; }
+    .pill.submitted{ background:#e5e7eb; color:#374151; }
+    .pill.checked_in{ background:#cffafe; color:#155e75; }
+    .pill.shipped{ background:#e9d5ff; color:#6b21a8; }
+    .pill.needs_review{ background:#fee2e2; color:#991b1b; }
+
+    .lines{
+      margin: 10px 0 0;
+      padding-left: 18px;
+    }
+    .lines li{
+      margin: 6px 0;
+      line-height: 1.25rem;
+    }
+
+    .totals{
+      margin-top: 8px;
+      display:flex;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap:wrap;
+    }
+
+    .small{
+      font-size: 13px;
+    }
+
+    a{ font-weight: 700; }
+  </style>
+</head>
+
+<body>
+  <div class="page-wrap">
+
+    <div class="panel">
+      <div class="row">
+        <h1>My Account</h1>
+        <button id="logout" class="btn btn-ghost">Logout</button>
+      </div>
+      <div id="who" style="margin-top:10px">Loading…</div>
+
+      <div class="tabs" style="margin-top:14px">
+        <button class="tab active" data-tab="all">All</button>
+        <button class="tab" data-tab="buy">Buy</button>
+        <button class="tab" data-tab="sell">Sell</button>
+        <button class="tab" data-tab="shipped">Shipped</button>
+      </div>
+    </div>
+
+    <div id="ordersPanel" class="panel">
+      <div class="row">
+        <strong style="font-size:18px">Orders</strong>
+        <span id="ordersHint" class="muted small"></span>
+      </div>
+      <div id="orders">Loading orders…</div>
+    </div>
+
+    <div class="panel">
+      <a href="/">Back to shop</a>
+    </div>
+  </div>
+
+<script>
+  const money = (cents) => `$${(Number(cents||0)/100).toFixed(2)}`;
+
+  function esc(s){
+    return String(s ?? "").replace(/[&<>"']/g, (c) => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[c]));
+  }
+
+  function statusPill(status){
+    const s = String(status||"").toLowerCase().replace(/\s+/g, "_");
+    return `<span class="pill ${esc(s)}">${esc(status||"")}</span>`;
+  }
+
+  function typePill(type){
+    const t = String(type||"").toLowerCase();
+    return `<span class="pill ${esc(t)}">${esc((type||"").toUpperCase())}</span>`;
+  }
+
+  function renderOrder(o){
+    const id = esc(o.id || "");
+    const type = String(o.type || "");
+    const status = String(o.status || "");
+    const created = o.createdAt ? new Date(o.createdAt).toLocaleString() : "";
+    const totalCents = Number(o.totalCents || 0);
+
+    const lines = Array.isArray(o.lines) ? o.lines : [];
+    const linesHtml = lines.length
+      ? `<ul class="lines">${
+          lines.map(l => {
+            const qty = Number(l.qty || 0);
+            const name = esc(l.name || l.sku || "Item");
+            const cond = esc(l.condition || "");
+            const unit = Number(l.unitPriceCents || 0);
+            const lineTot = Number(l.lineTotalCents || (unit * qty) || 0);
+
+            // Some old buy orders might not have unitPriceCents/lineTotalCents saved:
+            const unitText = unit ? money(unit) : "";
+            const lineText = lineTot ? money(lineTot) : "";
+
+            return `<li>
+              <strong>${qty}×</strong> ${name}
+              ${cond ? `<span class="muted">(${cond})</span>` : ""}
+              ${unitText ? `— <span class="muted">Unit:</span> <strong>${unitText}</strong>` : ""}
+              ${lineText ? `— <span class="muted">Line:</span> <strong>${lineText}</strong>` : ""}
+            </li>`;
+          }).join("")
+        }</ul>`
+      : `<div class="muted small" style="margin-top:8px">No line items stored for this order.</div>`;
+
+    return `
+      <div class="order">
+        <div class="row">
+          <div>
+            <span class="mono"><strong>${id}</strong></span>
+            ${typePill(type)}
+            ${statusPill(status)}
+          </div>
+          <div><strong>${money(totalCents)}</strong></div>
+        </div>
+
+        <div class="muted small" style="margin-top:4px">${esc(created)}</div>
+
+        ${linesHtml}
+      </div>
+    `;
+  }
+
+  function filterOrders(orders, tab){
+    if (tab === "all") return orders;
+
+    if (tab === "buy") return orders.filter(o => String(o.type).toLowerCase() === "buy");
+    if (tab === "sell") return orders.filter(o => String(o.type).toLowerCase() === "sell");
+
+    if (tab === "shipped") return orders.filter(o => String(o.status).toLowerCase() === "shipped");
+
+    return orders;
+  }
+
+  async function load(){
+    // who am I
+    const meRes = await fetch("/api/me");
+    const me = await meRes.json().catch(()=>({}));
+    if (!me.ok || !me.user) {
+      window.location.href = "/login.html";
+      return;
+    }
+
+    document.getElementById("who").innerHTML =
+      `<div>
+        <strong style="font-size:18px">${esc(me.user.name || "Customer")}</strong>
+        <div class="muted">${esc(me.user.email || "")}</div>
+      </div>`;
+
+    // orders
+    const oRes = await fetch("/api/my/orders");
+    const oData = await oRes.json().catch(()=>({}));
+    if (!oRes.ok || !oData.ok) {
+      document.getElementById("orders").textContent = "Could not load orders.";
+      return;
+    }
+
+    const allOrders = Array.isArray(oData.orders) ? oData.orders : [];
+    window.__ALL_ORDERS__ = allOrders;
+
+    setTab("all");
+  }
+
+  function setTab(tab){
+    // UI state
+    document.querySelectorAll(".tab").forEach(b => {
+      b.classList.toggle("active", b.dataset.tab === tab);
+    });
+
+    const orders = window.__ALL_ORDERS__ || [];
+    const filtered = filterOrders(orders, tab);
+
+    const hint = document.getElementById("ordersHint");
+    hint.textContent = filtered.length ? `${filtered.length} order(s)` : `No orders`;
+
+    const ordersEl = document.getElementById("orders");
+    if (!filtered.length){
+      ordersEl.innerHTML = `<p class="muted" style="margin-top:10px">No orders yet in this view.</p>`;
+      return;
+    }
+
+    ordersEl.innerHTML = filtered.map(renderOrder).join("");
+  }
+
+  // tab clicks
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".tab");
+    if (!btn) return;
+    setTab(btn.dataset.tab || "all");
+  });
+
+  // logout
+  document.getElementById("logout").onclick = async () => {
+    await fetch("/api/auth/logout", { method:"POST" });
+    window.location.href = "/";
+  };
+
+  load();
+</script>
+</body>
+</html>

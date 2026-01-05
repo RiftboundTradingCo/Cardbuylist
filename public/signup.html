@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Sign up</title>
+  <link rel="stylesheet" href="/style.css"/>
+</head>
+<body>
+  <div class="page-wrap">
+    <h1>Create account</h1>
+    <p id="msg" style="color:#b00020"></p>
+
+    <input id="name" placeholder="Name (optional)" autocomplete="name"/>
+    <input id="email" placeholder="Email" autocomplete="email"/>
+    <input id="password" type="password" placeholder="Password (8+ chars)" autocomplete="new-password"/>
+    <button id="btn">Sign up</button>
+
+    <p><a href="/login.html">Already have an account?</a></p>
+    <p><a href="/">Back to shop</a></p>
+  </div>
+
+<script>
+document.getElementById("btn").onclick = async () => {
+  const name = document.getElementById("name").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  const res = await fetch("/api/auth/signup", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ name, email, password })
+  });
+
+  const data = await res.json().catch(()=>({}));
+  if (!res.ok || !data.ok) {
+    document.getElementById("msg").textContent = data.error || "Signup failed";
+    return;
+  }
+  window.location.href = "/account.html";
+};
+</script>
+</body>
+</html>
