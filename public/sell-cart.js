@@ -9,6 +9,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const emailInput = document.getElementById("sellEmail");
   const submitBtn = document.getElementById("sellSubmitBtn");
 
+  // The row that contains the email input + submit button
+  const checkoutRow = emailInput ? emailInput.closest(".cart-checkout-row") : null;
+  // The label above the row (Email for confirmation)
+  const checkoutLabel = emailInput ? document.querySelector('label[for="sellEmail"]') : null;
+
   if (!listEl || !totalEl) return;
 
   // Sell cart uses NM/LP/MP
@@ -37,6 +42,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function money(n) {
     return `$${(Number(n || 0)).toFixed(2)}`;
+  }
+
+  function moneyCents(cents) {
+    return `$${(Number(cents || 0) / 100).toFixed(2)}`;
   }
 
   function normalizeTab(t) {
@@ -187,6 +196,63 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   if (modalClose) modalClose.addEventListener("click", closeModal);
   if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+
+  // ---------- Better UX: Logged in as... ----------
+  let loggedInEmail = "";
+
+  async function applyLoggedInAsUX() {
+    if (!emailInput) return;
+
+    try {
+      const res = await fetch("/api/me", { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      loggedInEmail = data?.ok && data?.user?.email ? String(data.user.email).trim() : "";
+    } catch {
+      loggedInEmail = "";
+    }
+
+    if (!loggedInEmail) {
+      // Not logged in → keep normal input visible/editable
+      emailInput.readOnly = false;
+      emailInput.disabled = false;
+      if (checkoutRow) checkoutRow.style.display = "";
+      if (checkoutLabel) checkoutLabel.style.display = "";
+      return;
+    }
+
+    // Logged in → lock email + hide row/label and show “Logged in as…”
+    emailInput.value = loggedInEmail;
+    emailInput.readOnly = true;
+
+    if (checkoutRow) checkoutRow.style.display = "none";
+    if (checkoutLabel) checkoutLabel.style.display = "none";
+
+    const host = checkoutRow?.parentElement || emailInput.parentElement;
+    if (!host) return;
+
+    if (document.getElementById("loggedInAsBox")) return;
+
+    const box = document.createElement("div");
+    box.id = "loggedInAsBox";
+    box.style.cssText = `
+      margin-top: 10px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(0,0,0,.12);
+      font-weight: 800;
+    `;
+    box.innerHTML = `
+      <div style="font-size:12px; opacity:.75; font-weight:800; margin-bottom:4px;">Logged in as</div>
+      <div style="font-size:15px;">${loggedInEmail}</div>
+      <div style="font-size:12px; opacity:.75; margin-top:6px; font-weight:700;">
+        (We’ll confirm this sell order here)
+      </div>
+    `;
+
+    host.insertBefore(box, host.firstChild);
+  }
 
   // ----- render -----
   function render() {
@@ -266,11 +332,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             <div class="cart-meta">
               <div>Condition: <strong>${activeTab}</strong></div>
-              <div>Unit: <strong>${money(unitCents / 100)}</strong></div>
+              <div>Unit: <strong>${moneyCents(unitCents)}</strong></div>
 
               <div class="cart-subline">
                 In cart (all conditions): <strong>${inCartAll}</strong> •
-                Subtotal: <strong>${money(subtotalCents / 100)}</strong>
+                Subtotal: <strong>${moneyCents(subtotalCents)}</strong>
               </div>
 
               <div>Max capacity: <strong>${maxCap}</strong></div>
@@ -284,7 +350,7 @@ document.addEventListener("DOMContentLoaded", async () => {
               <button class="qty-plus" type="button">+</button>
             </div>
 
-            <div class="line-price">${money((unitCents * activeQty) / 100)}</div>
+            <div class="line-price">${moneyCents(unitCents * activeQty)}</div>
 
             <button class="remove-cond-btn" type="button">Remove condition</button>
           </div>
@@ -306,6 +372,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     totalEl.textContent = (totalCents / 100).toFixed(2);
   }
 
+  // init
+  await applyLoggedInAsUX();
   render();
 
   // ===== click handlers =====
@@ -365,7 +433,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ===== submit sell order =====
   if (submitBtn) {
     submitBtn.addEventListener("click", async () => {
-      const email = String(emailInput?.value || "").trim();
+      // choose email: logged-in email wins; else use input
+      const email = String(loggedInEmail || emailInput?.value || "").trim();
       if (!email || !email.includes("@")) {
         showMsg("Please enter a valid email for confirmation.", false);
         return;
@@ -378,13 +447,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       submitBtn.disabled = true;
+      const prev = submitBtn.textContent;
       submitBtn.textContent = "Submitting...";
 
       try {
         const groups = groupCart(cart);
         const order = [];
 
-        // ✅ Build order lines WITH cents fields (this is the key change)
         for (const g of groups) {
           const { sku, item } = resolveSellItem(g.key, g.name);
           if (!item) continue;
@@ -408,16 +477,10 @@ document.addEventListener("DOMContentLoaded", async () => {
           }
         }
 
-        if (!order.length) {
-          showMsg("Could not build your order (missing selllist pricing).", false);
-          submitBtn.disabled = false;
-          submitBtn.textContent = "Submit Sell Order";
-          return;
-        }
+        if (!order.length) throw new Error("Could not build order (missing selllist pricing).");
 
         const totalCents = order.reduce((sum, l) => sum + Number(l.lineTotalCents || 0), 0);
 
-        // ✅ Send cents to server
         const res = await fetch("/api/submit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -437,7 +500,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           throw new Error((data && data.error) || text || `HTTP ${res.status}`);
         }
 
-        // ✅ STEP A: Save the same cents payload for recap.html
+        // recap payload for recap.html
         sessionStorage.setItem("sellOrderRecap", JSON.stringify({
           name: "Sell Customer",
           email,
@@ -445,14 +508,13 @@ document.addEventListener("DOMContentLoaded", async () => {
           totalCents
         }));
 
-        // ✅ Clear cart + redirect
         saveCart([]);
         window.location.href = "/recap.html";
       } catch (err) {
         console.error("Sell submit error:", err);
         showMsg(String(err.message || "Error submitting sell order. Try again."), false);
         submitBtn.disabled = false;
-        submitBtn.textContent = "Submit Sell Order";
+        submitBtn.textContent = prev || "Submit Sell Order";
       }
     });
   }

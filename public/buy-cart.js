@@ -1,23 +1,30 @@
 document.addEventListener("DOMContentLoaded", async () => {
-  console.log("✅ buy-cart.js loaded");
+  const BUY_CART_KEY = "buyCart";
 
   const listEl = document.getElementById("buyCartList");
   const totalEl = document.getElementById("buyCartTotal");
   const msgEl = document.getElementById("checkoutMsg");
+
   const clearBtn = document.getElementById("buyClearCartBtn");
   const checkoutBtn = document.getElementById("checkoutBtn");
+
+  // email field in buy-cart.html
   const emailInput = document.getElementById("buyEmail");
-  const shipBtn = document.getElementById("shippingCalcBtn");
+  const emailLabel = emailInput ? emailInput.closest("label") : null;
 
-  const BUY_CART_KEY = "buyCart";
+  // ---------- helpers ----------
+  function showMsg(text, ok = true) {
+    if (!msgEl) return;
+    msgEl.textContent = text || "";
+    msgEl.style.color = ok ? "#1b7f3a" : "#b00020";
+  }
 
-  // ---------- cart helpers ----------
+  function safeParse(raw, fallback) {
+    try { return JSON.parse(raw); } catch { return fallback; }
+  }
+
   function loadCart() {
-    try {
-      return JSON.parse(localStorage.getItem(BUY_CART_KEY) || "[]");
-    } catch {
-      return [];
-    }
+    return safeParse(localStorage.getItem(BUY_CART_KEY) || "[]", []);
   }
 
   function saveCart(cart) {
@@ -25,187 +32,77 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.dispatchEvent(new Event("cart:changed"));
   }
 
-  function qtyInBuyCart(sku, condition) {
-    const cart = loadCart();
-    const s = String(sku || "").trim();
-    const c = String(condition || "Near Mint").trim();
+  // ---------- “Logged in as …” UX ----------
+  async function applyLoggedInEmailUX() {
+    if (!emailInput) return;
 
-    return cart.reduce((sum, it) => {
-      if (
-        String(it.sku || "").trim() === s &&
-        String(it.condition || "Near Mint").trim() === c
-      ) {
-        return sum + Math.max(0, Number(it.qty || 0));
-      }
-      return sum;
-    }, 0);
-  }
+    try {
+      const res = await fetch("/api/me", { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
 
-  // ---------- config ----------
-  const TAB_ORDER = ["NM", "LP", "MP", "HP"];
-  const TAB_TO_COND = {
-    NM: "Near Mint",
-    LP: "Lightly Played",
-    MP: "Moderately Played",
-    HP: "Heavily Played",
-  };
+      const userEmail =
+        data?.ok && data?.user?.email ? String(data.user.email).trim() : "";
 
-  const CONDITION_MULT = {
-    "Near Mint": 1.0,
-    "Lightly Played": 0.9,
-    "Moderately Played": 0.8,
-    "Heavily Played": 0.65,
-  };
-
-  function money(cents) {
-    return `$${(Number(cents || 0) / 100).toFixed(2)}`;
-  }
-
-  function normalizeCondition(c) {
-    const allowed = Object.keys(CONDITION_MULT);
-    const s = String(c || "Near Mint").trim();
-    return allowed.includes(s) ? s : "Near Mint";
-  }
-
-  function calcUnitCents(baseCents, condition) {
-    const mult = CONDITION_MULT[normalizeCondition(condition)] ?? 1.0;
-    return Math.round(Number(baseCents || 0) * mult);
-  }
-
-  function normalizeImagePath(p) {
-    const s = String(p || "").trim();
-    if (!s) return "";
-    const withSlash = s.startsWith("/") ? s : `/${s}`;
-    return encodeURI(withSlash);
-  }
-
-  async function fetchCatalog() {
-    const res = await fetch("/api/catalog", { cache: "no-store" });
-    if (!res.ok) throw new Error(`Catalog HTTP ${res.status}`);
-    const data = await res.json();
-    if (!data?.ok || !data.catalog) throw new Error("Bad catalog JSON");
-    return data.catalog;
-  }
-
-  function getStockForCondition(product, condition) {
-    const cond = normalizeCondition(condition);
-    if (product && product.stock && typeof product.stock === "object") {
-      return Number(product.stock[cond] ?? 0);
-    }
-    return Number(product?.stock ?? 0); // fallback old format
-  }
-
-  function tabForCondition(cond) {
-    const c = normalizeCondition(cond);
-    for (const tab of TAB_ORDER) {
-      if (TAB_TO_COND[tab] === c) return tab;
-    }
-    return "NM";
-  }
-
-  // Group cart lines by SKU
-  function groupCart(cart) {
-    const groups = new Map(); // sku -> { sku, lines: Map(cond->qty), activeTab }
-    for (const line of cart) {
-      const sku = String(line.sku || "").trim();
-      if (!sku) continue;
-
-      const cond = normalizeCondition(line.condition);
-      const qty = Math.max(1, Number(line.qty || 1));
-
-      if (!groups.has(sku)) groups.set(sku, { sku, lines: new Map(), activeTab: "NM" });
-      const g = groups.get(sku);
-
-      g.lines.set(cond, (g.lines.get(cond) || 0) + qty);
-
-      // keep a reasonable default active tab
-      if (!g.activeTab || g.activeTab === "NM") {
-        g.activeTab = tabForCondition(cond);
-      }
-    }
-    return [...groups.values()];
-  }
-
-  // Flatten groups back to cart array [{sku, condition, qty}]
-  function flattenGroups(groups) {
-    const out = [];
-    for (const g of groups) {
-      for (const [cond, qty] of g.lines.entries()) {
-        const q = Number(qty) || 0;
-        if (q > 0) out.push({ sku: g.sku, condition: cond, qty: q });
-      }
-    }
-    return out;
-  }
-
-  // Clamp quantities to stock (per condition) using catalog
-  function clampGroupsToStock(groups, catalog) {
-    let changed = false;
-
-    for (const g of groups) {
-      const product = catalog[g.sku];
-      if (!product) continue;
-
-      for (const [cond, qty] of g.lines.entries()) {
-        const stock = getStockForCondition(product, cond);
-        if (stock >= 0 && qty > stock) {
-          g.lines.set(cond, stock);
-          changed = true;
-        }
-        if ((Number(g.lines.get(cond)) || 0) <= 0) {
-          g.lines.delete(cond);
-          changed = true;
-        }
+      if (!userEmail) {
+        // not logged in → keep normal input editable
+        emailInput.readOnly = false;
+        emailInput.disabled = false;
+        if (emailLabel) emailLabel.style.display = "";
+        return;
       }
 
-      // if active tab is empty, move to first available
-      const activeCond = TAB_TO_COND[g.activeTab] || "Near Mint";
-      const activeQty = Number(g.lines.get(activeCond) || 0);
-      if (!activeQty) {
-        const firstCartCond = [...g.lines.keys()][0];
-        g.activeTab = firstCartCond ? tabForCondition(firstCartCond) : "NM";
+      // logged in → prefill + lock
+      emailInput.value = userEmail;
+      emailInput.readOnly = true;
+
+      // hide the original label/input UI (but keep the input in DOM)
+      if (emailLabel) emailLabel.style.display = "none";
+
+      // show “Logged in as …” box
+      const wrap = emailLabel?.parentElement || emailInput.parentElement;
+      if (!wrap) return;
+
+      // don’t add twice
+      if (document.getElementById("loggedInAsBox")) return;
+
+      const box = document.createElement("div");
+      box.id = "loggedInAsBox";
+      box.style.cssText = `
+        margin-top: 10px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: rgba(255,255,255,.92);
+        border: 1px solid rgba(0,0,0,.12);
+        font-weight: 800;
+      `;
+      box.innerHTML = `
+        <div style="font-size:12px; opacity:.75; font-weight:800; margin-bottom:4px;">Logged in as</div>
+        <div style="font-size:15px;">${userEmail}</div>
+        <div style="font-size:12px; opacity:.75; margin-top:6px; font-weight:700;">
+          (We’ll send your receipt here)
+        </div>
+      `;
+
+      // insert after the label if possible; otherwise after input
+      if (emailLabel && emailLabel.nextSibling) {
+        wrap.insertBefore(box, emailLabel.nextSibling);
+      } else {
+        wrap.appendChild(box);
       }
+    } catch {
+      // ignore
     }
-
-    return { groups, changed };
   }
 
-  // ---------- IMAGE MODAL ZOOM ----------
-  const modal = document.getElementById("imageModal");
-  const modalImg = document.getElementById("imageModalImg");
-  const modalClose = document.getElementById("imageModalClose");
-
-  function openModal(src) {
-    if (!modal || !modalImg) return;
-    modalImg.src = src;
-    modal.classList.remove("hidden");
-  }
-  function closeModal() {
-    if (!modal || !modalImg) return;
-    modal.classList.add("hidden");
-    modalImg.src = "";
-  }
-
-  if (modalClose) modalClose.addEventListener("click", closeModal);
-  if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
-
-  document.addEventListener("click", (e) => {
-    const imgEl = e.target.closest(".card-zoom-img");
-    if (!imgEl) return;
-    openModal(imgEl.src);
-  });
-
-  // ---------- Render ----------
+ // ---------- render ----------
   function render(groups, catalog) {
-    if (!listEl) return;
-
     listEl.innerHTML = "";
-    if (msgEl) msgEl.textContent = "";
+    showMsg("");
 
     if (!groups.length) {
       listEl.innerHTML = `<li class="buy-cart-empty">Your cart is empty.</li>`;
-      if (totalEl) totalEl.textContent = "0.00";
+      totalEl.textContent = "0.00";
+
       const countEl = document.getElementById("buyCartCount");
       if (countEl) countEl.textContent = "0";
       return;
@@ -224,13 +121,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       const perTab = TAB_ORDER.map((tab) => {
         const cond = TAB_TO_COND[tab];
         const qty = Number(g.lines.get(cond) || 0);
-
         const stock = getStockForCondition(product, cond);
-        const inCart = qtyInBuyCart(g.sku, cond);
-        const remaining = Math.max(0, stock - inCart);
-
         const unitCents = calcUnitCents(baseCents, cond);
-        return { tab, cond, qty, stock, remaining, unitCents };
+        return { tab, cond, qty, stock, unitCents };
       });
 
       const groupQty = perTab.reduce((s, x) => s + x.qty, 0);
@@ -240,7 +133,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const activeTab = String(g.activeTab || "NM").toUpperCase();
       const active = perTab.find((x) => x.tab === activeTab) || perTab[0];
 
-      const canPlus = active.remaining > 0;
+      const canPlus = active.qty < active.stock;
 
       const li = document.createElement("li");
       li.className = "buy-cart-item";
@@ -257,7 +150,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             <div class="cond-tabs cart-cond-tabs" role="tablist" aria-label="Condition">
               ${TAB_ORDER.map((tab) => {
                 const x = perTab.find((p) => p.tab === tab);
-                const enabled = x.qty > 0; // only enable tabs that exist in cart
+                const enabled = x.qty > 0;
                 const isActive = tab === active.tab;
 
                 return `<button
@@ -271,7 +164,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             <div class="cart-meta">
               <div>Condition: <strong class="cart-cond-text">${active.cond}</strong></div>
-              <div>Remaining: <strong class="cart-stock-text">${Number.isFinite(active.remaining) ? active.remaining : 0}</strong></div>
+              <div>In stock: <strong class="cart-stock-text">${Number.isFinite(active.stock) ? active.stock : 0}</strong></div>
               <div>Unit: <strong class="cart-unit-text">${money(active.unitCents)}</strong></div>
 
               <div class="cart-subline">
@@ -283,7 +176,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
           <div class="cart-right">
             <div class="qty-controls">
-              <button class="cart-minus" type="button">−</button>
+              <button class="cart-minus" type="button" ${active.qty <= 0 ? "disabled" : ""}>−</button>
               <span class="cart-qty">${active.qty}</span>
               <button class="cart-plus" type="button" ${canPlus ? "" : "disabled"}>+</button>
             </div>
@@ -295,10 +188,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         </div>
       `;
 
+      // zoom click
+      const thumb = li.querySelector(".card-zoom-img");
+      if (thumb) thumb.addEventListener("click", () => openModal(thumb.getAttribute("src")));
+
       listEl.appendChild(li);
     }
 
-    if (totalEl) totalEl.textContent = (totalCents / 100).toFixed(2);
+    totalEl.textContent = (totalCents / 100).toFixed(2);
 
     const countEl = document.getElementById("buyCartCount");
     if (countEl) {
@@ -311,169 +208,69 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // ---------- Init ----------
-  let catalog = {};
-  try {
-    catalog = await fetchCatalog();
-  } catch (e) {
-    console.error("buy-cart catalog error:", e);
-    if (msgEl) msgEl.textContent = "Could not load inventory right now.";
-    catalog = {};
-  }
-
-  let cart = loadCart();
-  let groups = groupCart(cart);
-
-  const clamped = clampGroupsToStock(groups, catalog);
-  groups = clamped.groups;
-  if (clamped.changed) saveCart(flattenGroups(groups));
-
-  render(groups, catalog);
-
-  // Shipping calculator button (only once)
-  if (shipBtn) shipBtn.addEventListener("click", () => alert("Shipping calculator coming soon!"));
-
-  // Clear cart
+  // ---------- clear cart ----------
   if (clearBtn) {
     clearBtn.addEventListener("click", () => {
       saveCart([]);
-      groups = [];
-      render(groups, catalog);
+      showMsg("Cart cleared.");
+      render();
     });
   }
 
-  // Stripe checkout
+  // ---------- checkout ----------
+  async function startCheckout() {
+    showMsg("");
+
+    const cart = loadCart();
+    if (!Array.isArray(cart) || cart.length === 0) {
+      showMsg("Your cart is empty.", false);
+      return;
+    }
+
+    const email = String(emailInput?.value || "").trim();
+    if (!email || !email.includes("@")) {
+      showMsg("Please enter a valid email for receipt.", false);
+      return;
+    }
+
+    checkoutBtn.disabled = true;
+    const prevText = checkoutBtn.textContent;
+    checkoutBtn.textContent = "Starting checkout…";
+
+    try {
+      const res = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, cart })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok || !data.url) {
+        throw new Error(data.error || `Checkout failed (HTTP ${res.status})`);
+      }
+
+      window.location.assign(data.url);
+    } catch (e) {
+      console.error("checkout error:", e);
+      showMsg(e.message || "Could not start checkout.", false);
+      checkoutBtn.disabled = false;
+      checkoutBtn.textContent = prevText;
+    }
+  }
+
   if (checkoutBtn) {
-    checkoutBtn.addEventListener("click", async (e) => {
+    checkoutBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      e.stopPropagation();
-
-      try {
-        checkoutBtn.disabled = true;
-
-        const email = String(emailInput?.value || "").trim();
-        const cart = loadCart();
-
-        if (!Array.isArray(cart) || cart.length === 0) {
-          alert("Your cart is empty.");
-          return;
-        }
-
-        const res = await fetch("/api/create-checkout-session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, cart }),
-        });
-
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok || !data.ok || !data.url) {
-          alert(data.error || `Checkout failed (HTTP ${res.status})`);
-          return;
-        }
-
-        window.location.assign(data.url);
-      } catch (err) {
-        console.error("[Checkout] error", err);
-        alert(err?.message || "Could not start checkout.");
-      } finally {
-        checkoutBtn.disabled = false;
-      }
+      startCheckout();
     });
   }
 
-  // ---------- Interactions (tabs, +/-, remove) ----------
-  document.addEventListener("click", (e) => {
-    const itemEl = e.target.closest(".buy-cart-item");
-    if (!itemEl) return;
-
-    const sku = String(itemEl.dataset.sku || "").trim();
-    if (!sku) return;
-
-    const g = groups.find((x) => x.sku === sku);
-    if (!g) return;
-
-    // Tab switch
-    const tabBtn = e.target.closest(".cond-tab");
-    if (tabBtn) {
-      if (tabBtn.getAttribute("aria-disabled") === "true") return;
-      if (tabBtn.classList.contains("disabled")) return;
-
-      const tab = String(tabBtn.dataset.tab || "NM").toUpperCase();
-      const cond = TAB_TO_COND[tab];
-      if (!cond) return;
-
-      const inCartQty = Number(g.lines.get(cond) || 0);
-      if (inCartQty <= 0) return; // only tabs in cart
-
-      g.activeTab = tab;
-      render(groups, catalog);
-      return;
-    }
-
-    const tab = String(g.activeTab || "NM").toUpperCase();
-    const cond = TAB_TO_COND[tab] || "Near Mint";
-    const product = catalog[sku];
-    if (!product) return;
-
-    // Qty +
-    if (e.target.closest(".cart-plus")) {
-      const stock = getStockForCondition(product, cond);
-      const inCart = qtyInBuyCart(sku, cond);
-      const remaining = Math.max(0, stock - inCart);
-
-      if (remaining <= 0) return; // ✅ hard stop
-
-      let qty = Number(g.lines.get(cond) || 0);
-      qty += 1;
-
-      if (stock >= 0) qty = Math.min(stock, qty);
-
-      g.lines.set(cond, qty);
-      saveCart(flattenGroups(groups));
-      render(groups, catalog);
-      return;
-    }
-
-    // Qty -
-    if (e.target.closest(".cart-minus")) {
-      let qty = Number(g.lines.get(cond) || 0);
-      qty = Math.max(0, qty - 1);
-
-      if (qty <= 0) g.lines.delete(cond);
-      else g.lines.set(cond, qty);
-
-      if (g.lines.size === 0) {
-        groups = groups.filter((x) => x.sku !== sku);
-      } else {
-        if (!g.lines.get(cond)) {
-          const firstCartCond = [...g.lines.keys()][0];
-          g.activeTab = firstCartCond ? tabForCondition(firstCartCond) : "NM";
-        }
-      }
-
-      saveCart(flattenGroups(groups));
-      render(groups, catalog);
-      return;
-    }
-
-    // Remove active condition
-    if (e.target.closest(".cart-remove")) {
-      g.lines.delete(cond);
-
-      if (g.lines.size === 0) {
-        groups = groups.filter((x) => x.sku !== sku);
-      } else {
-        const firstCartCond = [...g.lines.keys()][0];
-        g.activeTab = firstCartCond ? tabForCondition(firstCartCond) : "NM";
-      }
-
-      saveCart(flattenGroups(groups));
-      render(groups, catalog);
-      return;
-    }
-  });
+  // ---------- init ----------
+  await applyLoggedInEmailUX();
+  render();
 });
+
+
 
 
 
