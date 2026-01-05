@@ -1,43 +1,299 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <title>Sign up</title>
-  <link rel="stylesheet" href="/style.css"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Create Account • Riftbound Trading Co</title>
+
+  <link rel="stylesheet" href="/style.css" />
+
+  <style>
+    /* ===== Page layout (matches login) ===== */
+    body{
+      background:url("/images/wooden-shelves.jpg") repeat;
+      min-height:100vh;
+      margin:0;
+      display:grid;
+      place-items:center;
+      padding:32px 16px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    .auth-wrap{
+      width:min(980px, 100%);
+      display:grid;
+      grid-template-columns: 1fr 1.1fr;
+      gap:18px;
+      align-items:stretch;
+    }
+
+    /* stack on small screens */
+    @media (max-width: 860px){
+      .auth-wrap{ grid-template-columns: 1fr; }
+    }
+
+    .panel{
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow: 0 18px 50px rgba(0,0,0,.28);
+      border: 1px solid rgba(255,255,255,.18);
+      backdrop-filter: blur(6px);
+    }
+
+    /* ===== Left brand panel ===== */
+    .brand-panel{
+      background: rgba(20, 20, 20, .35);
+      color: #fff;
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      padding:22px 22px 18px;
+    }
+
+    .brand-top h1{
+      margin:0;
+      font-size:28px;
+      line-height:1.1;
+      letter-spacing:.2px;
+      text-shadow: 0 10px 20px rgba(0,0,0,.55);
+    }
+    .brand-top p{
+      margin:8px 0 0;
+      opacity:.9;
+      font-size:13px;
+      line-height:1.35;
+      text-shadow: 0 8px 16px rgba(0,0,0,.55);
+      max-width: 36ch;
+    }
+
+    .brand-center{
+      flex:1;
+      display:grid;
+      place-items:center;
+      pointer-events:none;
+      padding: 10px 0;
+    }
+    .brand-center img{
+      width: 62%;
+      max-width: 280px;
+      opacity:.95;
+      filter: drop-shadow(0 16px 30px rgba(0,0,0,.55));
+    }
+
+    .brand-foot{
+      margin-top:12px;
+      font-size:12px;
+      opacity:.92;
+      text-shadow: 0 8px 16px rgba(0,0,0,.55);
+    }
+    .brand-foot .tip{
+      margin:0 0 6px;
+    }
+    .brand-foot .muted{
+      margin:0;
+      opacity:.85;
+    }
+
+    /* ===== Right form panel ===== */
+    .form-panel{
+      background: rgba(255,255,255,.92);
+      padding:26px 26px 22px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+    }
+
+    .form-panel h2{
+      margin:0;
+      font-size:26px;
+      color:#111827;
+    }
+    .form-panel .sub{
+      margin:6px 0 18px;
+      color:#4b5563;
+      font-size:13px;
+      line-height:1.35;
+    }
+
+    label{
+      display:block;
+      font-size:13px;
+      font-weight:600;
+      color:#111827;
+      margin:14px 0 6px;
+    }
+    input{
+      width:100%;
+      box-sizing:border-box;
+      padding:12px 12px;
+      border-radius:10px;
+      border:1px solid #d1d5db;
+      background:#fff;
+      outline:none;
+      font-size:14px;
+    }
+    input:focus{
+      border-color:#2563eb;
+      box-shadow:0 0 0 4px rgba(37,99,235,.15);
+    }
+
+    .msg{
+      margin-top:12px;
+      font-size:13px;
+      min-height:18px;
+      color:#b00020;
+    }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-top:16px;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      appearance:none;
+      border:none;
+      border-radius:12px;
+      padding:12px 16px;
+      font-weight:700;
+      cursor:pointer;
+      background: linear-gradient(180deg, #2563eb, #1d4ed8);
+      color:white;
+      min-width: 160px;
+      box-shadow: 0 12px 22px rgba(37,99,235,.25);
+    }
+    .btn:disabled{
+      opacity:.7;
+      cursor:not-allowed;
+    }
+
+    .links{
+      display:flex;
+      gap:14px;
+      font-size:13px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .links a{
+      color:#2563eb;
+      font-weight:700;
+      text-decoration:none;
+    }
+    .links a:hover{ text-decoration:underline; }
+  </style>
 </head>
+
 <body>
-  <div class="page-wrap">
-    <h1>Create account</h1>
-    <p id="msg" style="color:#b00020"></p>
+  <div class="auth-wrap">
 
-    <input id="name" placeholder="Name (optional)" autocomplete="name"/>
-    <input id="email" placeholder="Email" autocomplete="email"/>
-    <input id="password" type="password" placeholder="Password (8+ chars)" autocomplete="new-password"/>
-    <button id="btn">Sign up</button>
+    <!-- LEFT: brand -->
+    <section class="panel brand-panel">
+      <div class="brand-top">
+        <h1>Riftbound Trading Co</h1>
+        <p>Create an account to track buy &amp; sell orders, receipts, and shipping status.</p>
+      </div>
 
-    <p><a href="/login.html">Already have an account?</a></p>
-    <p><a href="/">Back to shop</a></p>
+      <!-- centered logo (your request) -->
+      <div class="brand-center">
+        <img src="/images/riftbound-logo.jpg" alt="Riftbound Trading Co Logo">
+      </div>
+
+      <div class="brand-foot">
+        <p class="tip"><strong>Tip:</strong> Use the same email you checkout / submit sells with.</p>
+        <p class="muted">Need help? Contact us from the site menu.</p>
+      </div>
+    </section>
+
+    <!-- RIGHT: signup form -->
+    <section class="panel form-panel">
+      <h2>Create account</h2>
+      <div class="sub">Enter your details to create an account.</div>
+
+      <form id="signupForm" autocomplete="on">
+        <label for="name">Name (optional)</label>
+        <input id="name" name="name" placeholder="Your name" />
+
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" placeholder="you@example.com" required />
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" placeholder="At least 8 characters" minlength="8" required />
+
+        <div id="msg" class="msg"></div>
+
+        <div class="actions">
+          <button class="btn" id="signupBtn" type="submit">Create account</button>
+
+          <div class="links">
+            <a href="/login.html">Log in</a>
+            <a href="/">Back to shop</a>
+          </div>
+        </div>
+      </form>
+    </section>
+
   </div>
 
-<script>
-document.getElementById("btn").onclick = async () => {
-  const name = document.getElementById("name").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
+  <script>
+    const form = document.getElementById("signupForm");
+    const msg = document.getElementById("msg");
+    const btn = document.getElementById("signupBtn");
 
-  const res = await fetch("/api/auth/signup", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ name, email, password })
-  });
+    function setMsg(text, ok=false){
+      msg.textContent = text || "";
+      msg.style.color = ok ? "#166534" : "#b00020";
+    }
 
-  const data = await res.json().catch(()=>({}));
-  if (!res.ok || !data.ok) {
-    document.getElementById("msg").textContent = data.error || "Signup failed";
-    return;
-  }
-  window.location.href = "/account.html";
-};
-</script>
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      setMsg("");
+
+      const name = String(document.getElementById("name").value || "").trim();
+      const email = String(document.getElementById("email").value || "").trim();
+      const password = String(document.getElementById("password").value || "");
+
+      if (!email.includes("@")) {
+        setMsg("Please enter a valid email.");
+        return;
+      }
+      if (password.length < 8) {
+        setMsg("Password must be at least 8 characters.");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Creating...";
+
+      try {
+        const res = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password })
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok || !data.ok) {
+          setMsg(data.error || "Signup failed. Try again.");
+          btn.disabled = false;
+          btn.textContent = "Create account";
+          return;
+        }
+
+        // logged in via cookie session — go to account page
+        setMsg("Account created! Redirecting...", true);
+        window.location.href = "/account.html";
+      } catch (err) {
+        console.error("signup error:", err);
+        setMsg("Signup failed. Try again.");
+        btn.disabled = false;
+        btn.textContent = "Create account";
+      }
+    });
+  </script>
 </body>
 </html>
