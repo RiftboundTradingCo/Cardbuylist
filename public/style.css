@@ -1191,6 +1191,7 @@ body {
 }
 
 /* === BUY CARDS GRID === */
+/* === BUY CARDS GRID === */
 #buyGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
@@ -1307,6 +1308,7 @@ body {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
 
 #miniCart,
 .shopping-cart-box {
