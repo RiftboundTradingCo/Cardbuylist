@@ -255,6 +255,18 @@ if (userId && session.shipping_details?.address) {
 
       const shipName = session.customer_details?.name || "";
 
+      const shipAddr = session.shipping_details?.address || session.customer_details?.address || null;
+
+const shippingAddress = shipAddr ? {
+  line1: shipAddr.line1 || "",
+  line2: shipAddr.line2 || "",
+  city: shipAddr.city || "",
+  state: shipAddr.state || "",
+  postal: shipAddr.postal_code || "",
+  country: shipAddr.country || ""
+} : null;
+
+
       const shipAddr = session.customer_detail?.address || null;
 
       const lines = [];
@@ -288,7 +300,7 @@ if (userId && session.shipping_details?.address) {
             type: "buy",
             status: "needs_review",
             createdAt: new Date().toISOString(),
-            customer: { name: shipName, email: customerEmail },
+            customer: { name: shipName, email: customerEmail, address: shippingAddress },
             lines: cart.map((x) => ({
               sku: String(x?.sku || ""),
               condition: normalizeCondition(x?.condition),
@@ -625,10 +637,18 @@ app.get("/api/me", (req, res) => {
   if (!userId) return res.json({ ok: true, user: null });
 
   const db = readUsersDb();
-  const user = db.users.find((u) => u.id === userId);
+  const user = db.users.find(u => u.id === userId);
   if (!user) return res.json({ ok: true, user: null });
 
-  res.json({ ok: true, user: { id: user.id, email: user.email, name: user.name, address: user.address || null } });
+  res.json({
+    ok: true,
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      address: user.address || null 
+    }
+  });
 });
 
 app.get("/api/my/orders", requireAuth, (req, res) => {
@@ -650,23 +670,43 @@ app.get("/api/my/orders", requireAuth, (req, res) => {
 });
 
 app.post("/api/me/address", requireAuth, (req, res) => {
-  const db = readUsersDb();
-  const user = db.users.find(u => u.id === req.userId);
-  if (!user) return res.status(404).json({ ok:false, error:"User not found" });
+  try {
+    const db = readUsersDb();
+    const user = db.users.find(u => u.id === req.userId);
+    if (!user) return res.status(404).json({ ok:false, error:"User not found" });
 
-  const a = req.body?.address || {};
-  user.address = {
-    line1: String(a.line1 || "").trim(),
-    line2: String(a.line2 || "").trim(),
-    city: String(a.city || "").trim(),
-    state: String(a.state || "").trim(),
-    postal: String(a.postal || "").trim(),
-    country: String(a.country || "US").trim()
-  };
+    const a = req.body?.address || {};
 
-  writeUsersDb(db);
-  res.json({ ok:true, address: user.address });
+    const next = {
+      line1: String(a.line1 || "").trim(),
+      line2: String(a.line2 || "").trim(),
+      city: String(a.city || "").trim(),
+      state: String(a.state || "").trim(),
+      postal: String(a.postal || "").trim(),
+      country: String(a.country || "US").trim()
+    };
+
+    // ✅ validate
+    if (!next.line1 || !next.city || !next.state || !next.postal) {
+      return res.status(400).json({
+        ok: false,
+        error: "Missing required fields (line1, city, state, postal)."
+      });
+    }
+
+    user.address = next;
+
+    if (!writeUsersDb(db)) {
+      return res.status(500).json({ ok:false, error:"Could not save address" });
+    }
+
+    return res.json({ ok:true, address: user.address });
+  } catch (e) {
+    console.error("save address error:", e);
+    return res.status(500).json({ ok:false, error:"Server error" });
+  }
 });
+
 
 /* =========================
    ADMIN ROUTES

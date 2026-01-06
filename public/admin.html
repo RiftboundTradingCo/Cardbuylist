@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,12 +9,32 @@
     body {
       background: url("/images/wooden-shelves.jpg") repeat;
       padding: 24px;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
     }
     .admin-toolbar {
       display: flex;
       gap: 12px;
       margin-bottom: 16px;
+      flex-wrap: wrap;
+      align-items: center;
     }
+    .admin-toolbar input, .admin-toolbar select {
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,.18);
+      background: rgba(255,255,255,.92);
+      min-width: 220px;
+    }
+    .admin-toolbar button {
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 0;
+      cursor: pointer;
+      font-weight: 700;
+      background: #111827;
+      color: #fff;
+    }
+
     .order-card {
       background: rgba(255,255,255,0.95);
       border-radius: 14px;
@@ -25,162 +46,328 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 12px;
       margin-bottom: 8px;
+      flex-wrap: wrap;
     }
+
     .pill {
+      display: inline-block;
       padding: 4px 10px;
       border-radius: 999px;
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 700;
+      margin-right: 6px;
+      margin-top: 6px;
     }
     .pill.buy { background:#dbeafe; color:#1e40af; }
     .pill.sell { background:#fde68a; color:#92400e; }
+
     .pill.paid { background:#dcfce7; color:#166534; }
+    .pill.submitted { background:#fee2e2; color:#991b1b; }
+    .pill.needs_review { background:#ffedd5; color:#9a3412; }
+    .pill.checked_in { background:#e0e7ff; color:#3730a3; }
+    .pill.approved { background:#cffafe; color:#155e75; }
     .pill.shipped { background:#e9d5ff; color:#6b21a8; }
 
-    .actions button {
-      margin-top: 10px;
+    .meta {
+      margin: 10px 0 0;
+      color: rgba(15,23,42,.85);
+      font-size: 14px;
+      line-height: 1.35;
     }
+    .muted { opacity: .8; }
+
+    ul { margin: 10px 0; padding-left: 18px; }
+    li { margin: 6px 0; }
+
+    .actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .actions button {
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 0;
+      cursor: pointer;
+      font-weight: 800;
+    }
+    .btn-green { background: #166534; color: #fff; }
+    .btn-purple { background: #6b21a8; color: #fff; }
+    .btn-outline {
+      background: transparent;
+      border: 2px solid rgba(0,0,0,.15);
+      color: #111827;
+    }
+
+    .addr-box{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,.12);
+      background: rgba(255,255,255,.7);
+      font-size: 13px;
+    }
+    .addr-title{
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+    .addr-line{ margin: 2px 0; }
   </style>
 </head>
 
 <body>
-<h1>Admin – Orders</h1>
+  <h1>Admin – Orders</h1>
 
-<div class="admin-toolbar">
-  <input id="tokenInput" placeholder="Admin token" />
-  <select id="statusFilter">
-    <option value="">All</option>
-    <option value="paid">Paid</option>
-    <option value="submitted">Submitted</option>
-    <option value="shipped">Shipped</option>
-  </select>
-  <button id="refreshBtn">Refresh</button>
-</div>
+  <div class="admin-toolbar">
+    <input id="tokenInput" placeholder="Admin token" />
+    <select id="statusFilter">
+      <option value="">All statuses</option>
+      <option value="paid">Paid</option>
+      <option value="submitted">Submitted</option>
+      <option value="checked_in">Checked in</option>
+      <option value="approved">Approved</option>
+      <option value="shipped">Shipped</option>
+      <option value="needs_review">Needs review</option>
+    </select>
+    <button id="refreshBtn">Refresh</button>
+  </div>
 
-<div id="orders"></div>
+  <div id="orders"></div>
 
-<script>
-const ordersEl = document.getElementById("orders");
-const tokenInput = document.getElementById("tokenInput");
+  <script>
+    const ordersEl = document.getElementById("orders");
+    const tokenInput = document.getElementById("tokenInput");
+    const statusFilterEl = document.getElementById("statusFilter");
 
-async function loadAdmin() {
-  ordersEl.innerHTML = "Loading…";
-
-  const token = tokenInput.value.trim();
-  if (!token) return;
-
-  const [ordersRes, catalogRes] = await Promise.all([
-    fetch("/api/admin/orders", {
-      headers: { "x-admin-token": token }
-    }),
-    fetch("/api/catalog")
-  ]);
-
-  if (!ordersRes.ok) {
-    ordersEl.textContent = "Unauthorized or error loading orders";
-    return;
-  }
-
-  const ordersData = await ordersRes.json();
-  const catalogData = await catalogRes.json();
-
-  const catalog = catalogData.catalog || {};
-  const orders = ordersData.orders || [];
-
-  ordersEl.innerHTML = "";
-
-  orders.forEach(order => {
-    const div = document.createElement("div");
-    div.className = "order-card";
-
-    const typeClass = order.type === "sell" ? "sell" : "buy";
-    const statusClass = order.status || "";
-
-    const lines = (order.lines || []).map(l => {
-  const sku = String(l.sku || "").trim();
-  const product = sku ? catalog[sku] : null;
-
-  // prefer catalog name, fallback to saved line name, then sku
-  const displayName = product?.name || l.name || sku || "Unknown";
-
-  // SELL: show payout per card + line total
-  if (order.type === "sell") {
-    const unit = (Number(l.unitPriceCents || 0) / 100).toFixed(2);
-    const lineTotal = (Number(l.lineTotalCents || 0) / 100).toFixed(2);
-
-    return `<li>
-      ${l.qty} × ${displayName} (${l.condition})
-      — <strong>$${unit}</strong> each
-      = <strong>$${lineTotal}</strong>
-    </li>`;
-  }
-if (order.type === "sell" && order.status === "submitted") {
-  actionHtml = `
-    <button onclick="markReceived('${order.id}')">
-      Mark received (add to stock)
-    </button>
-  `;
-}
-async function markReceived(id) {
-  const token = tokenInput.value.trim();
-  await fetch(`/api/admin/orders/${id}/approve`, {
-    method: "POST",
-    headers: { "x-admin-token": token }
-  });
-  loadAdmin();
-}
-
-  // BUY: normal
-  return `<li>${l.qty} × ${displayName} (${l.condition})</li>`;
-}).join("");
-
-    let actionHtml = "<em>No actions</em>";
-
-    if (order.type === "buy" && order.status === "paid") {
-      actionHtml = `
-        <button onclick="markShipped('${order.id}')">
-          Mark as shipped
-        </button>
-      `;
+    function moneyCents(cents) {
+      return `$${(Number(cents || 0) / 100).toFixed(2)}`;
     }
 
-    div.innerHTML = `
-      <div class="order-header">
-        <strong>${order.id}</strong>
-        <strong>$${(Number(order.totalCents || 0) / 100).toFixed(2)}</strong>
+    function escapeHtml(s) {
+      return String(s || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+   function renderAddressBlock(order){
+  const a =
+    order?.customer?.address ||
+    order?.shipping?.address ||
+    null;
+
+  if (!a) return "";
+
+  const line1 = escapeHtml(a.line1 || "");
+  const line2 = escapeHtml(a.line2 || "");
+  const city  = escapeHtml(a.city || "");
+  const state = escapeHtml(a.state || "");
+  const postal= escapeHtml(a.postal || "");
+  const country = escapeHtml(a.country || "US");
+
+  // Build a text block for clipboard (NOT escaped)
+  const rawLines = [
+    a.line1 || "",
+    a.line2 || "",
+    [a.city, a.state, a.postal].filter(Boolean).join(", ").replace(", ,", ","),
+    a.country || "US"
+  ].filter(Boolean);
+
+  const copyText = rawLines.join("\n");
+
+  // Encode copy text safely into a data attribute
+  const encoded = encodeURIComponent(copyText);
+
+  return `
+    <div class="addr-box">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div class="addr-title">Shipping Address</div>
+        <button class="btn-outline" type="button" onclick="copyAddress('${encoded}')">
+          Copy address
+        </button>
       </div>
 
-      <div>
-        <span class="pill ${typeClass}">${order.type.toUpperCase()}</span>
-        <span class="pill ${statusClass}">${order.status}</span>
-      </div>
-
-      <p>
-        ${order.customer?.name || "Customer"} —
-        ${order.customer?.email || ""}
-      </p>
-
-      <ul>${lines}</ul>
-
-      <div class="actions">${actionHtml}</div>
-    `;
-
-    ordersEl.appendChild(div);
-  });
+      ${line1 ? `<div class="addr-line">${line1}</div>` : ""}
+      ${line2 ? `<div class="addr-line">${line2}</div>` : ""}
+      ${(city || state || postal) ? `<div class="addr-line">${city}${city && state ? ", " : ""}${state} ${postal}</div>` : ""}
+      ${country ? `<div class="addr-line muted">${country}</div>` : ""}
+    </div>
+  `;
 }
 
-async function markShipped(id) {
-  const token = tokenInput.value.trim();
-  await fetch(`/api/admin/orders/${id}/fulfill`, {
-    method: "POST",
-    headers: { "x-admin-token": token }
-  });
-  loadAdmin();
+
+    async function loadAdmin() {
+      ordersEl.innerHTML = "Loading…";
+
+      const token = tokenInput.value.trim();
+      if (!token) {
+        ordersEl.textContent = "Enter your admin token.";
+        return;
+      }
+
+      const [ordersRes, catalogRes] = await Promise.all([
+        fetch("/api/admin/orders", { headers: { "x-admin-token": token } }),
+        fetch("/api/catalog", { cache: "no-store" })
+      ]);
+
+      if (!ordersRes.ok) {
+        ordersEl.textContent = "Unauthorized or error loading orders";
+        return;
+      }
+
+      const ordersData = await ordersRes.json().catch(()=>({}));
+      const catalogData = await catalogRes.json().catch(()=>({}));
+
+      const catalog = catalogData.catalog || {};
+      let orders = ordersData.orders || [];
+
+      // apply status filter
+      const wanted = String(statusFilterEl.value || "").trim();
+      if (wanted) {
+        orders = orders.filter(o => String(o.status || "").trim() === wanted);
+      }
+
+      ordersEl.innerHTML = "";
+
+      if (!orders.length) {
+        ordersEl.innerHTML = `<div class="order-card">No orders match this filter.</div>`;
+        return;
+      }
+
+      orders.forEach(order => {
+        const div = document.createElement("div");
+        div.className = "order-card";
+
+        const typeClass = order.type === "sell" ? "sell" : "buy";
+        const statusClass = String(order.status || "").trim();
+
+        // Build lines list
+        const linesHtml = (order.lines || []).map(l => {
+          const sku = String(l.sku || "").trim();
+          const product = sku ? catalog[sku] : null;
+
+          // prefer catalog name, fallback to saved line name, then sku
+          const displayName = escapeHtml(product?.name || l.name || sku || "Unknown");
+          const cond = escapeHtml(l.condition || "");
+
+          if (order.type === "sell") {
+            const unit = moneyCents(l.unitPriceCents || 0);
+            const lineTotal = moneyCents(l.lineTotalCents || 0);
+            return `<li>
+              ${Number(l.qty || 0)} × ${displayName} (${cond})
+              — <strong>${unit}</strong> each
+              = <strong>${lineTotal}</strong>
+            </li>`;
+          }
+
+          // BUY: normal
+          return `<li>${Number(l.qty || 0)} × ${displayName} (${cond})</li>`;
+        }).join("");
+
+        // Actions
+        let actionHtml = `<em class="muted">No actions</em>`;
+
+        if (order.type === "buy" && order.status === "paid") {
+          actionHtml = `
+            <button class="btn-purple" onclick="markShipped('${escapeHtml(order.id)}')">
+              Mark as shipped
+            </button>
+          `;
+        }
+
+        if (order.type === "sell" && order.status === "submitted") {
+          actionHtml = `
+            <button class="btn-green" onclick="markReceived('${escapeHtml(order.id)}')">
+              Mark received (add to stock)
+            </button>
+          `;
+        }
+
+        const customerName = escapeHtml(order.customer?.name || "Customer");
+        const customerEmail = escapeHtml(order.customer?.email || "");
+        const created = order.createdAt ? new Date(order.createdAt).toLocaleString() : "";
+
+        div.innerHTML = `
+          <div class="order-header">
+            <div>
+              <strong>${escapeHtml(order.id)}</strong>
+              ${created ? `<div class="muted" style="font-size:12px; margin-top:4px;">${escapeHtml(created)}</div>` : ""}
+            </div>
+            <strong>${moneyCents(order.totalCents || 0)}</strong>
+          </div>
+
+          <div>
+            <span class="pill ${typeClass}">${escapeHtml(String(order.type || "").toUpperCase())}</span>
+            <span class="pill ${statusClass}">${escapeHtml(statusClass || "unknown")}</span>
+          </div>
+
+          <div class="meta">
+            <div><strong>${customerName}</strong> — ${customerEmail}</div>
+            ${order.userId ? `<div class="muted">userId: ${escapeHtml(order.userId)}</div>` : ""}
+          </div>
+
+          ${renderAddressBlock(order)}
+
+          <ul>${linesHtml}</ul>
+
+          <div class="actions">${actionHtml}</div>
+        `;
+
+        ordersEl.appendChild(div);
+      });
+    }
+
+    async function markShipped(id) {
+      const token = tokenInput.value.trim();
+      await fetch(`/api/admin/orders/${id}/fulfill`, {
+        method: "POST",
+        headers: { "x-admin-token": token }
+      });
+      loadAdmin();
+    }
+
+    async function markReceived(id) {
+      const token = tokenInput.value.trim();
+      await fetch(`/api/admin/orders/${id}/approve`, {
+        method: "POST",
+        headers: { "x-admin-token": token }
+      });
+      loadAdmin();
+    }
+
+    // expose for inline onclick
+    window.markShipped = markShipped;
+    window.markReceived = markReceived;
+
+    document.getElementById("refreshBtn").onclick = loadAdmin;
+    statusFilterEl.onchange = loadAdmin;
+    
+    async function copyAddress(encoded) {
+  const text = decodeURIComponent(encoded || "");
+  try {
+    await navigator.clipboard.writeText(text);
+    alert("Address copied!");
+  } catch {
+    // fallback if clipboard API is blocked
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
+    alert("Address copied!");
+  }
 }
 
-document.getElementById("refreshBtn").onclick = loadAdmin;
-</script>
+window.copyAddress = copyAddress;
+
+  </script>
 </body>
 </html>
 
