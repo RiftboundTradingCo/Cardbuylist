@@ -217,6 +217,27 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
 
       const userId = String(session?.metadata?.userId || "").trim() || null; // ✅ used in all paths
 
+
+if (userId && session.shipping_details?.address) {
+  const usersDb = readUsersDb();
+  const user = usersDb.users.find(u => u.id === userId);
+
+  if (user) {
+    user.address = {
+      line1: session.shipping_details.address.line1 || "",
+      line2: session.shipping_details.address.line2 || "",
+      city: session.shipping_details.address.city || "",
+      state: session.shipping_details.address.state || "",
+      postal: session.shipping_details.address.postal_code || "",
+      country: session.shipping_details.address.country || "US"
+    };
+
+    user.addressUpdatedAt = new Date().toISOString();
+    writeUsersDb(usersDb);
+  }
+}
+
+
       let cart = [];
       try {
         cart = JSON.parse(session?.metadata?.cart || "[]");
@@ -233,6 +254,8 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
         "";
 
       const shipName = session.customer_details?.name || "";
+
+      const shipAddr = session.customer_detail?.address || null:
 
       const lines = [];
       const emailLines = [];
@@ -261,7 +284,7 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
 
           appendOrder({
             id: orderId,
-            userId, // ✅ FIX: include userId on needs_review too
+            userId, 
             type: "buy",
             status: "needs_review",
             createdAt: new Date().toISOString(),
@@ -303,16 +326,20 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
 
       // save order
       appendOrder({
-        id: orderId,
-        userId,
-        type: "buy",
-        status: "paid",
-        createdAt: new Date().toISOString(),
-        customer: { name: shipName, email: customerEmail },
-        lines,
-        totalCents,
-        stripeSessionId: session.id,
-      });
+  id: orderId,
+  userId,
+  type: "buy",
+  status: "paid",
+  createdAt: new Date().toISOString(),
+  customer: {
+    name: shipName,
+    email: customerEmail,
+    address: shipAddr   // ✅ add this
+  },
+  lines,
+  totalCents,
+  stripeSessionId: session.id
+});
 
       // optional emails
       if (resend && EMAIL_FROM) {
@@ -521,6 +548,19 @@ app.post("/api/auth/signup", async (req, res) => {
     const email = String(req.body?.email || "").trim().toLowerCase();
     const password = String(req.body?.password || "");
     const name = String(req.body?.name || "").trim();
+   
+    const address =
+      req.body?.address && typeof req.body.address === "object"
+        ? {
+            line1: String(req.body.address.line1 || "").trim(),
+            line2: String(req.body.address.line2 || "").trim(),
+            city: String(req.body.address.city || "").trim(),
+            state: String(req.body.address.state || "").trim(),
+            postal: String(req.body.address.postal || "").trim(),
+            country: String(req.body.address.country || "US").trim()
+          }
+        : null;
+
 
     if (!email || !email.includes("@")) {
       return res.status(400).json({ ok: false, error: "Valid email required" });
@@ -540,6 +580,7 @@ app.post("/api/auth/signup", async (req, res) => {
       email,
       name,
       passwordHash: hash,
+      address,
       createdAt: new Date().toISOString(),
     };
 
@@ -587,7 +628,7 @@ app.get("/api/me", (req, res) => {
   const user = db.users.find((u) => u.id === userId);
   if (!user) return res.json({ ok: true, user: null });
 
-  res.json({ ok: true, user: { id: user.id, email: user.email, name: user.name } });
+  res.json({ ok: true, user: { id: user.id, email: user.email, name: user.name, address: user.address || null } });
 });
 
 app.get("/api/my/orders", requireAuth, (req, res) => {
@@ -606,6 +647,25 @@ app.get("/api/my/orders", requireAuth, (req, res) => {
   );
 
   res.json({ ok: true, orders: mine });
+});
+
+app.post("/api/me/address", requireAuth, (req, res) => {
+  const db = readUsersDb();
+  const user = db.users.find(u => u.id === req.userId);
+  if (!user) return res.status(404).json({ ok:false, error:"User not found" });
+
+  const a = req.body?.address || {};
+  user.address = {
+    line1: String(a.line1 || "").trim(),
+    line2: String(a.line2 || "").trim(),
+    city: String(a.city || "").trim(),
+    state: String(a.state || "").trim(),
+    postal: String(a.postal || "").trim(),
+    country: String(a.country || "US").trim()
+  };
+
+  writeUsersDb(db);
+  res.json({ ok:true, address: user.address });
 });
 
 /* =========================

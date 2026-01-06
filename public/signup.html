@@ -274,6 +274,49 @@
         <input id="email" type="email" autocomplete="email" placeholder="you@example.com" />
       </div>
 
+<div class="field">
+  <label for="line1">Street address</label>
+  <input
+    id="line1"
+    type="text"
+    autocomplete="address-line1"
+    placeholder="123 Main St"
+  />
+</div>
+
+<div class="field">
+  <label for="city">City</label>
+  <input
+    id="city"
+    type="text"
+    autocomplete="address-level2"
+    placeholder="Seattle"
+  />
+</div>
+
+<div class="field-row">
+  <div class="field">
+    <label for="state">State</label>
+    <input
+      id="state"
+      type="text"
+      autocomplete="address-level1"
+      placeholder="WA"
+      maxlength="2"
+    />
+  </div>
+
+  <div class="field">
+    <label for="postal">ZIP Code</label>
+    <input
+      id="postal"
+      type="text"
+      autocomplete="postal-code"
+      placeholder="98101"
+      inputmode="numeric"
+    />
+  </div>
+
       <div class="field">
         <label for="password">Password</label>
         <input id="password" type="password" autocomplete="new-password" placeholder="At least 8 characters" />
@@ -313,23 +356,36 @@
       btn.disabled = true;
       btn.textContent = "Creating…";
 
-      try{
-        const res = await fetch("/api/auth/signup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, password })
-        });
+      try {
+  const res = await fetch("/api/auth/signup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name,
+      email,
+      password,
+      address: {
+        line1,
+        line2,
+        city,
+        state,
+        postal,
+        country: "US"
+      }
+    })
+  });
 
-        const data = await res.json().catch(()=>({}));
-        if (!res.ok || !data.ok){
-          setMsg(data.error || "Signup failed.");
-          return;
-        }
+        const data = await res.json();
 
-        window.location.href = "/account.html";
-      } catch (e){
-        setMsg("Could not create account. Try again.");
-      } finally{
+  if (!res.ok || !data.ok) {
+    throw new Error(data.error || "Signup failed");
+  }
+
+  window.location.href = "/account.html";
+} catch (err) {
+  console.error(err);
+  alert(err.message || "Could not sign up");
+} finally{
         btn.disabled = false;
         btn.textContent = "Create account";
       }
