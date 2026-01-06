@@ -267,8 +267,6 @@ const shippingAddress = shipAddr ? {
 } : null;
 
 
-      const shipAddr = session.customer_detail?.address || null;
-
       const lines = [];
       const emailLines = [];
       let totalCents = 0;
