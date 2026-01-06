@@ -14,6 +14,50 @@ document.addEventListener("DOMContentLoaded", async () => {
   // The label above the row (Email for confirmation)
   const checkoutLabel = emailInput ? document.querySelector('label[for="sellEmail"]') : null;
 
+let loggedInEmail = "";
+
+async function applyLoggedInUX() {
+  if (!emailInput) return;
+
+  try {
+    const meRes = await fetch("/api/me", { cache: "no-store" });
+    const me = await meRes.json().catch(() => ({}));
+    loggedInEmail = me?.ok && me?.user?.email ? String(me.user.email).trim() : "";
+  } catch {
+    loggedInEmail = "";
+  }
+
+  if (!loggedInEmail) return;
+
+  // Fill email automatically
+  emailInput.value = loggedInEmail;
+  emailInput.readOnly = true;
+
+  // ✅ Hide ONLY the input (NOT the checkout row)
+  emailInput.style.display = "none";
+
+  // Add a small "Logged in as" display (optional)
+  const checkout = document.querySelector(".cart-checkout");
+  if (checkout && !document.getElementById("loggedInAsBox")) {
+    const box = document.createElement("div");
+    box.id = "loggedInAsBox";
+    box.style.cssText = `
+      margin: 10px 0 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(0,0,0,.12);
+      max-width: 520px;
+    `;
+    box.innerHTML = `
+      <div style="font-size:12px; opacity:.75; font-weight:800; margin-bottom:4px;">Logged in as</div>
+      <div style="font-size:15px; font-weight:800;">${loggedInEmail}</div>
+      <div style="font-size:12px; opacity:.75; margin-top:6px; font-weight:700;">(We’ll confirm this sell order here)</div>
+    `;
+    checkout.insertBefore(box, checkout.firstChild);
+  }
+}
+
   if (!listEl || !totalEl) return;
 
   // Sell cart uses NM/LP/MP
@@ -371,6 +415,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     totalEl.textContent = (totalCents / 100).toFixed(2);
   }
+
+await applyLoggedInUX();
+render();
 
   // init
   await applyLoggedInAsUX();

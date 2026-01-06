@@ -1317,3 +1317,24 @@ body {
   box-shadow: 0 12px 28px rgba(0,0,0,0.18);
 }
 
+/* Ensure the summary panel stacks cleanly */
+.cart-summary {
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+}
+
+/* Logged-in block should NOT overlay anything */
+#loggedInAsBox {
+  position: static !important;
+  z-index: auto !important;
+  margin: 10px 0 12px;
+}
+
+/* If your checkout row is flex, ensure it wraps */
+.cart-checkout-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
