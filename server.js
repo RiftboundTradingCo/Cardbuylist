@@ -255,7 +255,7 @@ if (userId && session.shipping_details?.address) {
 
       const shipName = session.customer_details?.name || "";
 
-      const shipAddr = session.customer_detail?.address || null:
+      const shipAddr = session.customer_detail?.address || null;
 
       const lines = [];
       const emailLines = [];
