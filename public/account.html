@@ -3,216 +3,530 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>My Account</title>
+  <title>My Account • Riftbound Trading Co</title>
+
   <link rel="stylesheet" href="/style.css"/>
 
   <style>
-    .card { background: rgba(255,255,255,.95); padding:16px; border-radius:12px; margin:12px 0; }
-    .row { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-    .muted { opacity:.8; }
-    .btn { padding:10px 12px; border-radius:10px; border:1px solid rgba(0,0,0,.15); background:#fff; cursor:pointer; font-weight:700; }
-    .btn:hover { filter: brightness(0.98); }
-    .field { display:flex; flex-direction:column; gap:6px; margin: 10px 0; }
-    .field label { font-weight:700; font-size:13px; }
-    .field input { padding:10px 12px; border-radius:10px; border:1px solid rgba(0,0,0,.18); }
+    :root{
+      --card-bg: rgba(255,255,255,.92);
+      --card-border: rgba(255,255,255,.35);
+      --shadow: 0 18px 50px rgba(0,0,0,.22);
+      --text: #0f172a;
+      --muted: rgba(15,23,42,.72);
+      --brand: #2563eb;
+      --brand2: #1d4ed8;
+      --radius: 18px;
+      --pill: rgba(15,23,42,.08);
+      --pillActive: rgba(15,23,42,.9);
+    }
+
+    body{
+      min-height: 100vh;
+      margin: 0;
+      background: url("/images/wooden-shelves.jpg") center / cover no-repeat fixed;
+      color: var(--text);
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    }
+    body::before{
+      content:"";
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at top, rgba(0,0,0,.20), rgba(0,0,0,.40));
+      pointer-events: none;
+    }
+
+    .page-wrap{
+      position: relative;
+      width: min(1100px, 96vw);
+      margin: 34px auto 60px;
+    }
+
+    .card{
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding: 18px 18px;
+      backdrop-filter: blur(8px);
+    }
+
+    .top-row{
+      display:flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    h1{
+      margin: 0;
+      font-size: 30px;
+      letter-spacing: .2px;
+    }
+
+    .btn{
+      appearance: none;
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 800;
+      cursor: pointer;
+      background: rgba(15,23,42,.08);
+      color: rgba(15,23,42,.92);
+    }
+    .btn:hover{ filter: brightness(1.02); }
+    .btn:active{ transform: translateY(1px); }
+    .btn-primary{
+      background: linear-gradient(180deg, var(--brand), var(--brand2));
+      color: #fff;
+    }
+    .btn-outline{
+      background: transparent;
+      border: 1px solid rgba(15,23,42,.18);
+    }
+
+    .muted{ color: var(--muted); }
+
+    .who{
+      display:flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .who .name{
+      font-weight: 900;
+      font-size: 18px;
+    }
+    .who .email{
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .tabs{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .tab{
+      border: 1px solid rgba(15,23,42,.12);
+      background: rgba(255,255,255,.65);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: 900;
+      cursor: pointer;
+      user-select: none;
+    }
+    .tab.active{
+      background: rgba(15,23,42,.92);
+      color: #fff;
+      border-color: rgba(15,23,42,.92);
+    }
+
+    .section-title{
+      font-size: 16px;
+      font-weight: 900;
+      margin: 0 0 10px;
+    }
+
+    .stack{ display:flex; flex-direction: column; gap: 14px; }
+
+    .addr-grid{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .field{
+      display:flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    label{
+      font-weight: 850;
+      font-size: 13px;
+      color: rgba(15,23,42,.85);
+    }
+    input{
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(15,23,42,.18);
+      background: rgba(255,255,255,.95);
+      font-size: 15px;
+      outline: none;
+    }
+    input:focus{
+      border-color: rgba(37,99,235,.55);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.18);
+    }
+
+    .field-row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 720px){
+      .field-row{ grid-template-columns: 1fr; }
+    }
+
+    .orders-head{
+      display:flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+
+    .order{
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(15,23,42,.12);
+    }
+    .order-row{
+      display:flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: baseline;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      font-weight: 900;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(15,23,42,.08);
+      color: rgba(15,23,42,.85);
+      margin-left: 8px;
+    }
+    .pill.buy{ background: rgba(37,99,235,.14); color: rgba(30,64,175,1); }
+    .pill.sell{ background: rgba(245,158,11,.20); color: rgba(146,64,14,1); }
+    .pill.shipped{ background: rgba(168,85,247,.16); color: rgba(107,33,168,1); }
+    .pill.paid{ background: rgba(34,197,94,.16); color: rgba(22,101,52,1); }
+    .pill.submitted{ background: rgba(234,179,8,.18); color: rgba(113,63,18,1); }
+
+    ul{ margin: 8px 0 0 18px; }
+    li{ margin: 4px 0; }
+
+    a.link{
+      font-weight: 900;
+      color: rgba(29,78,216,1);
+      text-decoration: none;
+    }
+    a.link:hover{ text-decoration: underline; }
   </style>
 </head>
 
 <body>
   <div class="page-wrap">
-    <div class="row" style="align-items:center;">
+    <div class="top-row">
       <h1>My Account</h1>
-      <button id="logout" class="btn" type="button">Logout</button>
+      <button id="logout" class="btn btn-outline">Logout</button>
     </div>
 
-    <div id="who" class="card">Loading…</div>
+    <!-- Profile / Tabs -->
+    <div class="card">
+      <div id="who" class="who">Loading…</div>
 
-    <!-- ✅ NEW: Address card -->
-    <div id="address" class="card">Loading address…</div>
+      <div class="tabs" role="tablist" aria-label="Order filter">
+        <button class="tab active" data-filter="all" type="button">All</button>
+        <button class="tab" data-filter="buy" type="button">Buy</button>
+        <button class="tab" data-filter="sell" type="button">Sell</button>
+        <button class="tab" data-filter="shipped" type="button">Shipped</button>
+      </div>
+    </div>
 
-    <div id="orders" class="card">Loading orders…</div>
+    <!-- Address -->
+    <div id="address" class="card" style="margin-top:14px;">Loading address…</div>
 
-    <p><a href="/">Back to shop</a></p>
+    <!-- Orders -->
+    <div id="orders" class="card" style="margin-top:14px;">Loading orders…</div>
+
+    <div class="card" style="margin-top:14px;">
+      <a class="link" href="/">← Back to shop</a>
+    </div>
   </div>
 
-  <script>
-    async function load() {
-      const meRes = await fetch("/api/me", { cache: "no-store" });
-      const me = await meRes.json().catch(()=>({}));
-      if (!me.ok || !me.user) {
-        window.location.href = "/login.html";
-        return;
-      }
+<script>
+(function(){
+  const whoEl = document.getElementById("who");
+  const addrEl = document.getElementById("address");
+  const ordersEl = document.getElementById("orders");
+  const logoutBtn = document.getElementById("logout");
 
-      document.getElementById("who").innerHTML =
-        `<strong>${me.user.name || "Customer"}</strong><div class="muted">${me.user.email}</div>`;
+  let currentFilter = "all";
+  let me = null;
+  let allOrders = [];
 
-      // ---- Address UI ----
-      const addrEl = document.getElementById("address");
-      const a = me.user.address || null;
+  function escapeHtml(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
 
-      function esc(s){
-        return String(s || "")
-          .replaceAll("&","&amp;")
-          .replaceAll("<","&lt;")
-          .replaceAll(">","&gt;")
-          .replaceAll('"',"&quot;");
-      }
+  function moneyCents(cents){
+    return `$${(Number(cents||0)/100).toFixed(2)}`;
+  }
 
-      function renderAddress(viewMode = true, addr = a) {
-        if (!addrEl) return;
+  function setTabs(){
+    document.querySelectorAll(".tab").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.filter === currentFilter);
+    });
+  }
 
-        if (viewMode) {
-          if (!addr || !addr.line1) {
-            addrEl.innerHTML = `
-              <div class="row" style="align-items:flex-start;">
-                <div>
-                  <strong>Shipping Address</strong>
-                  <div class="muted" style="margin-top:6px;">No address on file.</div>
-                </div>
-                <button id="editAddr" class="btn" type="button">Add</button>
-              </div>
-            `;
-            document.getElementById("editAddr").onclick = () => renderAddress(false, {
-              line1:"", line2:"", city:"", state:"", postal:"", country:"US"
-            });
-            return;
-          }
+  function applyFilter(orders){
+    if (currentFilter === "all") return orders;
+    if (currentFilter === "buy") return orders.filter(o => o.type === "buy");
+    if (currentFilter === "sell") return orders.filter(o => o.type === "sell");
+    if (currentFilter === "shipped") return orders.filter(o => String(o.status||"") === "shipped");
+    return orders;
+  }
 
-          const line2 = addr.line2 ? `<div>${esc(addr.line2)}</div>` : "";
-          addrEl.innerHTML = `
-            <div class="row" style="align-items:flex-start;">
-              <div>
-                <strong>Shipping Address</strong>
-                <div style="margin-top:8px;">
-                  <div>${esc(addr.line1)}</div>
-                  ${line2}
-                  <div>${esc(addr.city)}, ${esc(addr.state)} ${esc(addr.postal)}</div>
-                  <div class="muted">${esc(addr.country || "US")}</div>
-                </div>
-              </div>
-              <button id="editAddr" class="btn" type="button">Edit</button>
-            </div>
-            <div id="addrMsg" class="muted" style="margin-top:10px;"></div>
-          `;
+  function renderWho(){
+    const name = escapeHtml(me?.user?.name || "Customer");
+    const email = escapeHtml(me?.user?.email || "");
+    whoEl.innerHTML = `
+      <div class="name">${name}</div>
+      <div class="email">${email}</div>
+    `;
+  }
 
-          document.getElementById("editAddr").onclick = () => renderAddress(false, addr);
-          return;
-        }
+  function renderAddress(viewMode = true, addr = (me?.user?.address || null)){
+    if (!addrEl) return;
 
-        // edit mode
+    // view mode
+    if (viewMode){
+      const hasAddr = addr && addr.line1 && addr.city && addr.state && addr.postal;
+
+      if (!hasAddr){
         addrEl.innerHTML = `
-          <strong>Shipping Address</strong>
-          <div class="muted" style="margin-top:6px;">Used for buy orders shipping.</div>
-
-          <div class="field" style="margin-top:12px;">
-            <label for="line1">Street address</label>
-            <input id="line1" autocomplete="address-line1" value="${esc(addr?.line1)}" />
-          </div>
-
-          <div class="field">
-            <label for="line2">Apartment / Suite (optional)</label>
-            <input id="line2" autocomplete="address-line2" value="${esc(addr?.line2)}" />
-          </div>
-
-          <div class="field">
-            <label for="city">City</label>
-            <input id="city" autocomplete="address-level2" value="${esc(addr?.city)}" />
-          </div>
-
-          <div class="row" style="gap:12px; align-items:flex-end;">
-            <div class="field" style="flex:1;">
-              <label for="state">State</label>
-              <input id="state" autocomplete="address-level1" value="${esc(addr?.state)}" />
+          <div class="addr-grid">
+            <div>
+              <div class="section-title">Shipping Address</div>
+              <div class="muted">No address on file yet.</div>
             </div>
-
-            <div class="field" style="flex:1;">
-              <label for="postal">ZIP Code</label>
-              <input id="postal" autocomplete="postal-code" value="${esc(addr?.postal)}" />
-            </div>
-          </div>
-
-          <div class="row" style="margin-top:12px; align-items:center;">
-            <button id="saveAddr" class="btn" type="button">Save</button>
-            <button id="cancelAddr" class="btn" type="button">Cancel</button>
-            <div id="addrMsg" class="muted" style="margin-left:auto;"></div>
+            <button id="editAddr" class="btn btn-outline" type="button">Add</button>
           </div>
         `;
-
-        document.getElementById("cancelAddr").onclick = () => renderAddress(true, a);
-
-        document.getElementById("saveAddr").onclick = async () => {
-          const next = {
-            line1: String(document.getElementById("line1").value || "").trim(),
-            line2: String(document.getElementById("line2").value || "").trim(),
-            city:  String(document.getElementById("city").value  || "").trim(),
-            state: String(document.getElementById("state").value || "").trim(),
-            postal:String(document.getElementById("postal").value|| "").trim(),
-            country: "US"
-          };
-
-          const msg = document.getElementById("addrMsg");
-          if (!next.line1 || !next.city || !next.state || !next.postal) {
-            msg.textContent = "Please fill out line1, city, state, and ZIP.";
-            return;
-          }
-
-          msg.textContent = "Saving…";
-
-          const res = await fetch("/api/me/address", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ address: next })
-          });
-
-          const data = await res.json().catch(()=>({}));
-          if (!res.ok || !data.ok) {
-            msg.textContent = data.error || "Could not save address.";
-            return;
-          }
-
-          // update local copy and re-render
-          me.user.address = data.address;
-          renderAddress(true, data.address);
-        };
-      }
-
-      renderAddress(true, a);
-
-      // ---- Orders ----
-      const oRes = await fetch("/api/my/orders", { cache: "no-store" });
-      const oData = await oRes.json().catch(()=>({}));
-      if (!oRes.ok || !oData.ok) {
-        document.getElementById("orders").textContent = "Could not load orders.";
+        document.getElementById("editAddr").onclick = () => renderAddress(false, {
+          line1:"", line2:"", city:"", state:"", postal:"", country:"US"
+        });
         return;
       }
 
-      const orders = oData.orders || [];
-      if (!orders.length) {
-        document.getElementById("orders").innerHTML =
-          "<strong>Orders</strong><p class='muted'>No orders yet.</p>";
-        return;
-      }
-
-      document.getElementById("orders").innerHTML =
-        `<strong>Orders</strong>` +
-        orders.map(o => `
-          <div style="margin-top:10px; padding-top:10px; border-top:1px solid #ddd">
-            <div class="row">
-              <div><strong>${o.id}</strong> <span class="muted">(${o.type} • ${o.status})</span></div>
-              <div><strong>$${((o.totalCents||0)/100).toFixed(2)}</strong></div>
+      const line2 = addr.line2 ? `<div>${escapeHtml(addr.line2)}</div>` : "";
+      addrEl.innerHTML = `
+        <div class="addr-grid">
+          <div>
+            <div class="section-title">Shipping Address</div>
+            <div style="margin-top:8px; font-weight:800;">
+              <div>${escapeHtml(addr.line1)}</div>
+              ${line2}
+              <div>${escapeHtml(addr.city)}, ${escapeHtml(addr.state)} ${escapeHtml(addr.postal)}</div>
+              <div class="muted" style="margin-top:4px;">${escapeHtml(addr.country || "US")}</div>
             </div>
-            <div class="muted">${new Date(o.createdAt).toLocaleString()}</div>
+            <div id="addrMsg" class="muted" style="margin-top:10px;"></div>
           </div>
-        `).join("");
+          <button id="editAddr" class="btn btn-outline" type="button">Edit</button>
+        </div>
+      `;
+      document.getElementById("editAddr").onclick = () => renderAddress(false, addr);
+      return;
     }
 
-    document.getElementById("logout").onclick = async () => {
-      await fetch("/api/auth/logout", { method:"POST" });
-      window.location.href = "/";
-    };
+    // edit mode
+    const safe = (v)=> escapeHtml(v||"");
+    addrEl.innerHTML = `
+      <div class="section-title">Shipping Address</div>
+      <div class="muted">Used for buy orders shipping.</div>
 
-    load();
-  </script>
+      <div class="field">
+        <label for="line1">Street address</label>
+        <input id="line1" autocomplete="address-line1" placeholder="123 Main St" value="${safe(addr?.line1)}"/>
+      </div>
+
+      <div class="field">
+        <label for="line2">Apartment / Suite (optional)</label>
+        <input id="line2" autocomplete="address-line2" placeholder="Apt 4B" value="${safe(addr?.line2)}"/>
+      </div>
+
+      <div class="field">
+        <label for="city">City</label>
+        <input id="city" autocomplete="address-level2" placeholder="Seattle" value="${safe(addr?.city)}"/>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="state">State</label>
+          <input id="state" autocomplete="address-level1" placeholder="WA" value="${safe(addr?.state)}"/>
+        </div>
+
+        <div class="field">
+          <label for="postal">ZIP Code</label>
+          <input id="postal" autocomplete="postal-code" placeholder="98101" value="${safe(addr?.postal)}"/>
+        </div>
+      </div>
+
+      <div class="top-row" style="margin-top:12px; margin-bottom:0; align-items:center;">
+        <div style="display:flex; gap:10px;">
+          <button id="saveAddr" class="btn btn-primary" type="button">Save</button>
+          <button id="cancelAddr" class="btn btn-outline" type="button">Cancel</button>
+        </div>
+        <div id="addrMsg" class="muted"></div>
+      </div>
+    `;
+
+    document.getElementById("cancelAddr").onclick = () => renderAddress(true, me.user.address || null);
+
+    document.getElementById("saveAddr").onclick = async () => {
+      const next = {
+        line1: String(document.getElementById("line1").value || "").trim(),
+        line2: String(document.getElementById("line2").value || "").trim(),
+        city:  String(document.getElementById("city").value  || "").trim(),
+        state: String(document.getElementById("state").value || "").trim(),
+        postal:String(document.getElementById("postal").value|| "").trim(),
+        country: "US"
+      };
+
+      const msg = document.getElementById("addrMsg");
+      if (!next.line1 || !next.city || !next.state || !next.postal) {
+        msg.textContent = "Please fill out Street, City, State, and ZIP.";
+        return;
+      }
+
+      msg.textContent = "Saving…";
+
+      const res = await fetch("/api/me/address", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: next })
+      });
+
+      const data = await res.json().catch(()=>({}));
+      if (!res.ok || !data.ok) {
+        msg.textContent = data.error || "Could not save address.";
+        return;
+      }
+
+      me.user.address = data.address;
+      renderAddress(true, data.address);
+    };
+  }
+
+  function renderOrders(){
+    const filtered = applyFilter(allOrders);
+    const count = filtered.length;
+
+    if (!count){
+      ordersEl.innerHTML = `
+        <div class="orders-head">
+          <div class="section-title">Orders</div>
+          <div class="muted">${count} order(s)</div>
+        </div>
+        <div class="muted">No orders match this filter yet.</div>
+      `;
+      return;
+    }
+
+    ordersEl.innerHTML = `
+      <div class="orders-head">
+        <div class="section-title">Orders</div>
+        <div class="muted">${count} order(s)</div>
+      </div>
+      ${filtered.map(o => {
+        const id = escapeHtml(o.id || "");
+        const type = String(o.type || "");
+        const status = String(o.status || "");
+        const created = o.createdAt ? new Date(o.createdAt).toLocaleString() : "";
+
+        const pillType = type === "sell" ? "sell" : "buy";
+        const pillStatus = escapeHtml(status);
+
+        const lines = Array.isArray(o.lines) ? o.lines : [];
+        const linesHtml = lines.length ? `
+          <ul>
+            ${lines.map(l => {
+              const qty = Number(l.qty || 0);
+              const name = escapeHtml(l.name || l.sku || "Item");
+              const cond = escapeHtml(l.condition || "");
+              const unit = moneyCents(l.unitPriceCents || 0);
+              const lineTotal = moneyCents(l.lineTotalCents || 0);
+
+              // sell lines have unit/line totals saved; buy lines may or may not (depending on your order format)
+              if (l.unitPriceCents != null || l.lineTotalCents != null){
+                return `<li>${qty} × ${name} (${cond}) — Unit: <strong>${unit}</strong> — Line: <strong>${lineTotal}</strong></li>`;
+              }
+              return `<li>${qty} × ${name} (${cond})</li>`;
+            }).join("")}
+          </ul>
+        ` : "";
+
+        return `
+          <div class="order">
+            <div class="order-row">
+              <div>
+                <strong>${id}</strong>
+                <span class="pill ${pillType}">${escapeHtml(type.toUpperCase())}</span>
+                <span class="pill ${escapeHtml(status)}">${pillStatus}</span>
+                ${created ? `<div class="muted" style="margin-top:4px;">${escapeHtml(created)}</div>` : ""}
+              </div>
+              <div style="font-weight: 1000;">${moneyCents(o.totalCents || 0)}</div>
+            </div>
+            ${linesHtml}
+          </div>
+        `;
+      }).join("")}
+    `;
+  }
+
+  async function load(){
+    const meRes = await fetch("/api/me", { cache: "no-store" });
+    me = await meRes.json().catch(()=>({}));
+    if (!me.ok || !me.user){
+      window.location.href = "/login.html";
+      return;
+    }
+
+    renderWho();
+    renderAddress(true, me.user.address || null);
+
+    const oRes = await fetch("/api/my/orders", { cache: "no-store" });
+    const oData = await oRes.json().catch(()=>({}));
+    if (!oRes.ok || !oData.ok){
+      ordersEl.textContent = "Could not load orders.";
+      return;
+    }
+
+    allOrders = Array.isArray(oData.orders) ? oData.orders : [];
+    renderOrders();
+  }
+
+  // tabs
+  document.addEventListener("click", (e) => {
+    const tab = e.target.closest(".tab");
+    if (!tab) return;
+    currentFilter = tab.dataset.filter || "all";
+    setTabs();
+    renderOrders();
+  });
+
+  logoutBtn.onclick = async () => {
+    await fetch("/api/auth/logout", { method:"POST" });
+    window.location.href = "/";
+  };
+
+  load();
+})();
+</script>
 </body>
 </html>
