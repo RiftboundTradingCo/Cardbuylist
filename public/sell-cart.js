@@ -10,56 +10,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   const emailInput = document.getElementById("sellEmail");
   const submitBtn = document.getElementById("sellSubmitBtn");
 
+  if (!listEl || !totalEl) return;
+
   // The row that contains the email input + submit button
   const checkoutRow = emailInput ? emailInput.closest(".cart-checkout-row") : null;
   // The label above the row (Email for confirmation)
-  const checkoutLabel = emailInput ? document.querySelector('label[for="sellEmail"]') : null;
-
-let loggedInEmail = "";
-
-async function applyLoggedInUX() {
-  if (!emailInput) return;
-
-  try {
-    const meRes = await fetch("/api/me", { cache: "no-store" });
-    const me = await meRes.json().catch(() => ({}));
-    loggedInEmail = me?.ok && me?.user?.email ? String(me.user.email).trim() : "";
-  } catch {
-    loggedInEmail = "";
-  }
-
-  if (!loggedInEmail) return;
-
-  // Fill email automatically
-  emailInput.value = loggedInEmail;
-  emailInput.readOnly = true;
-
-  // ✅ Hide ONLY the input (NOT the checkout row)
-  emailInput.style.display = "none";
-
-  // Add a small "Logged in as" display (optional)
-  const checkout = document.querySelector(".cart-checkout");
-  if (checkout && !document.getElementById("loggedInAsBox")) {
-    const box = document.createElement("div");
-    box.id = "loggedInAsBox";
-    box.style.cssText = `
-      margin: 10px 0 10px;
-      padding: 10px 12px;
-      border-radius: 12px;
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(0,0,0,.12);
-      max-width: 520px;
-    `;
-    box.innerHTML = `
-      <div style="font-size:12px; opacity:.75; font-weight:800; margin-bottom:4px;">Logged in as</div>
-      <div style="font-size:15px; font-weight:800;">${loggedInEmail}</div>
-      <div style="font-size:12px; opacity:.75; margin-top:6px; font-weight:700;">(We’ll confirm this sell order here)</div>
-    `;
-    checkout.insertBefore(box, checkout.firstChild);
-  }
-}
-
-  if (!listEl || !totalEl) return;
+  const checkoutLabel = document.querySelector('label[for="sellEmail"]');
+  // The checkout container
+  const checkoutBox = document.querySelector(".cart-checkout");
 
   // Sell cart uses NM/LP/MP
   const TAB_ORDER = ["NM", "LP", "MP"];
@@ -85,10 +43,6 @@ async function applyLoggedInUX() {
     window.dispatchEvent(new Event("cart:changed"));
   }
 
-  function money(n) {
-    return `$${(Number(n || 0)).toFixed(2)}`;
-  }
-
   function moneyCents(cents) {
     return `$${(Number(cents || 0) / 100).toFixed(2)}`;
   }
@@ -111,6 +65,69 @@ async function applyLoggedInUX() {
     return "NM";
   }
 
+  // ---------- Logged in UX ----------
+  let loggedInEmail = "";
+
+  async function applyLoggedInAsUX() {
+    if (!emailInput) return;
+
+    // Determine logged-in user (if any)
+    try {
+      const meRes = await fetch("/api/me", { cache: "no-store" });
+      const me = await meRes.json().catch(() => ({}));
+      loggedInEmail = me?.ok && me?.user?.email ? String(me.user.email).trim() : "";
+    } catch {
+      loggedInEmail = "";
+    }
+
+    // Not logged in → keep normal input
+    if (!loggedInEmail) {
+      emailInput.readOnly = false;
+      emailInput.disabled = false;
+      emailInput.style.display = "";
+      if (checkoutLabel) checkoutLabel.style.display = "";
+      return;
+    }
+
+    // Logged in → fill email and lock it
+    emailInput.value = loggedInEmail;
+    emailInput.readOnly = true;
+
+    // Hide ONLY the label + input (keep the row so submit button remains)
+    if (checkoutLabel) checkoutLabel.style.display = "none";
+    emailInput.style.display = "none";
+
+    // Insert a "Logged in as" box at the top of the checkout panel
+    if (checkoutBox && !document.getElementById("loggedInAsBox")) {
+      const box = document.createElement("div");
+      box.id = "loggedInAsBox";
+      box.style.cssText = `
+        margin: 10px 0 12px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: rgba(255,255,255,.92);
+        border: 1px solid rgba(0,0,0,.12);
+        max-width: 560px;
+      `;
+      box.innerHTML = `
+        <div style="font-size:12px; opacity:.75; font-weight:800; margin-bottom:4px;">Logged in as</div>
+        <div style="font-size:15px; font-weight:800;">${loggedInEmail}</div>
+        <div style="font-size:12px; opacity:.75; margin-top:6px; font-weight:700;">
+          (We’ll confirm this sell order here)
+        </div>
+      `;
+      checkoutBox.insertBefore(box, checkoutBox.firstChild);
+    }
+
+    // Optional: make the submit button look aligned when input is hidden
+    if (checkoutRow) {
+      checkoutRow.style.display = "flex";
+      checkoutRow.style.gap = "10px";
+      checkoutRow.style.alignItems = "center";
+    }
+  }
+
+  // ---------- Selllist ----------
   async function fetchSellList() {
     const res = await fetch("/api/selllist", { cache: "no-store" });
     if (!res.ok) throw new Error(`selllist HTTP ${res.status}`);
@@ -243,62 +260,6 @@ async function applyLoggedInUX() {
   if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
 
-  // ---------- Better UX: Logged in as... ----------
-  let loggedInEmail = "";
-
-  async function applyLoggedInAsUX() {
-    if (!emailInput) return;
-
-    try {
-      const res = await fetch("/api/me", { cache: "no-store" });
-      const data = await res.json().catch(() => ({}));
-      loggedInEmail = data?.ok && data?.user?.email ? String(data.user.email).trim() : "";
-    } catch {
-      loggedInEmail = "";
-    }
-
-    if (!loggedInEmail) {
-      // Not logged in → keep normal input visible/editable
-      emailInput.readOnly = false;
-      emailInput.disabled = false;
-      if (checkoutRow) checkoutRow.style.display = "";
-      if (checkoutLabel) checkoutLabel.style.display = "";
-      return;
-    }
-
-    // Logged in → lock email + hide row/label and show “Logged in as…”
-    emailInput.value = loggedInEmail;
-    emailInput.readOnly = true;
-
-    if (checkoutRow) checkoutRow.style.display = "none";
-    if (checkoutLabel) checkoutLabel.style.display = "none";
-
-    const host = checkoutRow?.parentElement || emailInput.parentElement;
-    if (!host) return;
-
-    if (document.getElementById("loggedInAsBox")) return;
-
-    const box = document.createElement("div");
-    box.id = "loggedInAsBox";
-    box.style.cssText = `
-      margin-top: 10px;
-      padding: 12px 14px;
-      border-radius: 12px;
-      background: rgba(255,255,255,.92);
-      border: 1px solid rgba(0,0,0,.12);
-      font-weight: 800;
-    `;
-    box.innerHTML = `
-      <div style="font-size:12px; opacity:.75; font-weight:800; margin-bottom:4px;">Logged in as</div>
-      <div style="font-size:15px;">${loggedInEmail}</div>
-      <div style="font-size:12px; opacity:.75; margin-top:6px; font-weight:700;">
-        (We’ll confirm this sell order here)
-      </div>
-    `;
-
-    host.insertBefore(box, host.firstChild);
-  }
-
   // ----- render -----
   function render() {
     const cart = loadCart();
@@ -417,10 +378,7 @@ async function applyLoggedInUX() {
     totalEl.textContent = (totalCents / 100).toFixed(2);
   }
 
-await applyLoggedInUX();
-render();
-
-  // init
+  // ---------- init ----------
   await applyLoggedInAsUX();
   render();
 
@@ -481,7 +439,6 @@ render();
   // ===== submit sell order =====
   if (submitBtn) {
     submitBtn.addEventListener("click", async () => {
-      // choose email: logged-in email wins; else use input
       const email = String(loggedInEmail || emailInput?.value || "").trim();
       if (!email || !email.includes("@")) {
         showMsg("Please enter a valid email for confirmation.", false);
@@ -495,7 +452,7 @@ render();
       }
 
       submitBtn.disabled = true;
-      const prev = submitBtn.textContent;
+      const prevText = submitBtn.textContent;
       submitBtn.textContent = "Submitting...";
 
       try {
@@ -548,7 +505,6 @@ render();
           throw new Error((data && data.error) || text || `HTTP ${res.status}`);
         }
 
-        // recap payload for recap.html
         sessionStorage.setItem("sellOrderRecap", JSON.stringify({
           name: "Sell Customer",
           email,
@@ -562,7 +518,7 @@ render();
         console.error("Sell submit error:", err);
         showMsg(String(err.message || "Error submitting sell order. Try again."), false);
         submitBtn.disabled = false;
-        submitBtn.textContent = prev || "Submit Sell Order";
+        submitBtn.textContent = prevText || "Submit Sell Order";
       }
     });
   }
