@@ -37,7 +37,7 @@ const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 const CATALOG_PATH = path.join(__dirname, "catalog.json");
 const SELLLIST_PATH = path.join(__dirname, "selllist.json");
 const ORDERS_PATH = path.join(__dirname, "data", "orders.json");
-const USERS_PATH = path.join(__dirname, "data", "users.json"); // ✅ FIX
+const USERS_PATH = path.join(__dirname, "data", "users.json");
 
 /* =========================
    HELPERS
