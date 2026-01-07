@@ -597,6 +597,8 @@ app.post("/api/auth/signup", async (req, res) => {
       createdAt: new Date().toISOString(),
     };
 
+    console.log("SIGNUP: writing users db to", USERS_PATH);
+
     db.users.unshift(user);
     writeUsersDb(db);
 
