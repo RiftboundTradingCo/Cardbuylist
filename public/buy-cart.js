@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // ----------------------------
-  // Condition normalization (supports NM/LP/MP/HP and full names)
+  // Condition normalization
   // ----------------------------
   const TAB_TO_COND = {
     NM: "Near Mint",
@@ -45,13 +45,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const s = String(raw || "").trim();
     const up = s.toUpperCase();
 
-    // If tab code
     if (TAB_TO_COND[up]) return TAB_TO_COND[up];
-
-    // If exact full name
     if (CONDITION_MULT[s]) return s;
 
-    // fallback
     return "Near Mint";
   }
 
@@ -100,9 +96,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // ----------------------------
-  // Logged in UX (hide email input only)
+  // Logged in UX + address fetch
   // ----------------------------
   let loggedInEmail = "";
+  let loggedInAddress = null; // {line1,line2,city,state,postal,country} or null
 
   async function applyLoggedInUX() {
     if (!emailInput) return;
@@ -110,9 +107,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       const meRes = await fetch("/api/me", { cache: "no-store" });
       const me = await meRes.json().catch(() => ({}));
+
       loggedInEmail = me?.ok && me?.user?.email ? String(me.user.email).trim() : "";
+      loggedInAddress = me?.ok && me?.user?.address ? me.user.address : null;
     } catch {
       loggedInEmail = "";
+      loggedInAddress = null;
     }
 
     if (!loggedInEmail) {
@@ -124,10 +124,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     emailInput.value = loggedInEmail;
     emailInput.readOnly = true;
 
-    // Hide the email row itself (but NOT the topbar)
     if (emailLabel) emailLabel.style.display = "none";
 
-    // Add “Logged in as” box into left column
     const leftCol = document.querySelector(".cart-top-left");
     if (leftCol && !document.getElementById("loggedInAsBox")) {
       const box = document.createElement("div");
@@ -138,19 +136,42 @@ document.addEventListener("DOMContentLoaded", async () => {
         border-radius: 12px;
         background: rgba(255,255,255,.92);
         border: 1px solid rgba(0,0,0,.12);
-        max-width: 320px;
+        max-width: 340px;
       `;
+
+      const hasAddr =
+        loggedInAddress &&
+        loggedInAddress.line1 &&
+        loggedInAddress.city &&
+        loggedInAddress.state &&
+        loggedInAddress.postal;
+
       box.innerHTML = `
         <div style="font-size:12px; opacity:.75; font-weight:800; margin-bottom:4px;">Logged in as</div>
         <div style="font-size:15px; font-weight:800;">${loggedInEmail}</div>
-        <div style="font-size:12px; opacity:.75; margin-top:6px; font-weight:700;">(We’ll email your receipt here)</div>
+        <div style="font-size:12px; opacity:.75; margin-top:6px; font-weight:700;">
+          (We’ll email your receipt here)
+        </div>
+        ${
+          hasAddr
+            ? `<div style="font-size:12px; opacity:.75; margin-top:6px; font-weight:700;">
+                 Shipping address on file ✓
+               </div>`
+            : `<div style="font-size:12px; color:#b00020; margin-top:6px; font-weight:800;">
+                 No shipping address on file
+               </div>
+               <div style="font-size:12px; opacity:.75; margin-top:4px;">
+                 Add one in <a href="/account.html" style="font-weight:900;">My Account</a>
+               </div>`
+        }
       `;
+
       leftCol.appendChild(box);
     }
   }
 
   // ----------------------------
-  // Render
+  // Catalog + render
   // ----------------------------
   let catalog = {};
   try {
@@ -162,7 +183,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function groupCart(cart) {
-    // sku|condFull -> { sku, conditionFull, qty }
     const map = new Map();
 
     for (const it of cart) {
@@ -171,7 +191,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const condFull = normalizeCondition(it?.condition);
       const qty = Math.max(0, Number(it?.qty || 0));
-
       if (qty <= 0) continue;
 
       const key = `${sku}__${condFull}`;
@@ -193,7 +212,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (stock <= 0) {
         changed = true;
-        continue; // remove from cart if out of stock
+        continue;
       }
 
       if (l.qty > stock) {
@@ -208,7 +227,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function flatten(lines) {
-    // store condition as FULL NAME to keep consistent going forward
     return lines.map(l => ({ sku: l.sku, condition: l.conditionFull, qty: l.qty }));
   }
 
@@ -262,7 +280,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
           <div class="cart-right">
             <div class="qty-controls">
-              <button class="cart-minus" type="button" ${l.qty <= 1 ? "" : ""}>−</button>
+              <button class="cart-minus" type="button">−</button>
               <span class="cart-qty">${l.qty}</span>
               <button class="cart-plus" type="button" ${canPlus ? "" : "disabled"}>+</button>
             </div>
@@ -294,12 +312,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const product = catalog[sku];
     const stock = getStockForCondition(product, condFull);
 
-    // Load grouped representation
     const grouped = groupCart(loadCart());
     const idx = grouped.findIndex(x => x.sku === sku && x.conditionFull === condFull);
     if (idx < 0) return;
 
-    // +
     if (e.target.closest(".cart-plus")) {
       if (stock <= 0) return;
       grouped[idx].qty = Math.min(stock, grouped[idx].qty + 1);
@@ -308,7 +324,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    // -
     if (e.target.closest(".cart-minus")) {
       grouped[idx].qty = Math.max(0, grouped[idx].qty - 1);
       if (grouped[idx].qty <= 0) grouped.splice(idx, 1);
@@ -317,7 +332,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    // remove
     if (e.target.closest(".cart-remove")) {
       grouped.splice(idx, 1);
       saveCart(flatten(grouped));
@@ -339,6 +353,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  // ----------------------------
+  // Checkout
+  // ----------------------------
   if (checkoutBtn) {
     checkoutBtn.addEventListener("click", async () => {
       const email = String(loggedInEmail || emailInput?.value || "").trim();
@@ -347,10 +364,27 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
+      // slim cart to prevent bloat
       const cart = loadCart();
-      if (!cart.length) {
+      const slimCart = (cart || []).map(it => ({
+        sku: String(it?.sku || "").trim(),
+        condition: String(it?.condition || "").trim(),
+        qty: Number(it?.qty || 0)
+      })).filter(it => it.sku && it.qty > 0);
+
+      if (!slimCart.length) {
         showMsg("Your cart is empty.", false);
         return;
+      }
+
+      // If logged in, require address on file (recommended)
+      if (loggedInEmail) {
+        const a = loggedInAddress;
+        const hasAddr = a && a.line1 && a.city && a.state && a.postal;
+        if (!hasAddr) {
+          showMsg("Please add a shipping address in My Account before checkout.", false);
+          return;
+        }
       }
 
       checkoutBtn.disabled = true;
@@ -359,7 +393,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         const res = await fetch("/api/create-checkout-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, cart }),
+          // send address if we have one (server can ignore if not needed)
+          body: JSON.stringify({
+            email,
+            cart: slimCart,
+            address: loggedInAddress || null
+          }),
         });
 
         const data = await res.json().catch(() => ({}));
@@ -383,7 +422,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   await applyLoggedInUX();
   render();
 });
-
 
 
 

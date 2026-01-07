@@ -68,6 +68,35 @@ function writeJsonSafe(filePath, obj) {
   }
 }
 
+const PENDING_CHECKOUT_PATH = path.join(__dirname, "data", "pending_checkout.json");
+
+function readPendingDb() {
+  const db = readJsonSafe(PENDING_CHECKOUT_PATH);
+  if (!db || typeof db !== "object") return { pending: {} };
+  if (!db.pending || typeof db.pending !== "object") db.pending = {};
+  return db;
+}
+
+function writePendingDb(db) {
+  return writeJsonSafe(PENDING_CHECKOUT_PATH, db);
+}
+
+function savePendingCheckout(orderId, payload) {
+  const db = readPendingDb();
+  db.pending[orderId] = payload;
+  writePendingDb(db);
+}
+
+function popPendingCheckout(orderId) {
+  const db = readPendingDb();
+  const payload = db.pending?.[orderId] || null;
+  if (payload) {
+    delete db.pending[orderId];
+    writePendingDb(db);
+  }
+  return payload;
+}
+
 function makeOrderId() {
   return `ord_${Date.now()}_${crypto.randomBytes(3).toString("hex")}`;
 }
@@ -190,201 +219,219 @@ function requireAuth(req, res, next) {
   next();
 }
 
-/* =========================
+//* =========================
    STRIPE WEBHOOK (RAW BODY)
    NOTE: must be BEFORE express.json()
 ========================= */
-app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
-  if (!stripe) return res.sendStatus(500);
+app.post(
+  "/api/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    if (!stripe) return res.sendStatus(500);
 
-  let event;
-  try {
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      req.headers["stripe-signature"],
-      STRIPE_WEBHOOK_SECRET
-    );
-  } catch (err) {
-    console.error("Webhook signature verify failed:", err?.message || err);
-    return res.status(400).send("Webhook error");
-  }
-
-  try {
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object;
-
-      const orderId = String(session?.metadata?.orderId || "").trim() || makeOrderId();
-
-      const userId = String(session?.metadata?.userId || "").trim() || null; // ✅ used in all paths
-
-
-if (userId && session.shipping_details?.address) {
-  const usersDb = readUsersDb();
-  const user = usersDb.users.find(u => u.id === userId);
-
-  if (user) {
-    user.address = {
-      line1: session.shipping_details.address.line1 || "",
-      line2: session.shipping_details.address.line2 || "",
-      city: session.shipping_details.address.city || "",
-      state: session.shipping_details.address.state || "",
-      postal: session.shipping_details.address.postal_code || "",
-      country: session.shipping_details.address.country || "US"
-    };
-
-    user.addressUpdatedAt = new Date().toISOString();
-    writeUsersDb(usersDb);
-  }
-}
-
-
-      let cart = [];
-      try {
-        cart = JSON.parse(session?.metadata?.cart || "[]");
-      } catch {
-        cart = [];
-      }
-
-      const catalog = readJsonSafe(CATALOG_PATH);
-
-      const customerEmail =
-        session.customer_details?.email ||
-        session.customer_email ||
-        String(session?.metadata?.email || "").trim() ||
-        "";
-
-      const shipName = session.customer_details?.name || "";
-
-      const shipAddr = session.shipping_details?.address || session.customer_details?.address || null;
-
-const shippingAddress = shipAddr ? {
-  line1: shipAddr.line1 || "",
-  line2: shipAddr.line2 || "",
-  city: shipAddr.city || "",
-  state: shipAddr.state || "",
-  postal: shipAddr.postal_code || "",
-  country: shipAddr.country || ""
-} : null;
-
-
-      const lines = [];
-      const emailLines = [];
-      let totalCents = 0;
-
-      for (const it of cart) {
-        const sku = String(it?.sku || "").trim();
-        const condition = normalizeCondition(it?.condition);
-        const qty = Math.max(1, Number(it?.qty || 0));
-
-        if (!sku || !Number.isFinite(qty) || qty <= 0) continue;
-
-        const product = catalog[sku];
-        if (!product) {
-          console.warn("Unknown SKU in cart:", sku);
-          continue;
-        }
-
-        const unitCents = centsForCondition(Number(product.price_cents || 0), condition);
-        const lineCents = unitCents * qty;
-        totalCents += lineCents;
-
-        const dec = decrementStock(catalog, sku, condition, qty);
-        if (!dec.ok) {
-          console.error("Inventory decrement failed:", dec.error);
-
-          appendOrder({
-            id: orderId,
-            userId, 
-            type: "buy",
-            status: "needs_review",
-            createdAt: new Date().toISOString(),
-            customer: { name: shipName, email: customerEmail, address: shippingAddress },
-            lines: cart.map((x) => ({
-              sku: String(x?.sku || ""),
-              condition: normalizeCondition(x?.condition),
-              qty: Math.max(1, Number(x?.qty || 0)),
-            })),
-            totalCents,
-            stripeSessionId: session.id,
-            error: dec.error || "Inventory decrement failed",
-          });
-
-          // respond 200 so Stripe does not retry forever
-          return res.json({ received: true });
-        }
-
-        const name = String(product.name || sku);
-
-         lines.push({
-         sku,
-         name,
-         condition,
-         qty,
-         unitPriceCents: unitCents,
-         lineTotalCents: lineCents
-       });
-
-        emailLines.push(
-          `${qty}x ${name} — ${condition} — $${(unitCents / 100).toFixed(2)} each = $${(
-            lineCents / 100
-          ).toFixed(2)}`
-        );
-      }
-
-      // persist updated inventory
-      writeJsonSafe(CATALOG_PATH, catalog);
-
-      // save order
-      appendOrder({
-  id: orderId,
-  userId,
-  type: "buy",
-  status: "paid",
-  createdAt: new Date().toISOString(),
-  customer: {
-    name: shipName,
-    email: customerEmail,
-    address: shipAddr   // ✅ add this
-  },
-  lines,
-  totalCents,
-  stripeSessionId: session.id
-});
-
-      // optional emails
-      if (resend && EMAIL_FROM) {
-        const totalNice = `$${(totalCents / 100).toFixed(2)}`;
-
-        if (OWNER_EMAIL) {
-          await resend.emails.send({
-            from: EMAIL_FROM,
-            to: OWNER_EMAIL,
-            subject: `New order ${orderId}`,
-            text: `Order ${orderId}\nCustomer: ${shipName} <${customerEmail}>\nTotal: ${totalNice}\n\n${emailLines.join(
-              "\n"
-            )}`,
-          });
-        }
-
-        if (customerEmail) {
-          await resend.emails.send({
-            from: EMAIL_FROM,
-            to: customerEmail,
-            subject: `Your Riftbound order receipt (${orderId})`,
-            text: `Thanks for your purchase!\nOrder: ${orderId}\nTotal: ${totalNice}\n\n${emailLines.join(
-              "\n"
-            )}`,
-          });
-        }
-      }
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        req.headers["stripe-signature"],
+        STRIPE_WEBHOOK_SECRET
+      );
+    } catch (err) {
+      console.error("Webhook signature verify failed:", err?.message || err);
+      return res.status(400).send("Webhook error");
     }
 
-    return res.json({ received: true });
-  } catch (e) {
-    console.error("Webhook handler error:", e);
-    return res.status(500).send("Webhook handler error");
+    try {
+      if (event.type === "checkout.session.completed") {
+        const session = event.data.object;
+
+        const orderId =
+          String(session?.metadata?.orderId || "").trim() || makeOrderId();
+
+        const userId =
+          String(session?.metadata?.userId || "").trim() || null;
+
+        /* =========================
+           CUSTOMER + SHIPPING
+        ========================= */
+        const customerEmail =
+          session.customer_details?.email ||
+          session.customer_email ||
+          String(session?.metadata?.email || "").trim() ||
+          "";
+
+        const shipName = session.customer_details?.name || "";
+
+        const shipAddr =
+          session.shipping_details?.address ||
+          session.customer_details?.address ||
+          null;
+
+        // ✅ Normalize address ONCE (your app format)
+        const shippingAddress = shipAddr
+          ? {
+              line1: shipAddr.line1 || "",
+              line2: shipAddr.line2 || "",
+              city: shipAddr.city || "",
+              state: shipAddr.state || "",
+              postal: shipAddr.postal_code || "",
+              country: shipAddr.country || "US",
+            }
+          : null;
+
+        // ✅ Save address to user account (if logged in)
+        if (userId && shippingAddress) {
+          const usersDb = readUsersDb();
+          const user = usersDb.users.find((u) => u.id === userId);
+          if (user) {
+            user.address = shippingAddress;
+            user.addressUpdatedAt = new Date().toISOString();
+            writeUsersDb(usersDb);
+          }
+        }
+
+        /* =========================
+           CART FROM METADATA
+        ========================= */
+        let cart = [];
+        try {
+          cart = JSON.parse(session?.metadata?.cart || "[]");
+        } catch {
+          cart = [];
+        }
+
+        const catalog = readJsonSafe(CATALOG_PATH);
+        const lines = [];
+        const emailLines = [];
+        let totalCents = 0;
+
+        for (const it of cart) {
+          const sku = String(it?.sku || "").trim();
+          const condition = normalizeCondition(it?.condition);
+          const qty = Math.max(1, Number(it?.qty || 0));
+
+          if (!sku || qty <= 0) continue;
+
+          const product = catalog[sku];
+          if (!product) {
+            console.warn("Unknown SKU in cart:", sku);
+            continue;
+          }
+
+          const unitCents = centsForCondition(
+            Number(product.price_cents || 0),
+            condition
+          );
+          const lineCents = unitCents * qty;
+          totalCents += lineCents;
+
+          const dec = decrementStock(catalog, sku, condition, qty);
+          if (!dec.ok) {
+            console.error("Inventory decrement failed:", dec.error);
+
+            appendOrder({
+              id: orderId,
+              userId,
+              type: "buy",
+              status: "needs_review",
+              createdAt: new Date().toISOString(),
+              customer: {
+                name: shipName,
+                email: customerEmail,
+                address: shippingAddress,
+              },
+              lines: cart.map((x) => ({
+                sku: String(x?.sku || ""),
+                condition: normalizeCondition(x?.condition),
+                qty: Math.max(1, Number(x?.qty || 0)),
+              })),
+              totalCents,
+              stripeSessionId: session.id,
+              error: dec.error || "Inventory decrement failed",
+            });
+
+            // Respond 200 so Stripe does not retry forever
+            return res.json({ received: true });
+          }
+
+          const name = String(product.name || sku);
+
+          lines.push({
+            sku,
+            name,
+            condition,
+            qty,
+            unitPriceCents: unitCents,
+            lineTotalCents: lineCents,
+          });
+
+          emailLines.push(
+            `${qty}x ${name} — ${condition} — $${(
+              unitCents / 100
+            ).toFixed(2)} each = $${(lineCents / 100).toFixed(2)}`
+          );
+        }
+
+        // Persist inventory updates
+        writeJsonSafe(CATALOG_PATH, catalog);
+
+        /* =========================
+           SAVE FINAL ORDER
+        ========================= */
+        appendOrder({
+          id: orderId,
+          userId,
+          type: "buy",
+          status: "paid",
+          createdAt: new Date().toISOString(),
+          customer: {
+            name: shipName,
+            email: customerEmail,
+            address: shippingAddress, // ✅ normalized
+          },
+          lines,
+          totalCents,
+          stripeSessionId: session.id,
+        });
+
+        /* =========================
+           OPTIONAL EMAILS
+        ========================= */
+        if (resend && EMAIL_FROM) {
+          const totalNice = `$${(totalCents / 100).toFixed(2)}`;
+
+          if (OWNER_EMAIL) {
+            await resend.emails.send({
+              from: EMAIL_FROM,
+              to: OWNER_EMAIL,
+              subject: `New order ${orderId}`,
+              text: `Order ${orderId}\nCustomer: ${shipName} <${customerEmail}>\nTotal: ${totalNice}\n\n${emailLines.join(
+                "\n"
+              )}`,
+            });
+          }
+
+          if (customerEmail) {
+            await resend.emails.send({
+              from: EMAIL_FROM,
+              to: customerEmail,
+              subject: `Your Riftbound order receipt (${orderId})`,
+              text: `Thanks for your purchase!\nOrder: ${orderId}\nTotal: ${totalNice}\n\n${emailLines.join(
+                "\n"
+              )}`,
+            });
+          }
+        }
+      }
+
+      return res.json({ received: true });
+    } catch (e) {
+      console.error("Webhook handler error:", e);
+      return res.status(500).send("Webhook handler error");
+    }
   }
-});
+);
+
 
 /* =========================
    NORMAL MIDDLEWARE + STATIC
@@ -401,16 +448,40 @@ app.post("/api/create-checkout-session", async (req, res) => {
 
     const email = String(req.body?.email || "").trim();
     const cart = Array.isArray(req.body?.cart) ? req.body.cart : [];
+    const addressRaw = req.body?.address && typeof req.body.address === "object" ? req.body.address : null;
 
     if (!cart.length) return res.status(400).json({ ok: false, error: "Cart is empty" });
+
+    // Normalize + slim cart (don’t trust client)
+    const cleanCart = cart
+      .map((it) => ({
+        sku: String(it?.sku || "").trim(),
+        condition: normalizeCondition(it?.condition),
+        qty: Math.max(1, Number(it?.qty || 0)),
+      }))
+      .filter((it) => it.sku && it.qty > 0);
+
+    if (!cleanCart.length) return res.status(400).json({ ok: false, error: "Cart is empty" });
+
+    // Clean address (optional but recommended for logged-in users)
+    const address = addressRaw
+      ? {
+          line1: String(addressRaw.line1 || "").trim(),
+          line2: String(addressRaw.line2 || "").trim(),
+          city: String(addressRaw.city || "").trim(),
+          state: String(addressRaw.state || "").trim(),
+          postal: String(addressRaw.postal || "").trim(),
+          country: String(addressRaw.country || "US").trim(),
+        }
+      : null;
 
     const catalog = readJsonSafe(CATALOG_PATH);
     const line_items = [];
 
-    for (const item of cart) {
-      const sku = String(item?.sku || "").trim();
-      const condition = normalizeCondition(item?.condition);
-      const qty = Math.max(1, Number(item?.qty || 0));
+    for (const item of cleanCart) {
+      const sku = item.sku;
+      const condition = item.condition;
+      const qty = item.qty;
 
       const product = catalog[sku];
       if (!product) return res.status(400).json({ ok: false, error: `Unknown SKU: ${sku}` });
@@ -437,8 +508,19 @@ app.post("/api/create-checkout-session", async (req, res) => {
     }
 
     const orderId = makeOrderId();
-    const userId = getSessionUserId(req); // ✅ userId into Stripe metadata
+    const userId = getSessionUserId(req) || null;
 
+    // ✅ Save pending checkout server-side (instead of Stripe metadata)
+    savePendingCheckout(orderId, {
+      orderId,
+      userId,
+      email,
+      cart: cleanCart,
+      address, // may be null
+      createdAt: new Date().toISOString(),
+    });
+
+    // ✅ Keep metadata tiny to avoid Stripe limits
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: email || undefined,
@@ -448,7 +530,6 @@ app.post("/api/create-checkout-session", async (req, res) => {
       cancel_url: `${PUBLIC_BASE_URL}/buy-cart.html`,
       metadata: {
         orderId,
-        cart: JSON.stringify(cart),
         email,
         userId: userId || "",
       },
@@ -460,6 +541,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
     return res.status(500).json({ ok: false, error: e.message || "Could not create checkout session" });
   }
 });
+
 
 /* =========================
    HEALTH
