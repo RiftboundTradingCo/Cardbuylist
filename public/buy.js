@@ -11,6 +11,65 @@ document.addEventListener("DOMContentLoaded", async () => {
   const miniCountEl = document.getElementById("miniCartCount");
   const miniSubtotalEl = document.getElementById("miniCartSubtotal");
   const miniItemsEl = document.getElementById("miniCartItems");
+  document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("secureCheckoutBtn");
+  if (!btn) return;
+
+  function safeParse(raw, fallback) {
+    try { return JSON.parse(raw); } catch { return fallback; }
+  }
+
+  async function secureCheckout() {
+    // 1) pull cart from localStorage
+    const cart = safeParse(localStorage.getItem("buyCart") || "[]", []);
+    if (!Array.isArray(cart) || cart.length === 0) {
+      alert("Your cart is empty.");
+      return;
+    }
+
+    // 2) try to get logged-in email
+    let email = "";
+    try {
+      const meRes = await fetch("/api/me", { cache: "no-store" });
+      const me = await meRes.json().catch(() => ({}));
+      email = me?.ok && me?.user?.email ? String(me.user.email).trim() : "";
+    } catch {}
+
+    // If not logged in, send them to buy cart page to enter email / login
+    if (!email) {
+      window.location.href = "/buy-cart.html";
+      return;
+    }
+
+    // 3) create checkout session
+    btn.disabled = true;
+    const prev = btn.textContent;
+    btn.textContent = "Starting checkout…";
+
+    try {
+      const res = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, cart })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok || !data.url) {
+        throw new Error(data.error || `Checkout failed (HTTP ${res.status})`);
+      }
+
+      window.location.assign(data.url);
+    } catch (err) {
+      console.error("Secure checkout error:", err);
+      alert(err?.message || "Could not start checkout.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = prev || "🔒 Secure Checkout";
+    }
+  }
+
+  btn.addEventListener("click", secureCheckout);
+});
 
   // image modal
   const modal = document.getElementById("imageModal");
