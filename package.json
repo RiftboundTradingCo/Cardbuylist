@@ -1,11 +1,10 @@
 {
-  "name": "riftbound-trading-co",
+  "name": "cardbuylist",
   "version": "1.0.0",
-  "description": "Buylist and storefront for Riftbound Trading Co",
   "main": "server.js",
-  "type": "commonjs",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "engines": {
     "node": ">=18"
@@ -18,5 +17,8 @@
     "express": "^4.19.2",
     "resend": "^4.0.0",
     "stripe": "^14.25.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
   }
 }
