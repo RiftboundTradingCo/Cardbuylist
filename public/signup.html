@@ -321,6 +321,7 @@
       inputmode="numeric"
     />
   </div>
+</div>
 
       <div class="field">
         <label for="password">Password</label>
@@ -341,66 +342,76 @@
   </div>
 
   <script>
-    const nameEl = document.getElementById("name");
-    const emailEl = document.getElementById("email");
-    const passEl = document.getElementById("password");
-    const btn = document.getElementById("signupBtn");
-    const msg = document.getElementById("msg");
+  const nameEl = document.getElementById("name");
+  const emailEl = document.getElementById("email");
+  const passEl = document.getElementById("password");
 
-    function setMsg(t){ msg.textContent = t || ""; }
+  const line1El = document.getElementById("line1");
+  const line2El = document.getElementById("line2"); // optional
+  const cityEl = document.getElementById("city");
+  const stateEl = document.getElementById("state");
+  const postalEl = document.getElementById("postal");
 
-    async function doSignup(){
-      setMsg("");
-      const name = String(nameEl.value || "").trim();
-      const email = String(emailEl.value || "").trim();
-      const password = String(passEl.value || "");
+  const btn = document.getElementById("signupBtn");
+  const msg = document.getElementById("msg");
 
-      if (!email || !email.includes("@")) return setMsg("Enter a valid email.");
-      if (!password || password.length < 8) return setMsg("Password must be at least 8 characters.");
+  function setMsg(t){ msg.textContent = t || ""; }
 
-      btn.disabled = true;
-      btn.textContent = "Creating…";
+  async function doSignup(){
+    setMsg("");
 
-      try {
-  const res = await fetch("/api/auth/signup", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name,
-      email,
-      password,
-      address: {
-        line1,
-        line2,
-        city,
-        state,
-        postal,
-        country: "US"
-      }
-    })
-  });
+    const name = String(nameEl?.value || "").trim();
+    const email = String(emailEl?.value || "").trim();
+    const password = String(passEl?.value || "");
 
-        const data = await res.json();
+    const line1 = String(line1El?.value || "").trim();
+    const line2 = String(line2El?.value || "").trim();
+    const city = String(cityEl?.value || "").trim();
+    const state = String(stateEl?.value || "").trim();
+    const postal = String(postalEl?.value || "").trim();
 
-  if (!res.ok || !data.ok) {
-    throw new Error(data.error || "Signup failed");
-  }
+    if (!email || !email.includes("@")) return setMsg("Enter a valid email.");
+    if (!password || password.length < 8) return setMsg("Password must be at least 8 characters.");
 
-  window.location.href = "/account.html";
-} catch (err) {
-  console.error(err);
-  alert(err.message || "Could not sign up");
-} finally{
-        btn.disabled = false;
-        btn.textContent = "Create account";
-      }
+    // address required (except line2)
+    if (!line1 || !city || !state || !postal) {
+      return setMsg("Please fill out Street, City, State, and ZIP.");
     }
 
-    btn.addEventListener("click", doSignup);
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") doSignup();
-    });
-  </script>
+    btn.disabled = true;
+    btn.textContent = "Creating…";
+
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          address: { line1, line2, city, state, postal, country: "US" }
+        })
+      });
+
+      const data = await res.json().catch(()=>({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || "Signup failed");
+
+      window.location.href = "/account.html";
+    } catch (err) {
+      console.error(err);
+      setMsg(err.message || "Could not sign up");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Create account";
+    }
+  }
+
+  btn.addEventListener("click", doSignup);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") doSignup();
+  });
+</script>
+
 </body>
 </html>
 

@@ -1,6 +1,21 @@
 {
   "users": [
     {
+      "id": "usr_1767768440568_e3ee7eee",
+      "email": "silverpacman@aol.com",
+      "name": "Samuel Combs",
+      "passwordHash": "$2b$12$FrHo6/.qX8Uymp0/9YHxDeC6t5B.oQJDOA5VpwHvVdenY8RA2PD86",
+      "address": {
+        "line1": "[object Object]",
+        "line2": "[object Object]",
+        "city": "[object Object]",
+        "state": "[object Object]",
+        "postal": "[object Object]",
+        "country": "US"
+      },
+      "createdAt": "2026-01-07T06:47:20.569Z"
+    },
+    {
       "id": "usr_1767768143691_24aa8078",
       "email": "samuelfcombs@gmail.com",
       "name": "Samuel Combs",
