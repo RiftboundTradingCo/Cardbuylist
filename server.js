@@ -219,10 +219,11 @@ function requireAuth(req, res, next) {
   next();
 }
 
-//* =========================
-   STRIPE WEBHOOK (RAW BODY)
-   NOTE: must be BEFORE express.json()
-========================= */
+// =========================
+// STRIPE WEBHOOK (RAW BODY)
+// NOTE: must be BEFORE express.json()
+// =========================
+
 app.post(
   "/api/stripe/webhook",
   express.raw({ type: "application/json" }),
