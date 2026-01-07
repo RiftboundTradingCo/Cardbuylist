@@ -578,6 +578,9 @@ app.post("/api/auth/signup", async (req, res) => {
     if (!password || password.length < 8) {
       return res.status(400).json({ ok: false, error: "Password must be 8+ characters" });
     }
+    if (!address || !address.line1 || !address.city || !address.state || !address.postal) {
+      return res.status(400).json({ ok:false, error:"Address required (line1, city, state, postal)." });
+    }
 
     const db = readUsersDb();
     const exists = db.users.find((u) => u.email === email);
@@ -598,7 +601,11 @@ app.post("/api/auth/signup", async (req, res) => {
     writeUsersDb(db);
 
     setSession(res, user.id);
-    return res.json({ ok: true, user: { id: user.id, email: user.email, name: user.name } });
+    return res.json({
+  ok: true,
+  user: { id: user.id, email: user.email, name: user.name, address: user.address || null }
+});
+
   } catch (e) {
     console.error("signup error:", e);
     return res.status(500).json({ ok: false, error: "Signup failed" });
@@ -618,7 +625,11 @@ app.post("/api/auth/login", async (req, res) => {
     if (!ok) return res.status(401).json({ ok: false, error: "Invalid credentials" });
 
     setSession(res, user.id);
-    return res.json({ ok: true, user: { id: user.id, email: user.email, name: user.name } });
+    return res.json({
+  ok: true,
+  user: { id: user.id, email: user.email, name: user.name, address: user.address || null }
+});
+
   } catch (e) {
     console.error("login error:", e);
     return res.status(500).json({ ok: false, error: "Login failed" });
