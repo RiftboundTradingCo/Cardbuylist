@@ -34,10 +34,23 @@ const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 /* =========================
    FILE PATHS
 ========================= */
+const fs = require("fs");
+const path = require("path");
+
+// Render persistent disk mount (you will set DATA_DIR=/var/data in Render)
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
+
+// make sure the folder exists (works locally + on Render)
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
 const CATALOG_PATH = path.join(__dirname, "catalog.json");
 const SELLLIST_PATH = path.join(__dirname, "selllist.json");
-const ORDERS_PATH = path.join(__dirname, "data", "orders.json");
-const USERS_PATH = path.join(__dirname, "data", "users.json");
+
+const ORDERS_PATH = path.join(DATA_DIR, "orders.json");
+const USERS_PATH  = path.join(DATA_DIR, "users.json");
+
 
 /* =========================
    HELPERS
@@ -46,15 +59,21 @@ function ensureDirForFile(filePath) {
   const dir = path.dirname(filePath);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
-
 function readJsonSafe(filePath) {
   try {
-    if (!fs.existsSync(filePath)) return {};
-    return JSON.parse(fs.readFileSync(filePath, "utf8") || "{}");
+    if (!fs.existsSync(filePath)) return null;
+    const raw = fs.readFileSync(filePath, "utf8");
+    if (!raw.trim()) return null;
+    return JSON.parse(raw);
   } catch (e) {
     console.error("readJsonSafe failed:", filePath, e);
-    return {};
+    return null;
   }
+}
+
+function ensureDirForFile(filePath) {
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
 
 function writeJsonSafe(filePath, obj) {
@@ -67,6 +86,7 @@ function writeJsonSafe(filePath, obj) {
     return false;
   }
 }
+
 
 const PENDING_CHECKOUT_PATH = path.join(__dirname, "data", "pending_checkout.json");
 
@@ -163,6 +183,31 @@ function requireAdmin(req, res, next) {
   if (!ADMIN_TOKEN) return res.status(500).json({ ok: false, error: "ADMIN_TOKEN not set" });
   if (token !== ADMIN_TOKEN) return res.status(401).json({ ok: false, error: "Unauthorized" });
   next();
+}
+
+function readJsonSafe(filePath) {
+  try {
+    if (!fs.existsSync(filePath)) return null;
+    const raw = fs.readFileSync(filePath, "utf8");
+    if (!raw.trim()) return null;
+    return JSON.parse(raw);
+  } catch (e) {
+    console.error("readJsonSafe error:", filePath, e.message);
+    return null;
+  }
+}
+
+function writeJsonSafe(filePath, data) {
+  try {
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
+    return true;
+  } catch (e) {
+    console.error("writeJsonSafe error:", filePath, e.message);
+    return false;
+  }
 }
 
 /* =========================

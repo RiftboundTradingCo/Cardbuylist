@@ -1,6 +1,21 @@
 {
   "users": [
     {
+      "id": "usr_1767893752857_31df4107",
+      "email": "katiebrett1234@hotmail.com",
+      "name": "Samuel Combs",
+      "passwordHash": "$2b$12$y.3ZYh1L/xJXs86P4j5kKOAlJCj5bi577LLMsD5P3qz5CGTpVIYCO",
+      "address": {
+        "line1": "325 Priest Point Dr NW",
+        "line2": "",
+        "city": "Tulalip",
+        "state": "WA",
+        "postal": "98271",
+        "country": "US"
+      },
+      "createdAt": "2026-01-08T17:35:52.857Z"
+    },
+    {
       "id": "usr_1767768440568_e3ee7eee",
       "email": "silverpacman@aol.com",
       "name": "Samuel Combs",
