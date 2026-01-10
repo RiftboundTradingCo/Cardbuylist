@@ -51,9 +51,7 @@ const USERS_PATH  = path.join(DATA_DIR, "users.json");
 /* =========================
    HELPERS
 ========================= */
-const fs = require("fs");
-const path = require("path");
-const crypto = require("crypto");
+
 
 /* ---------- filesystem ---------- */
 function ensureDirForFile(filePath) {
