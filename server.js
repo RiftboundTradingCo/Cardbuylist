@@ -51,25 +51,29 @@ const USERS_PATH  = path.join(DATA_DIR, "users.json");
 /* =========================
    HELPERS
 ========================= */
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
+
+/* ---------- filesystem ---------- */
 function ensureDirForFile(filePath) {
   const dir = path.dirname(filePath);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-}
-function readJsonSafe(filePath) {
-  try {
-    if (!fs.existsSync(filePath)) return null;
-    const raw = fs.readFileSync(filePath, "utf8");
-    if (!raw.trim()) return null;
-    return JSON.parse(raw);
-  } catch (e) {
-    console.error("readJsonSafe failed:", filePath, e);
-    return null;
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
   }
 }
 
-function ensureDirForFile(filePath) {
-  const dir = path.dirname(filePath);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+function readJsonSafe(filePath) {
+  try {
+    if (!fs.existsSync(filePath)) return {};
+    const raw = fs.readFileSync(filePath, "utf8");
+    if (!raw || !raw.trim()) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (e) {
+    console.error("readJsonSafe failed:", filePath, e);
+    return {};
+  }
 }
 
 function writeJsonSafe(filePath, obj) {
@@ -83,13 +87,14 @@ function writeJsonSafe(filePath, obj) {
   }
 }
 
-
-const PENDING_CHECKOUT_PATH = path.join(__dirname, "data", "pending_checkout.json");
+/* ---------- pending checkout ---------- */
+const PENDING_CHECKOUT_PATH = path.join(DATA_DIR, "pending_checkout.json");
 
 function readPendingDb() {
   const db = readJsonSafe(PENDING_CHECKOUT_PATH);
-  if (!db || typeof db !== "object") return { pending: {} };
-  if (!db.pending || typeof db.pending !== "object") db.pending = {};
+  if (!db.pending || typeof db.pending !== "object") {
+    db.pending = {};
+  }
   return db;
 }
 
@@ -113,19 +118,23 @@ function popPendingCheckout(orderId) {
   return payload;
 }
 
+/* ---------- orders ---------- */
 function makeOrderId() {
   return `ord_${Date.now()}_${crypto.randomBytes(3).toString("hex")}`;
 }
 
 function appendOrder(order) {
   const db = readJsonSafe(ORDERS_PATH);
-  const out = {
-    orders: Array.isArray(db.orders) ? db.orders : [],
-  };
-  out.orders.unshift(order);
-  writeJsonSafe(ORDERS_PATH, out);
+  if (!Array.isArray(db.orders)) db.orders = [];
+
+  db.orders.unshift(order);
+
+  const ok = writeJsonSafe(ORDERS_PATH, db);
+  if (!ok) console.error("appendOrder: failed to write orders DB");
+  return ok;
 }
 
+/* ---------- conditions / pricing ---------- */
 const CONDITION_MULT = {
   "Near Mint": 1,
   "Lightly Played": 0.9,
@@ -139,13 +148,11 @@ function normalizeCondition(c) {
 }
 
 function normalizeSellCondition(c) {
-  // ✅ FIX: SELL orders store NM/LP/MP (sometimes HP)
   const s = String(c || "").trim().toUpperCase();
   if (s === "NM") return "Near Mint";
   if (s === "LP") return "Lightly Played";
   if (s === "MP") return "Moderately Played";
   if (s === "HP") return "Heavily Played";
-  // If someone accidentally sends full names, accept them too:
   return normalizeCondition(c);
 }
 
@@ -174,37 +181,18 @@ function decrementStock(catalog, sku, cond, qty) {
   return { ok: true };
 }
 
+/* ---------- admin ---------- */
 function requireAdmin(req, res, next) {
   const token = String(req.headers["x-admin-token"] || "").trim();
-  if (!ADMIN_TOKEN) return res.status(500).json({ ok: false, error: "ADMIN_TOKEN not set" });
-  if (token !== ADMIN_TOKEN) return res.status(401).json({ ok: false, error: "Unauthorized" });
+  if (!ADMIN_TOKEN) {
+    return res.status(500).json({ ok: false, error: "ADMIN_TOKEN not set" });
+  }
+  if (token !== ADMIN_TOKEN) {
+    return res.status(401).json({ ok: false, error: "Unauthorized" });
+  }
   next();
 }
 
-function readJsonSafe(filePath) {
-  try {
-    if (!fs.existsSync(filePath)) return null;
-    const raw = fs.readFileSync(filePath, "utf8");
-    if (!raw.trim()) return null;
-    return JSON.parse(raw);
-  } catch (e) {
-    console.error("readJsonSafe error:", filePath, e.message);
-    return null;
-  }
-}
-
-function writeJsonSafe(filePath, data) {
-  try {
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
-    return true;
-  } catch (e) {
-    console.error("writeJsonSafe error:", filePath, e.message);
-    return false;
-  }
-}
 
 /* =========================
    USERS DB + SESSION HELPERS
