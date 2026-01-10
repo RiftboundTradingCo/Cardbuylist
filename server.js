@@ -277,7 +277,17 @@ app.post(
           String(session?.metadata?.orderId || "").trim() || makeOrderId();
 
         const userId =
-          String(session?.metadata?.userId || "").trim() || null;
+         String(session?.metadata?.userId || "").trim() ||
+         String(pending?.userId || "").trim() ||
+         null;
+ 
+        const customerEmail =
+         session.customer_details?.email ||
+         session.customer_email ||
+         String(pending?.email || "").trim() ||
+         String(session?.metadata?.email || "").trim() ||
+         "";
+
 
         /* =========================
            CUSTOMER + SHIPPING
@@ -321,12 +331,16 @@ app.post(
         /* =========================
            CART FROM METADATA
         ========================= */
-        let cart = [];
-        try {
-          cart = JSON.parse(session?.metadata?.cart || "[]");
-        } catch {
-          cart = [];
-        }
+        // ✅ Pull cart from pending storage first (no Stripe limit)
+       const pending = popPendingCheckout(orderId);
+       let cart = Array.isArray(pending?.cart) ? pending.cart : [];
+
+        // fallback (older orders only)
+       if (!cart.length) {
+       try { cart = JSON.parse(session?.metadata?.cart || "[]"); }
+       catch { cart = []; }
+     }
+
 
         const catalog = readJsonSafe(CATALOG_PATH);
         const lines = [];
@@ -476,45 +490,30 @@ app.post("/api/create-checkout-session", async (req, res) => {
 
     const email = String(req.body?.email || "").trim();
     const cart = Array.isArray(req.body?.cart) ? req.body.cart : [];
-    const addressRaw = req.body?.address && typeof req.body.address === "object" ? req.body.address : null;
-
     if (!cart.length) return res.status(400).json({ ok: false, error: "Cart is empty" });
 
-    // Normalize + slim cart (don’t trust client)
-    const cleanCart = cart
-      .map((it) => ({
-        sku: String(it?.sku || "").trim(),
-        condition: normalizeCondition(it?.condition),
-        qty: Math.max(1, Number(it?.qty || 0)),
-      }))
-      .filter((it) => it.sku && it.qty > 0);
+    const orderId = makeOrderId();
+    const userId = getSessionUserId(req) || "";
 
-    if (!cleanCart.length) return res.status(400).json({ ok: false, error: "Cart is empty" });
-
-    // Clean address (optional but recommended for logged-in users)
-    const address = addressRaw
-      ? {
-          line1: String(addressRaw.line1 || "").trim(),
-          line2: String(addressRaw.line2 || "").trim(),
-          city: String(addressRaw.city || "").trim(),
-          state: String(addressRaw.state || "").trim(),
-          postal: String(addressRaw.postal || "").trim(),
-          country: String(addressRaw.country || "US").trim(),
-        }
-      : null;
+    // ✅ Save the full cart server-side (no Stripe metadata limit)
+    savePendingCheckout(orderId, {
+      email,
+      userId,
+      cart,
+      createdAt: new Date().toISOString(),
+    });
 
     const catalog = readJsonSafe(CATALOG_PATH);
     const line_items = [];
 
-    for (const item of cleanCart) {
-      const sku = item.sku;
-      const condition = item.condition;
-      const qty = item.qty;
+    for (const item of cart) {
+      const sku = String(item?.sku || "").trim();
+      const condition = normalizeCondition(item?.condition);
+      const qty = Math.max(1, Number(item?.qty || 0));
 
       const product = catalog[sku];
       if (!product) return res.status(400).json({ ok: false, error: `Unknown SKU: ${sku}` });
 
-      // Stock check
       const curStock = Number(product?.stock?.[condition] ?? 0);
       if (qty > curStock) {
         return res.status(400).json({
@@ -535,20 +534,6 @@ app.post("/api/create-checkout-session", async (req, res) => {
       });
     }
 
-    const orderId = makeOrderId();
-    const userId = getSessionUserId(req) || null;
-
-    // ✅ Save pending checkout server-side (instead of Stripe metadata)
-    savePendingCheckout(orderId, {
-      orderId,
-      userId,
-      email,
-      cart: cleanCart,
-      address, // may be null
-      createdAt: new Date().toISOString(),
-    });
-
-    // ✅ Keep metadata tiny to avoid Stripe limits
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: email || undefined,
@@ -556,10 +541,12 @@ app.post("/api/create-checkout-session", async (req, res) => {
       shipping_address_collection: { allowed_countries: ["US"] },
       success_url: `${PUBLIC_BASE_URL}/success.html?order=${encodeURIComponent(orderId)}`,
       cancel_url: `${PUBLIC_BASE_URL}/buy-cart.html`,
+
+      // ✅ keep metadata tiny
       metadata: {
         orderId,
+        userId,
         email,
-        userId: userId || "",
       },
     });
 
