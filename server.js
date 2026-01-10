@@ -48,6 +48,30 @@ const ORDERS_PATH = path.join(DATA_DIR, "orders.json");
 const USERS_PATH = path.join(DATA_DIR, "users.json");
 const PENDING_CHECKOUT_PATH = path.join(DATA_DIR, "pending_checkout.json");
 
+// Seed sources (committed in repo root)
+const SEED_CATALOG_PATH = path.join(__dirname, "catalog.json");
+const SEED_SELLLIST_PATH = path.join(__dirname, "selllist.json");
+
+function seedFileIfMissing(destPath, seedPath) {
+  try {
+    if (fs.existsSync(destPath)) return; // already seeded
+    if (!fs.existsSync(seedPath)) {
+      console.warn("⚠️ Seed file missing:", seedPath, "-> leaving", destPath, "empty");
+      writeJsonSafe(destPath, {}); // create empty so reads work
+      return;
+    }
+    ensureDirForFile(destPath);
+    fs.copyFileSync(seedPath, destPath);
+    console.log("✅ Seeded", destPath, "from", seedPath);
+  } catch (e) {
+    console.error("❌ Seeding failed for", destPath, e?.message || e);
+  }
+}
+
+// Run seeding once at boot
+seedFileIfMissing(CATALOG_PATH, SEED_CATALOG_PATH);
+seedFileIfMissing(SELLLIST_PATH, SEED_SELLLIST_PATH);
+
 /* =========================
    HELPERS
 ========================= */
