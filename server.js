@@ -250,7 +250,6 @@ function requireAuth(req, res, next) {
 // STRIPE WEBHOOK (RAW BODY)
 // NOTE: must be BEFORE express.json()
 // =========================
-
 app.post(
   "/api/stripe/webhook",
   express.raw({ type: "application/json" }),
@@ -276,28 +275,35 @@ app.post(
         const orderId =
           String(session?.metadata?.orderId || "").trim() || makeOrderId();
 
-        const userId =
-         String(session?.metadata?.userId || "").trim() ||
-         String(pending?.userId || "").trim() ||
-         null;
- 
-        const customerEmail =
-         session.customer_details?.email ||
-         session.customer_email ||
-         String(pending?.email || "").trim() ||
-         String(session?.metadata?.email || "").trim() ||
-         "";
+        // ✅ Pull pending checkout first (so we can use it for userId/email/cart)
+        const pending = popPendingCheckout(orderId);
 
+        // ✅ cart (pending-first; metadata fallback for older orders only)
+        let cart = Array.isArray(pending?.cart) ? pending.cart : [];
+        if (!cart.length) {
+          try {
+            cart = JSON.parse(session?.metadata?.cart || "[]");
+          } catch {
+            cart = [];
+          }
+        }
+
+        // ✅ userId + email (prefer pending)
+        const userId =
+          String(session?.metadata?.userId || "").trim() ||
+          String(pending?.userId || "").trim() ||
+          null;
+
+        const customerEmail =
+          session.customer_details?.email ||
+          session.customer_email ||
+          String(pending?.email || "").trim() ||
+          String(session?.metadata?.email || "").trim() ||
+          "";
 
         /* =========================
            CUSTOMER + SHIPPING
         ========================= */
-        const customerEmail =
-          session.customer_details?.email ||
-          session.customer_email ||
-          String(session?.metadata?.email || "").trim() ||
-          "";
-
         const shipName = session.customer_details?.name || "";
 
         const shipAddr =
@@ -329,20 +335,9 @@ app.post(
         }
 
         /* =========================
-           CART FROM METADATA
+           BUILD ORDER LINES + DECREMENT STOCK
         ========================= */
-        // ✅ Pull cart from pending storage first (no Stripe limit)
-       const pending = popPendingCheckout(orderId);
-       let cart = Array.isArray(pending?.cart) ? pending.cart : [];
-
-        // fallback (older orders only)
-       if (!cart.length) {
-       try { cart = JSON.parse(session?.metadata?.cart || "[]"); }
-       catch { cart = []; }
-     }
-
-
-        const catalog = readJsonSafe(CATALOG_PATH);
+        const catalog = readJsonSafe(CATALOG_PATH) || {};
         const lines = [];
         const emailLines = [];
         let totalCents = 0;
@@ -364,6 +359,7 @@ app.post(
             Number(product.price_cents || 0),
             condition
           );
+
           const lineCents = unitCents * qty;
           totalCents += lineCents;
 
@@ -383,7 +379,7 @@ app.post(
                 address: shippingAddress,
               },
               lines: cart.map((x) => ({
-                sku: String(x?.sku || ""),
+                sku: String(x?.sku || "").trim(),
                 condition: normalizeCondition(x?.condition),
                 qty: Math.max(1, Number(x?.qty || 0)),
               })),
@@ -408,9 +404,9 @@ app.post(
           });
 
           emailLines.push(
-            `${qty}x ${name} — ${condition} — $${(
-              unitCents / 100
-            ).toFixed(2)} each = $${(lineCents / 100).toFixed(2)}`
+            `${qty}x ${name} — ${condition} — $${(unitCents / 100).toFixed(
+              2
+            )} each = $${(lineCents / 100).toFixed(2)}`
           );
         }
 
@@ -429,12 +425,24 @@ app.post(
           customer: {
             name: shipName,
             email: customerEmail,
-            address: shippingAddress, // ✅ normalized
+            address: shippingAddress,
           },
           lines,
           totalCents,
           stripeSessionId: session.id,
         });
+
+        // (optional) send emails here using emailLines...
+      }
+
+      return res.json({ received: true });
+    } catch (e) {
+      console.error("Webhook handler error:", e);
+      return res.status(500).send("Webhook handler error");
+    }
+  }
+);
+
 
         /* =========================
            OPTIONAL EMAILS
