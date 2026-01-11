@@ -10,6 +10,7 @@ const Stripe = require("stripe");
 const { Resend } = require("resend");
 const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
+const { Pool } = require("pg");
 
 const app = express();
 app.use(cookieParser());
@@ -25,63 +26,36 @@ const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
 const EMAIL_FROM = process.env.EMAIL_FROM || "";
 const OWNER_EMAIL = process.env.OWNER_EMAIL || "";
-
 const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`;
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "";
+const SESSION_SECRET = process.env.SESSION_SECRET || "dev_secret";
 
 const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
 /* =========================
-   FILE PATHS
+   POSTGRES
 ========================= */
-const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
-
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+if (!process.env.DATABASE_URL) {
+  console.warn("⚠️ DATABASE_URL not set. DB features will fail.");
 }
 
-// ✅ Put writable JSON in DATA_DIR (Render-friendly)
-const CATALOG_PATH = path.join(DATA_DIR, "catalog.json");
-const SELLLIST_PATH = path.join(DATA_DIR, "selllist.json");
-const ORDERS_PATH = path.join(DATA_DIR, "orders.json");
-const USERS_PATH = path.join(DATA_DIR, "users.json");
-const PENDING_CHECKOUT_PATH = path.join(DATA_DIR, "pending_checkout.json");
-
-// Seed sources (committed in repo root)
-const SEED_CATALOG_PATH = path.join(__dirname, "catalog.json");
-const SEED_SELLLIST_PATH = path.join(__dirname, "selllist.json");
-
-function seedFileIfMissing(destPath, seedPath) {
-  try {
-    if (fs.existsSync(destPath)) return; // already seeded
-    if (!fs.existsSync(seedPath)) {
-      console.warn("⚠️ Seed file missing:", seedPath, "-> leaving", destPath, "empty");
-      writeJsonSafe(destPath, {}); // create empty so reads work
-      return;
-    }
-    ensureDirForFile(destPath);
-    fs.copyFileSync(seedPath, destPath);
-    console.log("✅ Seeded", destPath, "from", seedPath);
-  } catch (e) {
-    console.error("❌ Seeding failed for", destPath, e?.message || e);
-  }
-}
-
-// Run seeding once at boot
-seedFileIfMissing(CATALOG_PATH, SEED_CATALOG_PATH);
-seedFileIfMissing(SELLLIST_PATH, SEED_SELLLIST_PATH);
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL?.includes("localhost")
+    ? false
+    : { rejectUnauthorized: false },
+});
 
 /* =========================
-   HELPERS
+   FILE PATHS (catalog stays JSON for now)
 ========================= */
+const CATALOG_PATH = path.join(__dirname, "catalog.json");
+const SELLLIST_PATH = path.join(__dirname, "selllist.json");
 
-/* ---------- filesystem ---------- */
-function ensureDirForFile(filePath) {
-  const dir = path.dirname(filePath);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-}
-
+/* =========================
+   JSON helpers (catalog/selllist only)
+========================= */
 function readJsonSafe(filePath) {
   try {
     if (!fs.existsSync(filePath)) return {};
@@ -90,64 +64,24 @@ function readJsonSafe(filePath) {
     const parsed = JSON.parse(raw);
     return parsed && typeof parsed === "object" ? parsed : {};
   } catch (e) {
-    console.error("readJsonSafe failed:", filePath, e?.message || e);
+    console.error("readJsonSafe failed:", filePath, e);
     return {};
   }
 }
 
 function writeJsonSafe(filePath, obj) {
   try {
-    ensureDirForFile(filePath);
     fs.writeFileSync(filePath, JSON.stringify(obj, null, 2), "utf8");
     return true;
   } catch (e) {
-    console.error("writeJsonSafe failed:", filePath, e?.message || e);
+    console.error("writeJsonSafe failed:", filePath, e);
     return false;
   }
 }
 
-/* ---------- pending checkout ---------- */
-function readPendingDb() {
-  const db = readJsonSafe(PENDING_CHECKOUT_PATH);
-  if (!db.pending || typeof db.pending !== "object") db.pending = {};
-  return db;
-}
-
-function writePendingDb(db) {
-  return writeJsonSafe(PENDING_CHECKOUT_PATH, db);
-}
-
-function savePendingCheckout(orderId, payload) {
-  const db = readPendingDb();
-  db.pending[orderId] = payload;
-  writePendingDb(db);
-}
-
-function popPendingCheckout(orderId) {
-  const db = readPendingDb();
-  const payload = db.pending?.[orderId] || null;
-  if (payload) {
-    delete db.pending[orderId];
-    writePendingDb(db);
-  }
-  return payload;
-}
-
-/* ---------- orders ---------- */
-function makeOrderId() {
-  return `ord_${Date.now()}_${crypto.randomBytes(3).toString("hex")}`;
-}
-
-function appendOrder(order) {
-  const db = readJsonSafe(ORDERS_PATH);
-  if (!Array.isArray(db.orders)) db.orders = [];
-  db.orders.unshift(order);
-  const ok = writeJsonSafe(ORDERS_PATH, db);
-  if (!ok) console.error("appendOrder: failed to write orders DB");
-  return ok;
-}
-
-/* ---------- conditions / pricing ---------- */
+/* =========================
+   CONDITIONS / PRICING
+========================= */
 const CONDITION_MULT = {
   "Near Mint": 1,
   "Lightly Played": 0.9,
@@ -160,71 +94,16 @@ function normalizeCondition(c) {
   return CONDITION_MULT[s] ? s : "Near Mint";
 }
 
-function normalizeSellCondition(c) {
-  const s = String(c || "").trim().toUpperCase();
-  if (s === "NM") return "Near Mint";
-  if (s === "LP") return "Lightly Played";
-  if (s === "MP") return "Moderately Played";
-  if (s === "HP") return "Heavily Played";
-  return normalizeCondition(c);
-}
-
 function centsForCondition(base, cond) {
   const b = Number(base || 0);
   return Math.round(b * (CONDITION_MULT[normalizeCondition(cond)] || 1));
 }
 
-function decrementStock(catalog, sku, cond, qty) {
-  const sSku = String(sku || "").trim();
-  const condition = normalizeCondition(cond);
-  const nQty = Number(qty || 0);
-
-  const product = catalog?.[sSku];
-  if (!product) return { ok: false, error: `Unknown SKU: ${sSku}` };
-
-  if (!product.stock || typeof product.stock !== "object") {
-    return { ok: false, error: `SKU ${sSku} missing stock object` };
-  }
-
-  const cur = Number(product.stock[condition] ?? 0);
-  if (!Number.isFinite(nQty) || nQty <= 0) return { ok: false, error: "Invalid qty" };
-  if (cur < nQty) return { ok: false, error: `Insufficient stock for ${sSku} (${condition})` };
-
-  product.stock[condition] = cur - nQty;
-  return { ok: true };
-}
-
-/* ---------- admin ---------- */
-function requireAdmin(req, res, next) {
-  const token = String(req.headers["x-admin-token"] || "").trim();
-  if (!ADMIN_TOKEN) return res.status(500).json({ ok: false, error: "ADMIN_TOKEN not set" });
-  if (token !== ADMIN_TOKEN) return res.status(401).json({ ok: false, error: "Unauthorized" });
-  next();
-}
-
 /* =========================
-   USERS DB + SESSION HELPERS
+   SESSION (signed cookie)
 ========================= */
-function readUsersDb() {
-  const db = readJsonSafe(USERS_PATH);
-  if (!db || typeof db !== "object") return { users: [] };
-  if (!Array.isArray(db.users)) db.users = [];
-  return db;
-}
-
-function writeUsersDb(db) {
-  return writeJsonSafe(USERS_PATH, db);
-}
-
-function makeUserId() {
-  return `usr_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
-}
-
-// Simple signed cookie session
 function setSession(res, userId) {
-  const secret = process.env.SESSION_SECRET || "dev_secret";
-  const sig = crypto.createHmac("sha256", secret).update(userId).digest("hex");
-
+  const sig = crypto.createHmac("sha256", SESSION_SECRET).update(userId).digest("hex");
   res.cookie("sid", `${userId}.${sig}`, {
     httpOnly: true,
     sameSite: "lax",
@@ -242,10 +121,9 @@ function getSessionUserId(req) {
   const [userId, sig] = raw.split(".");
   if (!userId || !sig) return null;
 
-  const secret = process.env.SESSION_SECRET || "dev_secret";
-  const expected = crypto.createHmac("sha256", secret).update(userId).digest("hex");
-
+  const expected = crypto.createHmac("sha256", SESSION_SECRET).update(userId).digest("hex");
   if (sig !== expected) return null;
+
   return userId;
 }
 
@@ -253,6 +131,13 @@ function requireAuth(req, res, next) {
   const userId = getSessionUserId(req);
   if (!userId) return res.status(401).json({ ok: false, error: "Not logged in" });
   req.userId = userId;
+  next();
+}
+
+function requireAdmin(req, res, next) {
+  const token = String(req.headers["x-admin-token"] || "").trim();
+  if (!ADMIN_TOKEN) return res.status(500).json({ ok: false, error: "ADMIN_TOKEN not set" });
+  if (token !== ADMIN_TOKEN) return res.status(401).json({ ok: false, error: "Unauthorized" });
   next();
 }
 
@@ -279,27 +164,29 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
 
-      const orderId = String(session?.metadata?.orderId || "").trim() || makeOrderId();
-
-      // ✅ pending-first (avoids Stripe metadata limits)
-      const pending = popPendingCheckout(orderId);
-
-      let cart = Array.isArray(pending?.cart) ? pending.cart : [];
-      if (!cart.length) {
-        try { cart = JSON.parse(session?.metadata?.cart || "[]"); }
-        catch { cart = []; }
+      const orderId = String(session?.metadata?.orderId || "").trim();
+      if (!orderId) {
+        console.error("Webhook missing metadata.orderId");
+        return res.json({ received: true });
       }
 
-      const userId =
-        String(session?.metadata?.userId || "").trim() ||
-        String(pending?.userId || "").trim() ||
-        null;
+      // 1) Load pending checkout from DB (cart, email, userId)
+      const pendingRes = await pool.query(
+        `SELECT order_id, user_id, email, cart_json
+           FROM app.pending_checkout
+          WHERE order_id = $1`,
+        [orderId]
+      );
+
+      const pending = pendingRes.rows[0] || null;
+      const cart = Array.isArray(pending?.cart_json) ? pending.cart_json : (pending?.cart_json || []);
+      const userId = pending?.user_id || (session?.metadata?.userId ? session.metadata.userId : null);
 
       const customerEmail =
         session.customer_details?.email ||
         session.customer_email ||
-        String(pending?.email || "").trim() ||
-        String(session?.metadata?.email || "").trim() ||
+        pending?.email ||
+        session?.metadata?.email ||
         "";
 
       const shipName = session.customer_details?.name || "";
@@ -320,101 +207,131 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
           }
         : null;
 
-      // ✅ write shipping address to the user account
-      if (userId && shippingAddress) {
-        const usersDb = readUsersDb();
-        const user = usersDb.users.find((u) => u.id === userId);
-        if (user) {
-          user.address = shippingAddress;
-          user.addressUpdatedAt = new Date().toISOString();
-          writeUsersDb(usersDb);
-        }
-      }
-
-      const catalog = readJsonSafe(CATALOG_PATH);
+      // 2) Build order lines (still using catalog.json for names/prices)
+      const catalog = readJsonSafe(CATALOG_PATH) || {};
       const lines = [];
-      const emailLines = [];
       let totalCents = 0;
 
-      for (const it of cart) {
+      for (const it of cart || []) {
         const sku = String(it?.sku || "").trim();
         const condition = normalizeCondition(it?.condition);
         const qty = Math.max(1, Number(it?.qty || 0));
-
-        if (!sku || !Number.isFinite(qty) || qty <= 0) continue;
+        if (!sku || qty <= 0) continue;
 
         const product = catalog[sku];
-        if (!product) {
-          console.warn("Unknown SKU in cart:", sku);
-          continue;
-        }
+        if (!product) continue;
 
         const unitCents = centsForCondition(Number(product.price_cents || 0), condition);
         const lineCents = unitCents * qty;
         totalCents += lineCents;
 
-        const dec = decrementStock(catalog, sku, condition, qty);
-        if (!dec.ok) {
-          appendOrder({
-            id: orderId,
-            userId,
-            type: "buy",
-            status: "needs_review",
-            createdAt: new Date().toISOString(),
-            customer: { name: shipName, email: customerEmail, address: shippingAddress },
-            lines: cart.map((x) => ({
-              sku: String(x?.sku || "").trim(),
-              condition: normalizeCondition(x?.condition),
-              qty: Math.max(1, Number(x?.qty || 0)),
-            })),
-            totalCents,
-            stripeSessionId: session.id,
-            error: dec.error || "Inventory decrement failed",
-          });
-
-          return res.json({ received: true });
-        }
-
-        const name = String(product.name || sku);
         lines.push({
           sku,
-          name,
+          name: String(product.name || sku),
           condition,
           qty,
           unitPriceCents: unitCents,
           lineTotalCents: lineCents,
         });
-
-        emailLines.push(
-          `${qty}x ${name} — ${condition} — $${(unitCents / 100).toFixed(2)} each = $${(lineCents / 100).toFixed(2)}`
-        );
       }
 
-      // save updated inventory + order
-      writeJsonSafe(CATALOG_PATH, catalog);
+      // 3) Write order + lines in ONE DB transaction (atomic)
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
 
-      appendOrder({
-        id: orderId,
-        userId,
-        type: "buy",
-        status: "paid",
-        createdAt: new Date().toISOString(),
-        customer: { name: shipName, email: customerEmail, address: shippingAddress },
-        lines,
-        totalCents,
-        stripeSessionId: session.id,
-      });
+        // Insert order
+        await client.query(
+          `INSERT INTO app.orders
+            (id, user_id, type, status, total_cents, customer_name, customer_email,
+             ship_line1, ship_line2, ship_city, ship_state, ship_postal, ship_country,
+             stripe_session_id)
+           VALUES
+            ($1,$2,'buy','paid',$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+           ON CONFLICT (id) DO NOTHING`,
+          [
+            orderId,
+            userId,
+            totalCents,
+            shipName,
+            customerEmail,
+            shippingAddress?.line1 || null,
+            shippingAddress?.line2 || null,
+            shippingAddress?.city || null,
+            shippingAddress?.state || null,
+            shippingAddress?.postal || null,
+            shippingAddress?.country || null,
+            session.id,
+          ]
+        );
 
-      // ✅ OPTIONAL EMAILS (inside webhook!)
+        // Insert order lines
+        for (const l of lines) {
+          await client.query(
+            `INSERT INTO app.order_lines
+              (id, order_id, sku, name, condition, qty, unit_price_cents, line_total_cents)
+             VALUES
+              (gen_random_uuid(), $1,$2,$3,$4,$5,$6,$7)`,
+            [
+              orderId,
+              l.sku,
+              l.name,
+              l.condition,
+              l.qty,
+              l.unitPriceCents,
+              l.lineTotalCents,
+            ]
+          );
+        }
+
+        // Save shipping address onto the user (optional)
+        if (userId && shippingAddress) {
+          await client.query(
+            `UPDATE app.users
+                SET address_line1=$2, address_line2=$3, address_city=$4, address_state=$5,
+                    address_postal=$6, address_country=$7, address_updated_at=NOW()
+              WHERE id=$1`,
+            [
+              userId,
+              shippingAddress.line1,
+              shippingAddress.line2,
+              shippingAddress.city,
+              shippingAddress.state,
+              shippingAddress.postal,
+              shippingAddress.country,
+            ]
+          );
+        }
+
+        // Delete pending checkout (so it can’t be replayed)
+        await client.query(`DELETE FROM app.pending_checkout WHERE order_id=$1`, [orderId]);
+
+        await client.query("COMMIT");
+      } catch (e) {
+        await client.query("ROLLBACK");
+        console.error("Webhook DB transaction failed:", e);
+      } finally {
+        client.release();
+      }
+
+      // Optional emails (now that order is saved)
       if (resend && EMAIL_FROM) {
         const totalNice = `$${(totalCents / 100).toFixed(2)}`;
+        const emailLines = lines.map(
+          (l) =>
+            `${l.qty}x ${l.name} — ${l.condition} — $${(l.unitPriceCents / 100).toFixed(2)} each = $${(
+              l.lineTotalCents / 100
+            ).toFixed(2)}`
+        );
 
         if (OWNER_EMAIL) {
           await resend.emails.send({
             from: EMAIL_FROM,
             to: OWNER_EMAIL,
             subject: `New order ${orderId}`,
-            text: `Order ${orderId}\nCustomer: ${shipName} <${customerEmail}>\nTotal: ${totalNice}\n\n${emailLines.join("\n")}`,
+            text: `Order ${orderId}\nCustomer: ${shipName} <${customerEmail}>\nTotal: ${totalNice}\n\n${emailLines.join(
+              "\n"
+            )}`,
           });
         }
 
@@ -453,18 +370,18 @@ app.post("/api/create-checkout-session", async (req, res) => {
     const cart = Array.isArray(req.body?.cart) ? req.body.cart : [];
     if (!cart.length) return res.status(400).json({ ok: false, error: "Cart is empty" });
 
-    const orderId = makeOrderId();
-    const userId = getSessionUserId(req) || "";
+    const orderId = crypto.randomUUID(); // UUID
+    const userId = getSessionUserId(req);
 
-    // ✅ store full cart server-side
-    savePendingCheckout(orderId, {
-      email,
-      userId,
-      cart,
-      createdAt: new Date().toISOString(),
-    });
+    // Save pending checkout in DB (no Stripe metadata limit)
+    await pool.query(
+      `INSERT INTO app.pending_checkout(order_id, user_id, email, cart_json)
+       VALUES ($1,$2,$3,$4)`,
+      [orderId, userId, email || null, JSON.stringify(cart)]
+    );
 
-    const catalog = readJsonSafe(CATALOG_PATH);
+    // Build Stripe line items from catalog.json
+    const catalog = readJsonSafe(CATALOG_PATH) || {};
     const line_items = [];
 
     for (const item of cart) {
@@ -474,14 +391,6 @@ app.post("/api/create-checkout-session", async (req, res) => {
 
       const product = catalog[sku];
       if (!product) return res.status(400).json({ ok: false, error: `Unknown SKU: ${sku}` });
-
-      const curStock = Number(product?.stock?.[condition] ?? 0);
-      if (qty > curStock) {
-        return res.status(400).json({
-          ok: false,
-          error: `Not enough stock for ${product.name || sku} (${condition}). Have ${curStock}, requested ${qty}`,
-        });
-      }
 
       const unitCents = centsForCondition(Number(product.price_cents || 0), condition);
 
@@ -502,7 +411,11 @@ app.post("/api/create-checkout-session", async (req, res) => {
       shipping_address_collection: { allowed_countries: ["US"] },
       success_url: `${PUBLIC_BASE_URL}/success.html?order=${encodeURIComponent(orderId)}`,
       cancel_url: `${PUBLIC_BASE_URL}/buy-cart.html`,
-      metadata: { orderId, userId, email }, // keep tiny
+      metadata: {
+        orderId,
+        userId: userId || "",
+        email,
+      },
     });
 
     return res.json({ ok: true, url: session.url, id: session.id, orderId });
@@ -511,11 +424,6 @@ app.post("/api/create-checkout-session", async (req, res) => {
     return res.status(500).json({ ok: false, error: e.message || "Could not create checkout session" });
   }
 });
-
-/* =========================
-   HEALTH
-========================= */
-app.get("/health", (req, res) => res.send("OK"));
 
 /* =========================
    PUBLIC API ROUTES
@@ -529,74 +437,7 @@ app.get("/api/selllist", (req, res) => {
 });
 
 /* =========================
-   SELL SUBMIT
-========================= */
-app.post("/api/submit", async (req, res) => {
-  try {
-    const name = String(req.body?.name || "Sell Customer").trim();
-    const email = String(req.body?.email || "").trim();
-    const order = Array.isArray(req.body?.order) ? req.body.order : [];
-
-    if (!email || !email.includes("@")) return res.status(400).json({ ok: false, error: "Missing/invalid email" });
-    if (!order.length) return res.status(400).json({ ok: false, error: "Empty sell order" });
-
-    const selllist = readJsonSafe(SELLLIST_PATH);
-    const lines = [];
-    let totalCents = 0;
-
-    for (const l of order) {
-      const sku = String(l.sku || "").trim();
-      const cardName = String(l.name || "").trim();
-      const condition = String(l.condition || "NM").trim().toUpperCase(); // NM/LP/MP/HP
-      const qty = Math.max(0, Number(l.qty || 0));
-
-      const unitPriceCents = Number(l.unitPriceCents || 0);
-      const lineTotalCents = Number(l.lineTotalCents || unitPriceCents * qty);
-
-      if (!sku || !qty) continue;
-
-      if (selllist?.[sku]?.max && selllist[sku].max[condition] != null) {
-        const cur = Number(selllist[sku].max[condition] || 0);
-        selllist[sku].max[condition] = Math.max(0, cur - qty);
-      }
-
-      lines.push({
-        sku,
-        name: cardName || selllist?.[sku]?.name || sku,
-        condition, // keep NM/LP/MP for sell
-        qty,
-        unitPriceCents,
-        lineTotalCents,
-      });
-
-      totalCents += lineTotalCents;
-    }
-
-    writeJsonSafe(SELLLIST_PATH, selllist);
-
-    const orderId = makeOrderId();
-    const userId = getSessionUserId(req);
-
-    appendOrder({
-      id: orderId,
-      userId: userId || null,
-      type: "sell",
-      status: "submitted",
-      createdAt: new Date().toISOString(),
-      customer: { name, email },
-      lines,
-      totalCents,
-    });
-
-    return res.json({ ok: true, orderId });
-  } catch (e) {
-    console.error("Sell submit error:", e);
-    return res.status(500).json({ ok: false, error: e.message || "Could not submit" });
-  }
-});
-
-/* =========================
-   AUTH
+   AUTH (DB-backed)
 ========================= */
 app.post("/api/auth/signup", async (req, res) => {
   try {
@@ -604,44 +445,24 @@ app.post("/api/auth/signup", async (req, res) => {
     const password = String(req.body?.password || "");
     const name = String(req.body?.name || "").trim();
 
-    const address =
-      req.body?.address && typeof req.body.address === "object"
-        ? {
-            line1: String(req.body.address.line1 || "").trim(),
-            line2: String(req.body.address.line2 || "").trim(),
-            city: String(req.body.address.city || "").trim(),
-            state: String(req.body.address.state || "").trim(),
-            postal: String(req.body.address.postal || "").trim(),
-            country: String(req.body.address.country || "US").trim(),
-          }
-        : null;
-
     if (!email || !email.includes("@")) return res.status(400).json({ ok: false, error: "Valid email required" });
     if (!password || password.length < 8) return res.status(400).json({ ok: false, error: "Password must be 8+ characters" });
-    if (!address || !address.line1 || !address.city || !address.state || !address.postal) {
-      return res.status(400).json({ ok: false, error: "Address required (line1, city, state, postal)." });
-    }
 
-    const db = readUsersDb();
-    const exists = db.users.find((u) => u.email === email);
-    if (exists) return res.status(409).json({ ok: false, error: "Email already in use" });
+    const exists = await pool.query(`SELECT 1 FROM app.users WHERE email=$1`, [email]);
+    if (exists.rowCount) return res.status(409).json({ ok: false, error: "Email already in use" });
 
     const hash = await bcrypt.hash(password, 12);
+    const id = crypto.randomUUID();
 
-    const user = {
-      id: makeUserId(),
-      email,
-      name,
-      passwordHash: hash,
-      address,
-      createdAt: new Date().toISOString(),
-    };
+    await pool.query(
+      `INSERT INTO app.users(id, email, name, password_hash)
+       VALUES ($1,$2,$3,$4)`,
+      [id, email, name || null, hash]
+    );
 
-    db.users.unshift(user);
-    writeUsersDb(db);
+    setSession(res, id);
 
-    setSession(res, user.id);
-    return res.json({ ok: true, user: { id: user.id, email: user.email, name: user.name, address: user.address || null } });
+    return res.json({ ok: true, user: { id, email, name } });
   } catch (e) {
     console.error("signup error:", e);
     return res.status(500).json({ ok: false, error: "Signup failed" });
@@ -653,15 +474,20 @@ app.post("/api/auth/login", async (req, res) => {
     const email = String(req.body?.email || "").trim().toLowerCase();
     const password = String(req.body?.password || "");
 
-    const db = readUsersDb();
-    const user = db.users.find((u) => u.email === email);
+    const r = await pool.query(
+      `SELECT id, email, name, password_hash
+         FROM app.users
+        WHERE email=$1`,
+      [email]
+    );
+    const user = r.rows[0];
     if (!user) return res.status(401).json({ ok: false, error: "Invalid credentials" });
 
-    const ok = await bcrypt.compare(password, user.passwordHash);
+    const ok = await bcrypt.compare(password, user.password_hash);
     if (!ok) return res.status(401).json({ ok: false, error: "Invalid credentials" });
 
     setSession(res, user.id);
-    return res.json({ ok: true, user: { id: user.id, email: user.email, name: user.name, address: user.address || null } });
+    return res.json({ ok: true, user: { id: user.id, email: user.email, name: user.name } });
   } catch (e) {
     console.error("login error:", e);
     return res.status(500).json({ ok: false, error: "Login failed" });
@@ -673,138 +499,112 @@ app.post("/api/auth/logout", (req, res) => {
   res.json({ ok: true });
 });
 
-app.get("/api/me", (req, res) => {
+app.get("/api/me", async (req, res) => {
   const userId = getSessionUserId(req);
   if (!userId) return res.json({ ok: true, user: null });
 
-  const db = readUsersDb();
-  const user = db.users.find((u) => u.id === userId);
-  if (!user) return res.json({ ok: true, user: null });
+  const r = await pool.query(
+    `SELECT id, email, name,
+            address_line1, address_line2, address_city, address_state, address_postal, address_country
+       FROM app.users
+      WHERE id=$1`,
+    [userId]
+  );
+  const u = r.rows[0];
+  if (!u) return res.json({ ok: true, user: null });
 
-  res.json({ ok: true, user: { id: user.id, email: user.email, name: user.name, address: user.address || null } });
+  const address = u.address_line1
+    ? {
+        line1: u.address_line1,
+        line2: u.address_line2 || "",
+        city: u.address_city || "",
+        state: u.address_state || "",
+        postal: u.address_postal || "",
+        country: u.address_country || "US",
+      }
+    : null;
+
+  res.json({
+    ok: true,
+    user: { id: u.id, email: u.email, name: u.name, address },
+  });
 });
 
-app.get("/api/my/orders", requireAuth, (req, res) => {
-  const db = readJsonSafe(ORDERS_PATH);
-  const orders = Array.isArray(db.orders) ? db.orders : [];
+/* =========================
+   MY ORDERS (DB-backed)
+========================= */
+app.get("/api/my/orders", requireAuth, async (req, res) => {
+  const userId = req.userId;
 
-  const usersDb = readUsersDb();
-  const me = usersDb.users.find((u) => u.id === req.userId);
-  const myEmail = String(me?.email || "").toLowerCase();
-
-  const mine = orders.filter(
-    (o) =>
-      o.userId === req.userId ||
-      (myEmail && String(o.customer?.email || "").toLowerCase() === myEmail)
+  // Fetch orders + lines
+  const ordersRes = await pool.query(
+    `SELECT *
+       FROM app.orders
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+      LIMIT 200`,
+    [userId]
   );
 
-  res.json({ ok: true, orders: mine });
-});
+  const orders = ordersRes.rows;
 
-app.post("/api/me/address", requireAuth, (req, res) => {
-  try {
-    const db = readUsersDb();
-    const user = db.users.find((u) => u.id === req.userId);
-    if (!user) return res.status(404).json({ ok: false, error: "User not found" });
+  if (!orders.length) return res.json({ ok: true, orders: [] });
 
-    const a = req.body?.address || {};
-    const next = {
-      line1: String(a.line1 || "").trim(),
-      line2: String(a.line2 || "").trim(),
-      city: String(a.city || "").trim(),
-      state: String(a.state || "").trim(),
-      postal: String(a.postal || "").trim(),
-      country: String(a.country || "US").trim(),
-    };
+  const ids = orders.map(o => o.id);
+  const linesRes = await pool.query(
+    `SELECT *
+       FROM app.order_lines
+      WHERE order_id = ANY($1::uuid[])
+      ORDER BY order_id, name`,
+    [ids]
+  );
 
-    if (!next.line1 || !next.city || !next.state || !next.postal) {
-      return res.status(400).json({ ok: false, error: "Missing required fields (line1, city, state, postal)." });
-    }
-
-    user.address = next;
-    if (!writeUsersDb(db)) return res.status(500).json({ ok: false, error: "Could not save address" });
-
-    return res.json({ ok: true, address: user.address });
-  } catch (e) {
-    console.error("save address error:", e);
-    return res.status(500).json({ ok: false, error: "Server error" });
+  const linesByOrder = new Map();
+  for (const l of linesRes.rows) {
+    const key = l.order_id;
+    if (!linesByOrder.has(key)) linesByOrder.set(key, []);
+    linesByOrder.get(key).push(l);
   }
+
+  const out = orders.map(o => ({
+    id: o.id,
+    userId: o.user_id,
+    type: o.type,
+    status: o.status,
+    totalCents: o.total_cents,
+    createdAt: o.created_at,
+    customer: {
+      name: o.customer_name,
+      email: o.customer_email,
+      address: o.ship_line1 ? {
+        line1: o.ship_line1,
+        line2: o.ship_line2 || "",
+        city: o.ship_city || "",
+        state: o.ship_state || "",
+        postal: o.ship_postal || "",
+        country: o.ship_country || "US",
+      } : null,
+    },
+    lines: (linesByOrder.get(o.id) || []).map(l => ({
+      sku: l.sku,
+      name: l.name,
+      condition: l.condition,
+      qty: l.qty,
+      unitPriceCents: l.unit_price_cents,
+      lineTotalCents: l.line_total_cents,
+    })),
+    stripeSessionId: o.stripe_session_id || null,
+  }));
+
+  res.json({ ok: true, orders: out });
 });
 
 /* =========================
-   ADMIN ROUTES
+   HEALTH + START
 ========================= */
-app.get("/api/admin/orders", requireAdmin, (req, res) => {
-  const db = readJsonSafe(ORDERS_PATH);
-  const orders = Array.isArray(db.orders) ? db.orders : [];
-  res.json({ ok: true, orders });
-});
+app.get("/health", (req, res) => res.send("OK"));
 
-app.post("/api/admin/orders/:id/approve", requireAdmin, (req, res) => {
-  const id = String(req.params.id || "").trim();
-  const db = readJsonSafe(ORDERS_PATH);
-  db.orders = Array.isArray(db.orders) ? db.orders : [];
-
-  const order = db.orders.find((o) => o.id === id);
-  if (!order) return res.status(404).json({ ok: false, error: "Order not found" });
-
-  if (order.status === "approved" || order.status === "checked_in" || order.status === "fulfilled") {
-    return res.json({ ok: true, order });
-  }
-
-  if (order.type === "sell") {
-    const catalog = readJsonSafe(CATALOG_PATH);
-
-    for (const l of order.lines || []) {
-      const sku = String(l.sku || "").trim();
-      const cond = normalizeSellCondition(l.condition);
-      const qty = Math.max(0, Number(l.qty || 0));
-      if (!sku || qty <= 0) continue;
-      if (!catalog[sku]) continue;
-
-      if (!catalog[sku].stock || typeof catalog[sku].stock !== "object") {
-        catalog[sku].stock = {
-          "Near Mint": 0,
-          "Lightly Played": 0,
-          "Moderately Played": 0,
-          "Heavily Played": 0,
-        };
-      }
-
-      catalog[sku].stock[cond] = Number(catalog[sku].stock[cond] || 0) + qty;
-    }
-
-    writeJsonSafe(CATALOG_PATH, catalog);
-    order.status = "checked_in";
-    order.checkedInAt = new Date().toISOString();
-  } else {
-    order.status = "approved";
-    order.approvedAt = new Date().toISOString();
-  }
-
-  writeJsonSafe(ORDERS_PATH, db);
-  res.json({ ok: true, order });
-});
-
-app.post("/api/admin/orders/:id/fulfill", requireAdmin, (req, res) => {
-  const id = String(req.params.id || "").trim();
-  const db = readJsonSafe(ORDERS_PATH);
-  db.orders = Array.isArray(db.orders) ? db.orders : [];
-
-  const order = db.orders.find((o) => o.id === id);
-  if (!order) return res.status(404).json({ ok: false, error: "Order not found" });
-
-  order.status = "shipped";
-  order.shippedAt = new Date().toISOString();
-
-  writeJsonSafe(ORDERS_PATH, db);
-  res.json({ ok: true, order });
-});
-
-/* =========================
-   START
-========================= */
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
-  console.log("DATA_DIR:", DATA_DIR);
 });
+
