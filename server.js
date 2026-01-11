@@ -102,6 +102,12 @@ function centsForCondition(base, cond) {
 /* =========================
    SESSION (signed cookie)
 ========================= */
+function isUuid(v) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    String(v || "")
+  );
+}
+
 function setSession(res, userId) {
   const sig = crypto.createHmac("sha256", SESSION_SECRET).update(userId).digest("hex");
   res.cookie("sid", `${userId}.${sig}`, {
@@ -124,12 +130,17 @@ function getSessionUserId(req) {
   const expected = crypto.createHmac("sha256", SESSION_SECRET).update(userId).digest("hex");
   if (sig !== expected) return null;
 
+  if (!isUuid(userId)) return null;
+
   return userId;
 }
 
 function requireAuth(req, res, next) {
   const userId = getSessionUserId(req);
-  if (!userId) return res.status(401).json({ ok: false, error: "Not logged in" });
+  if (!userId) {  
+        clearSession(res); 
+        return res.status(401).json({ ok: false, error: "Not logged in" });
+  }
   req.userId = userId;
   next();
 }
