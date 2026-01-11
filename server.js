@@ -179,7 +179,25 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
       );
 
       const pending = pendingRes.rows[0] || null;
-      const cart = Array.isArray(pending?.cart_json) ? pending.cart_json : (pending?.cart_json || []);
+
+      // ✅ FIX: cart_json might be json/jsonb (object/array) OR a string (older rows).
+      // Prefer json/jsonb; fallback to JSON.parse if string.
+      let cart = [];
+      try {
+        if (Array.isArray(pending?.cart_json)) {
+          cart = pending.cart_json;
+        } else if (typeof pending?.cart_json === "string") {
+          cart = JSON.parse(pending.cart_json || "[]");
+        } else if (pending?.cart_json && typeof pending.cart_json === "object") {
+          // jsonb can come back as an object/array depending on driver/config
+          cart = Array.isArray(pending.cart_json) ? pending.cart_json : [];
+        } else {
+          cart = [];
+        }
+      } catch {
+        cart = [];
+      }
+
       const userId = pending?.user_id || (session?.metadata?.userId ? session.metadata.userId : null);
 
       const customerEmail =
@@ -240,7 +258,7 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
       try {
         await client.query("BEGIN");
 
-        // Insert order
+        // ✅ FIX: placeholder count matches param array (12 placeholders, 12 params)
         await client.query(
           `INSERT INTO app.orders
             (id, user_id, type, status, total_cents, customer_name, customer_email,
@@ -250,29 +268,30 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
             ($1,$2,'buy','paid',$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
            ON CONFLICT (id) DO NOTHING`,
           [
-            orderId,
-            userId,
-            totalCents,
-            shipName,
-            customerEmail,
-            shippingAddress?.line1 || null,
-            shippingAddress?.line2 || null,
-            shippingAddress?.city || null,
-            shippingAddress?.state || null,
-            shippingAddress?.postal || null,
-            shippingAddress?.country || null,
-            session.id,
+            orderId,                        // $1
+            userId,                         // $2
+            totalCents,                     // $3
+            shipName,                       // $4
+            customerEmail,                  // $5
+            shippingAddress?.line1 || null, // $6
+            shippingAddress?.line2 || null, // $7
+            shippingAddress?.city || null,  // $8
+            shippingAddress?.state || null, // $9
+            shippingAddress?.postal || null,// $10
+            shippingAddress?.country || null,// $11
+            session.id,                     // $12
           ]
         );
 
-        // Insert order lines
+        // ✅ FIX: don’t rely on gen_random_uuid(); generate in Node
         for (const l of lines) {
           await client.query(
             `INSERT INTO app.order_lines
               (id, order_id, sku, name, condition, qty, unit_price_cents, line_total_cents)
              VALUES
-              (gen_random_uuid(), $1,$2,$3,$4,$5,$6,$7)`,
+              ($1,$2,$3,$4,$5,$6,$7,$8)`,
             [
+              crypto.randomUUID(),
               orderId,
               l.sku,
               l.name,
@@ -373,11 +392,12 @@ app.post("/api/create-checkout-session", async (req, res) => {
     const orderId = crypto.randomUUID(); // UUID
     const userId = getSessionUserId(req);
 
-    // Save pending checkout in DB (no Stripe metadata limit)
+    // ✅ FIX: store cart as real JSON/JSONB (not a string) if your cart_json column is json/jsonb
+    // If your column is TEXT, change this back to JSON.stringify(cart)
     await pool.query(
       `INSERT INTO app.pending_checkout(order_id, user_id, email, cart_json)
        VALUES ($1,$2,$3,$4)`,
-      [orderId, userId, email || null, JSON.stringify(cart)]
+      [orderId, userId, email || null, cart]
     );
 
     // Build Stripe line items from catalog.json
@@ -536,7 +556,6 @@ app.get("/api/me", async (req, res) => {
 app.get("/api/my/orders", requireAuth, async (req, res) => {
   const userId = req.userId;
 
-  // Fetch orders + lines
   const ordersRes = await pool.query(
     `SELECT *
        FROM app.orders
@@ -547,10 +566,9 @@ app.get("/api/my/orders", requireAuth, async (req, res) => {
   );
 
   const orders = ordersRes.rows;
-
   if (!orders.length) return res.json({ ok: true, orders: [] });
 
-  const ids = orders.map(o => o.id);
+  const ids = orders.map((o) => o.id);
   const linesRes = await pool.query(
     `SELECT *
        FROM app.order_lines
@@ -566,7 +584,7 @@ app.get("/api/my/orders", requireAuth, async (req, res) => {
     linesByOrder.get(key).push(l);
   }
 
-  const out = orders.map(o => ({
+  const out = orders.map((o) => ({
     id: o.id,
     userId: o.user_id,
     type: o.type,
@@ -576,16 +594,18 @@ app.get("/api/my/orders", requireAuth, async (req, res) => {
     customer: {
       name: o.customer_name,
       email: o.customer_email,
-      address: o.ship_line1 ? {
-        line1: o.ship_line1,
-        line2: o.ship_line2 || "",
-        city: o.ship_city || "",
-        state: o.ship_state || "",
-        postal: o.ship_postal || "",
-        country: o.ship_country || "US",
-      } : null,
+      address: o.ship_line1
+        ? {
+            line1: o.ship_line1,
+            line2: o.ship_line2 || "",
+            city: o.ship_city || "",
+            state: o.ship_state || "",
+            postal: o.ship_postal || "",
+            country: o.ship_country || "US",
+          }
+        : null,
     },
-    lines: (linesByOrder.get(o.id) || []).map(l => ({
+    lines: (linesByOrder.get(o.id) || []).map((l) => ({
       sku: l.sku,
       name: l.name,
       condition: l.condition,
