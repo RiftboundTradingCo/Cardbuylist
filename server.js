@@ -90,6 +90,24 @@ function centsForCondition(base, cond) {
 }
 
 /* =========================
+   INVENTORY HELPERS
+========================= */
+function stockColumnForCondition(condition) {
+  switch (condition) {
+    case "Near Mint":
+      return "stock_nm";
+    case "Lightly Played":
+      return "stock_lp";
+    case "Moderately Played":
+      return "stock_mp";
+    case "Heavily Played":
+      return "stock_hp";
+    default:
+      return "stock_nm";
+  }
+}
+
+/* =========================
    SESSION (signed cookie)
 ========================= */
 function isUuid(v) {
@@ -298,6 +316,27 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
           );
         }
 
+// DECREMENT INVENTORY (ATOMIC, SAFE)
+for (const l of lines) {
+  const col = stockColumnForCondition(l.condition);
+
+  const r = await client.query(
+    `
+    UPDATE app.inventory
+    SET ${col} = ${col} - $2,
+        updated_at = NOW()
+    WHERE sku = $1
+      AND ${col} >= $2
+    `,
+    [l.sku, l.qty]
+  );
+
+  // If no row updated → oversell protection
+  if (r.rowCount === 0) {
+    throw new Error(`Insufficient stock for ${l.sku} (${l.condition})`);
+  }
+}
+
         // Save shipping to user (optional)
         if (isUuid(userId) && shippingAddress) {
           await client.query(
@@ -318,6 +357,11 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
         }
 
         await client.query(`DELETE FROM app.pending_checkout WHERE order_id=$1`, [orderId]);
+
+          UPDATE app.inventory
+          SET stock_nm = stock_nm - $2,
+             updated_at = NOW()
+          WHERE sku = $1 AND stock_nm >= $2;
 
         await client.query("COMMIT");
       } catch (e) {
