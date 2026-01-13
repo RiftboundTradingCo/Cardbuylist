@@ -548,44 +548,64 @@ app.post("/api/auth/signup", async (req, res) => {
     const password = String(req.body?.password || "");
     const name = String(req.body?.name || "").trim();
 
+    // Address is REQUIRED at signup
     const a = req.body?.address && typeof req.body.address === "object" ? req.body.address : null;
-    const address = a
-      ? {
-          line1: String(a.line1 || "").trim(),
-          line2: String(a.line2 || "").trim(),
-          city: String(a.city || "").trim(),
-          state: String(a.state || "").trim(),
-          postal: String(a.postal || "").trim(),
-          country: String(a.country || "US").trim(),
-        }
-      : null;
 
-    if (!email || !email.includes("@")) return res.status(400).json({ ok: false, error: "Valid email required" });
-    if (!password || password.length < 8) return res.status(400).json({ ok: false, error: "Password must be 8+ characters" });
+    const address = {
+      line1: String(a?.line1 || "").trim(),
+      line2: String(a?.line2 || "").trim(),
+      city: String(a?.city || "").trim(),
+      state: String(a?.state || "").trim(),
+      postal: String(a?.postal || "").trim(),
+      country: String(a?.country || "US").trim(),
+    };
+
+    if (!email || !email.includes("@")) {
+      return res.status(400).json({ ok: false, error: "Valid email required" });
+    }
+    if (!password || password.length < 8) {
+      return res.status(400).json({ ok: false, error: "Password must be 8+ characters" });
+    }
+
+    // Validate required address fields
+    if (!address.line1 || !address.city || !address.state || !address.postal) {
+      return res.status(400).json({
+        ok: false,
+        error: "Address required (line1, city, state, postal).",
+      });
+    }
 
     const exists = await pool.query(`SELECT 1 FROM app.users WHERE email=$1`, [email]);
-    if (exists.rowCount) return res.status(409).json({ ok: false, error: "Email already in use" });
+    if (exists.rowCount) {
+      return res.status(409).json({ ok: false, error: "Email already in use" });
+    }
 
     const hash = await bcrypt.hash(password, 12);
     const id = crypto.randomUUID();
 
+    // IMPORTANT: never pass undefined to pg — use strings or null only
     await pool.query(
-      `INSERT INTO app.users(
+      `INSERT INTO app.users (
          id, email, name, password_hash,
-         address_line1, address_line2, address_city, address_state, address_postal, address_country, address_updated_at
+         address_line1, address_line2, address_city, address_state, address_postal, address_country,
+         address_updated_at
        )
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, CASE WHEN $5 IS NULL THEN NULL ELSE NOW() END)`,
+       VALUES (
+         $1, $2, $3, $4,
+         $5, $6, $7, $8, $9, $10,
+         NOW()
+       )`,
       [
         id,
         email,
         name || null,
         hash,
-        address?.line1 || null,
-        address?.line2 || null,
-        address?.city || null,
-        address?.state || null,
-        address?.postal || null,
-        address?.country || "US",
+        address.line1,                 // required -> string
+        address.line2 || null,         // optional -> null if empty
+        address.city,                  // required -> string
+        address.state,                 // required -> string
+        address.postal,                // required -> string
+        address.country || "US",        // default
       ]
     );
 
@@ -593,7 +613,7 @@ app.post("/api/auth/signup", async (req, res) => {
 
     return res.json({
       ok: true,
-      user: { id, email, name, address: address && address.line1 ? address : null },
+      user: { id, email, name, address },
     });
   } catch (e) {
     console.error("signup error:", e);
