@@ -548,6 +548,18 @@ app.post("/api/auth/signup", async (req, res) => {
     const password = String(req.body?.password || "");
     const name = String(req.body?.name || "").trim();
 
+    const a = req.body?.address && typeof req.body.address === "object" ? req.body.address : null;
+    const address = a
+      ? {
+          line1: String(a.line1 || "").trim(),
+          line2: String(a.line2 || "").trim(),
+          city: String(a.city || "").trim(),
+          state: String(a.state || "").trim(),
+          postal: String(a.postal || "").trim(),
+          country: String(a.country || "US").trim(),
+        }
+      : null;
+
     if (!email || !email.includes("@")) return res.status(400).json({ ok: false, error: "Valid email required" });
     if (!password || password.length < 8) return res.status(400).json({ ok: false, error: "Password must be 8+ characters" });
 
@@ -558,18 +570,37 @@ app.post("/api/auth/signup", async (req, res) => {
     const id = crypto.randomUUID();
 
     await pool.query(
-      `INSERT INTO app.users(id, email, name, password_hash)
-       VALUES ($1,$2,$3,$4)`,
-      [id, email, name || null, hash]
+      `INSERT INTO app.users(
+         id, email, name, password_hash,
+         address_line1, address_line2, address_city, address_state, address_postal, address_country, address_updated_at
+       )
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, CASE WHEN $5 IS NULL THEN NULL ELSE NOW() END)`,
+      [
+        id,
+        email,
+        name || null,
+        hash,
+        address?.line1 || null,
+        address?.line2 || null,
+        address?.city || null,
+        address?.state || null,
+        address?.postal || null,
+        address?.country || "US",
+      ]
     );
 
     setSession(res, id);
-    return res.json({ ok: true, user: { id, email, name } });
+
+    return res.json({
+      ok: true,
+      user: { id, email, name, address: address && address.line1 ? address : null },
+    });
   } catch (e) {
     console.error("signup error:", e);
     return res.status(500).json({ ok: false, error: "Signup failed" });
   }
 });
+
 
 app.post("/api/auth/login", async (req, res) => {
   try {
