@@ -629,8 +629,43 @@ app.get("/api/catalog", async (req, res) => {
   }
 });
 
-app.get("/api/selllist", (req, res) => {
-  res.json({ ok: true, selllist: readJsonSafe(SELLLIST_PATH) });
+app.get("/api/selllist", async (req, res) => {
+  try {
+    const selllist = readJsonSafe(SELLLIST_PATH) || {};
+    const skus = Object.keys(selllist);
+
+    if (!skus.length) return res.json({ ok: true, selllist: {} });
+
+    const r = await pool.query(
+      `SELECT sku, stock_nm, stock_lp, stock_mp, stock_hp
+         FROM app.inventory
+        WHERE sku = ANY($1::text[])`,
+      [skus]
+    );
+
+    const invBySku = new Map(r.rows.map(row => [row.sku, row]));
+
+    // Merge DB stock into selllist response (so front-end can show changing numbers)
+    for (const sku of skus) {
+      const inv = invBySku.get(sku);
+
+      // keep whatever selllist already has, but add/override stock with live DB numbers
+      selllist[sku] = {
+        ...selllist[sku],
+        stock: {
+          "Near Mint": Number(inv?.stock_nm || 0),
+          "Lightly Played": Number(inv?.stock_lp || 0),
+          "Moderately Played": Number(inv?.stock_mp || 0),
+          "Heavily Played": Number(inv?.stock_hp || 0),
+        },
+      };
+    }
+
+    res.json({ ok: true, selllist });
+  } catch (e) {
+    console.error("selllist error:", e);
+    res.status(500).json({ ok: false, error: "Selllist load failed" });
+  }
 });
 
 /* =========================
