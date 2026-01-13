@@ -782,6 +782,77 @@ app.get("/api/my/orders", requireAuth, async (req, res) => {
   res.json({ ok: true, orders: out });
 });
 
+// =========================
+// ADMIN: LIST ALL ORDERS
+// =========================
+app.get("/api/admin/orders", requireAdmin, async (req, res) => {
+  try {
+    const ordersRes = await pool.query(
+      `SELECT id, user_id, type, status, total_cents, created_at,
+              customer_name, customer_email,
+              ship_line1, ship_line2, ship_city, ship_state, ship_postal, ship_country,
+              stripe_session_id
+         FROM app.orders
+        ORDER BY created_at DESC
+        LIMIT 500`
+    );
+
+    const orders = ordersRes.rows;
+    if (!orders.length) return res.json({ ok: true, orders: [] });
+
+    const ids = orders.map(o => o.id);
+
+    const linesRes = await pool.query(
+      `SELECT order_id, sku, name, condition, qty, unit_price_cents, line_total_cents
+         FROM app.order_lines
+        WHERE order_id = ANY($1::uuid[])
+        ORDER BY order_id, name`,
+      [ids]
+    );
+
+    const linesByOrder = new Map();
+    for (const l of linesRes.rows) {
+      if (!linesByOrder.has(l.order_id)) linesByOrder.set(l.order_id, []);
+      linesByOrder.get(l.order_id).push(l);
+    }
+
+    const out = orders.map(o => ({
+      id: o.id,
+      userId: o.user_id,
+      type: o.type,
+      status: o.status,
+      totalCents: o.total_cents,
+      createdAt: o.created_at,
+      customer: {
+        name: o.customer_name,
+        email: o.customer_email,
+        address: o.ship_line1 ? {
+          line1: o.ship_line1,
+          line2: o.ship_line2 || "",
+          city: o.ship_city || "",
+          state: o.ship_state || "",
+          postal: o.ship_postal || "",
+          country: o.ship_country || "US",
+        } : null,
+      },
+      lines: (linesByOrder.get(o.id) || []).map(l => ({
+        sku: l.sku,
+        name: l.name,
+        condition: l.condition,
+        qty: l.qty,
+        unitPriceCents: l.unit_price_cents,
+        lineTotalCents: l.line_total_cents,
+      })),
+      stripeSessionId: o.stripe_session_id || null,
+    }));
+
+    res.json({ ok: true, orders: out });
+  } catch (e) {
+    console.error("Admin orders error:", e);
+    res.status(500).json({ ok: false, error: "Failed to load orders" });
+  }
+});
+
 /* =========================
    HEALTH + START
 ========================= */
