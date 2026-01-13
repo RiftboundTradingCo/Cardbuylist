@@ -634,12 +634,128 @@ app.post("/api/submit", async (req, res) => {
 /* =========================
    PUBLIC API ROUTES
 ========================= */
-app.get("/api/catalog", (req, res) => {
-  res.json({ ok: true, catalog: readJsonSafe(CATALOG_PATH) });
+app.get("/api/catalog", async (req, res) => {
+  try {
+    const catalog = readJsonSafe(CATALOG_PATH) || {};
+
+    // Pull live inventory from DB
+    const invRes = await pool.query(
+      `SELECT sku, stock_nm, stock_lp, stock_mp, stock_hp
+         FROM app.inventory`
+    );
+
+    // Map: sku -> stock object (same shape your frontend expects)
+    const invMap = new Map();
+    for (const r of invRes.rows) {
+      invMap.set(String(r.sku), {
+        "Near Mint": Number(r.stock_nm || 0),
+        "Lightly Played": Number(r.stock_lp || 0),
+        "Moderately Played": Number(r.stock_mp || 0),
+        "Heavily Played": Number(r.stock_hp || 0),
+      });
+    }
+
+    // Merge DB stock into catalog.json items
+    // Keep name/price/image from JSON; stock comes from DB
+    for (const sku of Object.keys(catalog)) {
+      const dbStock = invMap.get(sku);
+
+      // If inventory row exists -> use it
+      if (dbStock) {
+        catalog[sku].stock = dbStock;
+        continue;
+      }
+
+      // If no DB row exists -> default to zeros (or keep existing JSON stock if you prefer)
+      catalog[sku].stock = {
+        "Near Mint": 0,
+        "Lightly Played": 0,
+        "Moderately Played": 0,
+        "Heavily Played": 0,
+      };
+    }
+
+    return res.json({ ok: true, catalog });
+  } catch (e) {
+    console.error("catalog route error:", e);
+    return res.status(500).json({ ok: false, error: "Catalog load failed" });
+  }
 });
 
-app.get("/api/selllist", (req, res) => {
-  res.json({ ok: true, selllist: readJsonSafe(SELLLIST_PATH) });
+app.get("/api/selllist", async (req, res) => {
+  try {
+    const selllist = readJsonSafe(SELLLIST_PATH) || {};
+
+    // Pull live inventory from DB
+    const invRes = await pool.query(
+      `SELECT sku, stock_nm, stock_lp, stock_mp, stock_hp
+         FROM app.inventory`
+    );
+
+    // Map: sku -> stock object (same shape your frontend expects)
+    const invMap = new Map();
+    for (const r of invRes.rows) {
+      invMap.set(String(r.sku), {
+        "Near Mint": Number(r.stock_nm || 0),
+        "Lightly Played": Number(r.stock_lp || 0),
+        "Moderately Played": Number(r.stock_mp || 0),
+        "Heavily Played": Number(r.stock_hp || 0),
+      });
+    }
+
+    // Merge DB stock into selllist.json items
+    // Keep name/price/image/max from JSON; add/overwrite stock from DB
+    for (const sku of Object.keys(selllist)) {
+      const dbStock = invMap.get(sku);
+
+      selllist[sku].stock =
+        dbStock ||
+        selllist[sku].stock || {
+          "Near Mint": 0,
+          "Lightly Played": 0,
+          "Moderately Played": 0,
+          "Heavily Played": 0,
+        };
+    }
+
+    return res.json({ ok: true, selllist });
+  } catch (e) {
+    console.error("selllist route error:", e);
+    return res.status(500).json({ ok: false, error: "Selllist load failed" });
+  }
+});
+
+app.post("/api/admin/seed-inventory", requireAdmin, async (req, res) => {
+  try {
+    const catalog = readJsonSafe(CATALOG_PATH) || {};
+    const selllist = readJsonSafe(SELLLIST_PATH) || {};
+    const merged = { ...catalog, ...selllist };
+
+    let inserted = 0;
+
+    for (const [sku, item] of Object.entries(merged)) {
+      if (!sku) continue;
+
+      const s = item?.stock && typeof item.stock === "object" ? item.stock : {};
+      const nm = Number(s["Near Mint"] ?? 0);
+      const lp = Number(s["Lightly Played"] ?? 0);
+      const mp = Number(s["Moderately Played"] ?? 0);
+      const hp = Number(s["Heavily Played"] ?? 0);
+
+      const r = await pool.query(
+        `INSERT INTO app.inventory (sku, stock_nm, stock_lp, stock_mp, stock_hp, updated_at)
+         VALUES ($1,$2,$3,$4,$5,NOW())
+         ON CONFLICT (sku) DO NOTHING`,
+        [sku, nm, lp, mp, hp]
+      );
+      inserted += r.rowCount;
+    }
+
+    res.json({ ok: true, inserted });
+  } catch (e) {
+    console.error("seed inventory error:", e);
+    res.status(500).json({ ok: false, error: "Seed failed" });
+  }
 });
 
 /* =========================
