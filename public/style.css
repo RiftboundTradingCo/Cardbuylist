@@ -1338,3 +1338,19 @@ body {
   align-items: center;
   flex-wrap: wrap;
 }
+
+.cart-image {
+  width: 110px;
+  min-width: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cart-image img {
+  width: 110px;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,.15);
+  background: rgba(255,255,255,.7);
+}

@@ -251,6 +251,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     for (const l of clamped.out) {
       const product = catalog[l.sku];
       const name = String(product?.name || l.sku);
+      const imgUrl = String(product?.image || "").trim();
       const base = Number(product?.price_cents || 0);
 
       const stock = getStockForCondition(product, l.conditionFull);
@@ -269,7 +270,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       li.innerHTML = `
         <div class="cart-card">
-          <div class="cart-main">
+  <div class="cart-image">
+    ${
+      imgUrl
+        ? `<img src="${imgUrl}" alt="${name}" loading="lazy" onerror="this.style.display='none'">`
+        : ""
+    }
+  </div>
+           <div class="cart-main">
             <h3 class="cart-title">${name}</h3>
             <div class="cart-meta">
               <div>Condition: <strong>${tab}</strong></div>
