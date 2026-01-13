@@ -457,6 +457,94 @@ app.post("/api/create-checkout-session", async (req, res) => {
 });
 
 /* =========================
+   SELL SUBMIT (DB-backed)
+========================= */
+app.post("/api/submit", async (req, res) => {
+  try {
+    const name = String(req.body?.name || "Sell Customer").trim();
+    const email = String(req.body?.email || "").trim();
+    const order = Array.isArray(req.body?.order) ? req.body.order : [];
+
+    if (!email || !email.includes("@")) {
+      return res.status(400).json({ ok: false, error: "Missing/invalid email" });
+    }
+    if (!order.length) {
+      return res.status(400).json({ ok: false, error: "Empty sell order" });
+    }
+
+    const orderId = crypto.randomUUID(); // ✅ uuid, matches DB
+    const userId = getSessionUserId(req); // uuid or null
+
+    // Build normalized lines (client already sends unitPriceCents/lineTotalCents)
+    const lines = [];
+    let totalCents = 0;
+
+    for (const l of order) {
+      const sku = String(l?.sku || "").trim();
+      const cardName = String(l?.name || "").trim();
+      const condition = String(l?.condition || "NM").trim().toUpperCase(); // NM/LP/MP
+      const qty = Math.max(0, Number(l?.qty || 0));
+
+      const unitPriceCents = Number(l?.unitPriceCents || 0);
+      const lineTotalCents = Number(l?.lineTotalCents || unitPriceCents * qty);
+
+      if (!sku || qty <= 0) continue;
+
+      lines.push({
+        sku,
+        name: cardName || sku,
+        condition,
+        qty,
+        unitPriceCents,
+        lineTotalCents,
+      });
+
+      totalCents += lineTotalCents;
+    }
+
+    if (!lines.length) {
+      return res.status(400).json({ ok: false, error: "No valid items in sell order" });
+    }
+
+    // Write order + lines atomically
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      await client.query(
+        `INSERT INTO app.orders
+          (id, user_id, type, status, total_cents, customer_name, customer_email)
+         VALUES
+          ($1, $2, 'sell', 'submitted', $3, $4, $5)`,
+        [orderId, userId && isUuid(userId) ? userId : null, totalCents, name, email]
+      );
+
+      for (const ln of lines) {
+        await client.query(
+          `INSERT INTO app.order_lines
+            (id, order_id, sku, name, condition, qty, unit_price_cents, line_total_cents)
+           VALUES
+            (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7)`,
+          [orderId, ln.sku, ln.name, ln.condition, ln.qty, ln.unitPriceCents, ln.lineTotalCents]
+        );
+      }
+
+      await client.query("COMMIT");
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
+
+    return res.json({ ok: true, orderId });
+  } catch (e) {
+    console.error("Sell submit error:", e);
+    return res.status(500).json({ ok: false, error: e.message || "Could not submit" });
+  }
+});
+
+/* =========================
    PUBLIC API ROUTES
 ========================= */
 app.get("/api/catalog", (req, res) => {
