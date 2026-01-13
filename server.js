@@ -69,16 +69,6 @@ function readJsonSafe(filePath) {
   }
 }
 
-function writeJsonSafe(filePath, obj) {
-  try {
-    fs.writeFileSync(filePath, JSON.stringify(obj, null, 2), "utf8");
-    return true;
-  } catch (e) {
-    console.error("writeJsonSafe failed:", filePath, e);
-    return false;
-  }
-}
-
 /* =========================
    CONDITIONS / PRICING
 ========================= */
@@ -137,9 +127,9 @@ function getSessionUserId(req) {
 
 function requireAuth(req, res, next) {
   const userId = getSessionUserId(req);
-  if (!userId) {  
-        clearSession(res); 
-        return res.status(401).json({ ok: false, error: "Not logged in" });
+  if (!userId) {
+    clearSession(res);
+    return res.status(401).json({ ok: false, error: "Not logged in" });
   }
   req.userId = userId;
   next();
@@ -181,7 +171,7 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
         return res.json({ received: true });
       }
 
-      // 1) Load pending checkout from DB (cart, email, userId)
+      // 1) Load pending checkout from DB
       const pendingRes = await pool.query(
         `SELECT order_id, user_id, email, cart_json
            FROM app.pending_checkout
@@ -191,20 +181,14 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
 
       const pending = pendingRes.rows[0] || null;
 
-      // ✅ FIX: cart_json might be json/jsonb (object/array) OR a string (older rows).
-      // Prefer json/jsonb; fallback to JSON.parse if string.
+      // cart_json might be json/jsonb (object/array) OR text string
       let cart = [];
       try {
-        if (Array.isArray(pending?.cart_json)) {
-          cart = pending.cart_json;
-        } else if (typeof pending?.cart_json === "string") {
-          cart = JSON.parse(pending.cart_json || "[]");
-        } else if (pending?.cart_json && typeof pending.cart_json === "object") {
-          // jsonb can come back as an object/array depending on driver/config
+        if (Array.isArray(pending?.cart_json)) cart = pending.cart_json;
+        else if (typeof pending?.cart_json === "string") cart = JSON.parse(pending.cart_json || "[]");
+        else if (pending?.cart_json && typeof pending.cart_json === "object") {
           cart = Array.isArray(pending.cart_json) ? pending.cart_json : [];
-        } else {
-          cart = [];
-        }
+        } else cart = [];
       } catch {
         cart = [];
       }
@@ -236,7 +220,7 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
           }
         : null;
 
-      // 2) Build order lines (still using catalog.json for names/prices)
+      // 2) Build order lines (still using catalog.json)
       const catalog = readJsonSafe(CATALOG_PATH) || {};
       const lines = [];
       let totalCents = 0;
@@ -264,12 +248,13 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
         });
       }
 
-      // 3) Write order + lines in ONE DB transaction (atomic)
+      // 3) Write order + lines atomically
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
 
-        // ✅ FIX: placeholder count matches param array (12 placeholders, 12 params)
+        // Matches your DB columns exactly:
+        // customer_name, customer_email, ship_line1.., stripe_session_id
         await client.query(
           `INSERT INTO app.orders
             (id, user_id, type, status, total_cents, customer_name, customer_email,
@@ -280,7 +265,7 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
            ON CONFLICT (id) DO NOTHING`,
           [
             orderId,                        // $1
-            userId,                         // $2
+            isUuid(userId) ? userId : null, // $2
             totalCents,                     // $3
             shipName,                       // $4
             customerEmail,                  // $5
@@ -290,11 +275,10 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
             shippingAddress?.state || null, // $9
             shippingAddress?.postal || null,// $10
             shippingAddress?.country || null,// $11
-            session.id,                     // $12
+            session.id,                     // $12  (stripe_session_id)
           ]
         );
 
-        // ✅ FIX: don’t rely on gen_random_uuid(); generate in Node
         for (const l of lines) {
           await client.query(
             `INSERT INTO app.order_lines
@@ -314,8 +298,8 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
           );
         }
 
-        // Save shipping address onto the user (optional)
-        if (userId && shippingAddress) {
+        // Save shipping to user (optional)
+        if (isUuid(userId) && shippingAddress) {
           await client.query(
             `UPDATE app.users
                 SET address_line1=$2, address_line2=$3, address_city=$4, address_state=$5,
@@ -333,7 +317,6 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
           );
         }
 
-        // Delete pending checkout (so it can’t be replayed)
         await client.query(`DELETE FROM app.pending_checkout WHERE order_id=$1`, [orderId]);
 
         await client.query("COMMIT");
@@ -344,7 +327,7 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
         client.release();
       }
 
-      // Optional emails (now that order is saved)
+      // Optional emails
       if (resend && EMAIL_FROM) {
         const totalNice = `$${(totalCents / 100).toFixed(2)}`;
         const emailLines = lines.map(
@@ -400,18 +383,17 @@ app.post("/api/create-checkout-session", async (req, res) => {
     const cart = Array.isArray(req.body?.cart) ? req.body.cart : [];
     if (!cart.length) return res.status(400).json({ ok: false, error: "Cart is empty" });
 
-    const orderId = crypto.randomUUID(); // UUID
+    const orderId = crypto.randomUUID();
     const userId = getSessionUserId(req);
 
-    // ✅ FIX: store cart as real JSON/JSONB (not a string) if your cart_json column is json/jsonb
-    // If your column is TEXT, change this back to JSON.stringify(cart)
+    // Store cart_json as json/jsonb safely:
+    // (works when cart_json is json or jsonb)
     await pool.query(
       `INSERT INTO app.pending_checkout(order_id, user_id, email, cart_json)
-       VALUES ($1,$2,$3,$4)`,
-      [orderId, userId, email || null, cart]
+       VALUES ($1,$2,$3,$4::jsonb)`,
+      [orderId, isUuid(userId) ? userId : null, email || null, JSON.stringify(cart)]
     );
 
-    // Build Stripe line items from catalog.json
     const catalog = readJsonSafe(CATALOG_PATH) || {};
     const line_items = [];
 
@@ -444,7 +426,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
       cancel_url: `${PUBLIC_BASE_URL}/buy-cart.html`,
       metadata: {
         orderId,
-        userId: userId || "",
+        userId: isUuid(userId) ? userId : "",
         email,
       },
     });
@@ -465,24 +447,19 @@ app.post("/api/submit", async (req, res) => {
     const email = String(req.body?.email || "").trim();
     const order = Array.isArray(req.body?.order) ? req.body.order : [];
 
-    if (!email || !email.includes("@")) {
-      return res.status(400).json({ ok: false, error: "Missing/invalid email" });
-    }
-    if (!order.length) {
-      return res.status(400).json({ ok: false, error: "Empty sell order" });
-    }
+    if (!email || !email.includes("@")) return res.status(400).json({ ok: false, error: "Missing/invalid email" });
+    if (!order.length) return res.status(400).json({ ok: false, error: "Empty sell order" });
 
-    const orderId = crypto.randomUUID(); // ✅ uuid, matches DB
-    const userId = getSessionUserId(req); // uuid or null
+    const orderId = crypto.randomUUID();
+    const userId = getSessionUserId(req);
 
-    // Build normalized lines (client already sends unitPriceCents/lineTotalCents)
     const lines = [];
     let totalCents = 0;
 
     for (const l of order) {
       const sku = String(l?.sku || "").trim();
       const cardName = String(l?.name || "").trim();
-      const condition = String(l?.condition || "NM").trim().toUpperCase(); // NM/LP/MP
+      const condition = String(l?.condition || "NM").trim();
       const qty = Math.max(0, Number(l?.qty || 0));
 
       const unitPriceCents = Number(l?.unitPriceCents || 0);
@@ -502,21 +479,19 @@ app.post("/api/submit", async (req, res) => {
       totalCents += lineTotalCents;
     }
 
-    if (!lines.length) {
-      return res.status(400).json({ ok: false, error: "No valid items in sell order" });
-    }
+    if (!lines.length) return res.status(400).json({ ok: false, error: "No valid items in sell order" });
 
-    // Write order + lines atomically
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
 
+      // orders table uses customer_name/customer_email (matches your DB)
       await client.query(
         `INSERT INTO app.orders
           (id, user_id, type, status, total_cents, customer_name, customer_email)
          VALUES
           ($1, $2, 'sell', 'submitted', $3, $4, $5)`,
-        [orderId, userId && isUuid(userId) ? userId : null, totalCents, name, email]
+        [orderId, isUuid(userId) ? userId : null, totalCents, name, email]
       );
 
       for (const ln of lines) {
@@ -524,8 +499,17 @@ app.post("/api/submit", async (req, res) => {
           `INSERT INTO app.order_lines
             (id, order_id, sku, name, condition, qty, unit_price_cents, line_total_cents)
            VALUES
-            (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7)`,
-          [orderId, ln.sku, ln.name, ln.condition, ln.qty, ln.unitPriceCents, ln.lineTotalCents]
+            ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          [
+            crypto.randomUUID(),
+            orderId,
+            ln.sku,
+            ln.name,
+            ln.condition,
+            ln.qty,
+            ln.unitPriceCents,
+            ln.lineTotalCents,
+          ]
         );
       }
 
@@ -580,7 +564,6 @@ app.post("/api/auth/signup", async (req, res) => {
     );
 
     setSession(res, id);
-
     return res.json({ ok: true, user: { id, email, name } });
   } catch (e) {
     console.error("signup error:", e);
@@ -643,14 +626,44 @@ app.get("/api/me", async (req, res) => {
       }
     : null;
 
-  res.json({
-    ok: true,
-    user: { id: u.id, email: u.email, name: u.name, address },
-  });
+  res.json({ ok: true, user: { id: u.id, email: u.email, name: u.name, address } });
+});
+
+app.post("/api/me/address", requireAuth, async (req, res) => {
+  try {
+    const a = req.body?.address || {};
+    const next = {
+      line1: String(a.line1 || "").trim(),
+      line2: String(a.line2 || "").trim(),
+      city: String(a.city || "").trim(),
+      state: String(a.state || "").trim(),
+      postal: String(a.postal || "").trim(),
+      country: String(a.country || "US").trim(),
+    };
+
+    if (!next.line1 || !next.city || !next.state || !next.postal) {
+      return res.status(400).json({ ok: false, error: "Missing required fields (line1, city, state, postal)." });
+    }
+
+    const r = await pool.query(
+      `UPDATE app.users
+          SET address_line1=$2, address_line2=$3, address_city=$4, address_state=$5,
+              address_postal=$6, address_country=$7, address_updated_at=NOW()
+        WHERE id=$1`,
+      [req.userId, next.line1, next.line2 || null, next.city, next.state, next.postal, next.country || "US"]
+    );
+
+    if (r.rowCount === 0) return res.status(404).json({ ok: false, error: "User not found" });
+
+    return res.json({ ok: true, address: next });
+  } catch (e) {
+    console.error("save address error:", e);
+    return res.status(500).json({ ok: false, error: "Could not save address" });
+  }
 });
 
 /* =========================
-   MY ORDERS (DB-backed)
+   MY ORDERS
 ========================= */
 app.get("/api/my/orders", requireAuth, async (req, res) => {
   const userId = req.userId;
@@ -726,4 +739,3 @@ app.get("/health", (req, res) => res.send("OK"));
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
-
