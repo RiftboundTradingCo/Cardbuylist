@@ -26,9 +26,7 @@ const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
 const EMAIL_FROM = process.env.EMAIL_FROM || "";
 const OWNER_EMAIL = process.env.OWNER_EMAIL || "";
-const PUBLIC_BASE_URL =
-  process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`;
-
+const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`;
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "";
 const SESSION_SECRET = process.env.SESSION_SECRET || "dev_secret";
 
@@ -44,19 +42,17 @@ if (!process.env.DATABASE_URL) {
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes("localhost")
-    ? false
-    : { rejectUnauthorized: false },
+  ssl: process.env.DATABASE_URL?.includes("localhost") ? false : { rejectUnauthorized: false },
 });
 
 /* =========================
-   FILE PATHS (catalog/selllist remain JSON)
+   FILE PATHS (kept for seeding)
 ========================= */
 const CATALOG_PATH = path.join(__dirname, "catalog.json");
 const SELLLIST_PATH = path.join(__dirname, "selllist.json");
 
 /* =========================
-   JSON helpers
+   JSON helper (read-only)
 ========================= */
 function readJsonSafe(filePath) {
   try {
@@ -83,12 +79,6 @@ const CONDITION_MULT = {
 
 function normalizeCondition(c) {
   const s = String(c || "").trim();
-  // Support tabs like "NM", "LP", etc.
-  const up = s.toUpperCase();
-  if (up === "NM") return "Near Mint";
-  if (up === "LP") return "Lightly Played";
-  if (up === "MP") return "Moderately Played";
-  if (up === "HP") return "Heavily Played";
   return CONDITION_MULT[s] ? s : "Near Mint";
 }
 
@@ -101,7 +91,7 @@ function centsForCondition(base, cond) {
    INVENTORY HELPERS
 ========================= */
 function stockColumnForCondition(condition) {
-  switch (normalizeCondition(condition)) {
+  switch (condition) {
     case "Near Mint":
       return "stock_nm";
     case "Lightly Played":
@@ -125,11 +115,7 @@ function isUuid(v) {
 }
 
 function setSession(res, userId) {
-  const sig = crypto
-    .createHmac("sha256", SESSION_SECRET)
-    .update(userId)
-    .digest("hex");
-
+  const sig = crypto.createHmac("sha256", SESSION_SECRET).update(userId).digest("hex");
   res.cookie("sid", `${userId}.${sig}`, {
     httpOnly: true,
     sameSite: "lax",
@@ -147,14 +133,10 @@ function getSessionUserId(req) {
   const [userId, sig] = raw.split(".");
   if (!userId || !sig) return null;
 
-  const expected = crypto
-    .createHmac("sha256", SESSION_SECRET)
-    .update(userId)
-    .digest("hex");
-
+  const expected = crypto.createHmac("sha256", SESSION_SECRET).update(userId).digest("hex");
   if (sig !== expected) return null;
-  if (!isUuid(userId)) return null;
 
+  if (!isUuid(userId)) return null;
   return userId;
 }
 
@@ -170,10 +152,8 @@ function requireAuth(req, res, next) {
 
 function requireAdmin(req, res, next) {
   const token = String(req.headers["x-admin-token"] || "").trim();
-  if (!ADMIN_TOKEN)
-    return res.status(500).json({ ok: false, error: "ADMIN_TOKEN not set" });
-  if (token !== ADMIN_TOKEN)
-    return res.status(401).json({ ok: false, error: "Unauthorized" });
+  if (!ADMIN_TOKEN) return res.status(500).json({ ok: false, error: "ADMIN_TOKEN not set" });
+  if (token !== ADMIN_TOKEN) return res.status(401).json({ ok: false, error: "Unauthorized" });
   next();
 }
 
@@ -181,62 +161,51 @@ function requireAdmin(req, res, next) {
    STRIPE WEBHOOK (RAW BODY)
    NOTE: must be BEFORE express.json()
 ========================= */
-app.post(
-  "/api/stripe/webhook",
-  express.raw({ type: "application/json" }),
-  async (req, res) => {
-    if (!stripe) return res.sendStatus(500);
+app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+  if (!stripe) return res.sendStatus(500);
 
-    let event;
-    try {
-      event = stripe.webhooks.constructEvent(
-        req.body,
-        req.headers["stripe-signature"],
-        STRIPE_WEBHOOK_SECRET
-      );
-    } catch (err) {
-      console.error("Webhook signature verify failed:", err?.message || err);
-      return res.status(400).send("Webhook error");
-    }
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      req.headers["stripe-signature"],
+      STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    console.error("Webhook signature verify failed:", err?.message || err);
+    return res.status(400).send("Webhook error");
+  }
 
-    try {
-      if (event.type !== "checkout.session.completed") {
-        return res.json({ received: true });
-      }
-
+  try {
+    if (event.type === "checkout.session.completed") {
       const session = event.data.object;
-      const orderId = String(session?.metadata?.orderId || "").trim();
-      if (!orderId) {
-        console.error("Webhook missing metadata.orderId");
-        return res.json({ received: true });
-      }
 
-      // Load pending checkout (cart/email/userId) from DB
+      const orderId = String(session?.metadata?.orderId || "").trim();
+      if (!orderId) return res.json({ received: true });
+
+      // 1) Load pending checkout
       const pendingRes = await pool.query(
         `SELECT order_id, user_id, email, cart_json
            FROM app.pending_checkout
           WHERE order_id = $1`,
         [orderId]
       );
-
       const pending = pendingRes.rows[0] || null;
 
-      // cart_json can be json/jsonb or text; handle both
+      // cart_json might be json/jsonb object/array OR a text string
       let cart = [];
       try {
         if (Array.isArray(pending?.cart_json)) cart = pending.cart_json;
-        else if (typeof pending?.cart_json === "string")
-          cart = JSON.parse(pending.cart_json || "[]");
-        else if (pending?.cart_json && typeof pending.cart_json === "object")
+        else if (typeof pending?.cart_json === "string") cart = JSON.parse(pending.cart_json || "[]");
+        else if (pending?.cart_json && typeof pending.cart_json === "object") {
           cart = Array.isArray(pending.cart_json) ? pending.cart_json : [];
+        } else cart = [];
       } catch {
         cart = [];
       }
 
-      const userId =
-        (pending?.user_id && isUuid(pending.user_id) ? pending.user_id : null) ||
-        (isUuid(session?.metadata?.userId) ? session.metadata.userId : null) ||
-        null;
+      const userIdRaw = pending?.user_id || session?.metadata?.userId || null;
+      const userId = isUuid(userIdRaw) ? userIdRaw : null;
 
       const customerEmail =
         session.customer_details?.email ||
@@ -247,10 +216,7 @@ app.post(
 
       const shipName = session.customer_details?.name || "";
 
-      const shipAddr =
-        session.shipping_details?.address ||
-        session.customer_details?.address ||
-        null;
+      const shipAddr = session.shipping_details?.address || session.customer_details?.address || null;
 
       const shippingAddress = shipAddr
         ? {
@@ -263,8 +229,10 @@ app.post(
           }
         : null;
 
-      // Build lines using catalog.json for names/prices
-      const catalog = readJsonSafe(CATALOG_PATH) || {};
+      // 2) Build lines FROM DB inventory (preferred) with fallback to catalog.json
+      // (This keeps your totals consistent with your pricing data.)
+      const catalogFallback = readJsonSafe(CATALOG_PATH) || {};
+
       const lines = [];
       let totalCents = 0;
 
@@ -274,19 +242,25 @@ app.post(
         const qty = Math.max(1, Number(it?.qty || 0));
         if (!sku || qty <= 0) continue;
 
-        const product = catalog[sku];
-        if (!product) continue;
-
-        const unitCents = centsForCondition(
-          Number(product.price_cents || 0),
-          condition
+        // Try DB first
+        const invRes = await pool.query(
+          `SELECT sku, name, price_cents
+             FROM app.inventory
+            WHERE sku = $1`,
+          [sku]
         );
+        const inv = invRes.rows[0] || null;
+
+        const name = String(inv?.name || catalogFallback?.[sku]?.name || sku);
+        const basePriceCents = Number(inv?.price_cents ?? catalogFallback?.[sku]?.price_cents ?? 0);
+
+        const unitCents = centsForCondition(basePriceCents, condition);
         const lineCents = unitCents * qty;
         totalCents += lineCents;
 
         lines.push({
           sku,
-          name: String(product.name || sku),
+          name,
           condition,
           qty,
           unitPriceCents: unitCents,
@@ -294,7 +268,7 @@ app.post(
         });
       }
 
-      // Save order + lines + inventory decrement atomically
+      // 3) Transaction: insert order, order_lines, decrement inventory, cleanup pending
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
@@ -308,18 +282,18 @@ app.post(
             ($1,$2,'buy','paid',$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
            ON CONFLICT (id) DO NOTHING`,
           [
-            orderId,
-            userId,
-            totalCents,
-            shipName,
-            customerEmail,
-            shippingAddress?.line1 || null,
-            shippingAddress?.line2 || null,
-            shippingAddress?.city || null,
-            shippingAddress?.state || null,
-            shippingAddress?.postal || null,
-            shippingAddress?.country || null,
-            session.id,
+            orderId, // $1
+            userId, // $2
+            totalCents, // $3
+            shipName, // $4
+            customerEmail, // $5
+            shippingAddress?.line1 || null, // $6
+            shippingAddress?.line2 || null, // $7
+            shippingAddress?.city || null, // $8
+            shippingAddress?.state || null, // $9
+            shippingAddress?.postal || null, // $10
+            shippingAddress?.country || null, // $11
+            String(session.id || ""), // $12
           ]
         );
 
@@ -342,10 +316,9 @@ app.post(
           );
         }
 
-        // ✅ Decrement inventory safely (prevents oversell)
+        // Decrement inventory (oversell-safe)
         for (const l of lines) {
-          const col = stockColumnForCondition(l.condition);
-
+          const col = stockColumnForCondition(l.condition); // safe: from switch
           const r = await client.query(
             `UPDATE app.inventory
                 SET ${col} = ${col} - $2,
@@ -354,15 +327,12 @@ app.post(
                 AND ${col} >= $2`,
             [l.sku, l.qty]
           );
-
           if (r.rowCount === 0) {
-            throw new Error(
-              `Insufficient stock for ${l.sku} (${l.condition})`
-            );
+            throw new Error(`Insufficient stock for ${l.sku} (${l.condition})`);
           }
         }
 
-        // Save shipping to user profile
+        // Save shipping to user (optional)
         if (userId && shippingAddress) {
           await client.query(
             `UPDATE app.users
@@ -381,29 +351,24 @@ app.post(
           );
         }
 
-        // Delete pending checkout so it can’t be replayed
-        await client.query(
-          `DELETE FROM app.pending_checkout WHERE order_id=$1`,
-          [orderId]
-        );
+        await client.query(`DELETE FROM app.pending_checkout WHERE order_id=$1`, [orderId]);
 
         await client.query("COMMIT");
       } catch (e) {
         await client.query("ROLLBACK");
         console.error("Webhook DB transaction failed:", e);
-        // Still respond 200 to Stripe to avoid endless retries
       } finally {
         client.release();
       }
 
-      // Emails (optional)
+      // Optional emails
       if (resend && EMAIL_FROM) {
         const totalNice = `$${(totalCents / 100).toFixed(2)}`;
         const emailLines = lines.map(
           (l) =>
-            `${l.qty}x ${l.name} — ${l.condition} — $${(
-              l.unitPriceCents / 100
-            ).toFixed(2)} each = $${(l.lineTotalCents / 100).toFixed(2)}`
+            `${l.qty}x ${l.name} — ${l.condition} — $${(l.unitPriceCents / 100).toFixed(
+              2
+            )} each = $${(l.lineTotalCents / 100).toFixed(2)}`
         );
 
         if (OWNER_EMAIL) {
@@ -422,20 +387,18 @@ app.post(
             from: EMAIL_FROM,
             to: customerEmail,
             subject: `Your Riftbound order receipt (${orderId})`,
-            text: `Thanks for your purchase!\nOrder: ${orderId}\nTotal: ${totalNice}\n\n${emailLines.join(
-              "\n"
-            )}`,
+            text: `Thanks for your purchase!\nOrder: ${orderId}\nTotal: ${totalNice}\n\n${emailLines.join("\n")}`,
           });
         }
       }
-
-      return res.json({ received: true });
-    } catch (e) {
-      console.error("Webhook handler error:", e);
-      return res.status(500).send("Webhook handler error");
     }
+
+    return res.json({ received: true });
+  } catch (e) {
+    console.error("Webhook handler error:", e);
+    return res.status(500).send("Webhook handler error");
   }
-);
+});
 
 /* =========================
    NORMAL MIDDLEWARE + STATIC
@@ -448,28 +411,24 @@ app.use(express.static(path.join(__dirname, "public")));
 ========================= */
 app.post("/api/create-checkout-session", async (req, res) => {
   try {
-    if (!stripe)
-      return res
-        .status(500)
-        .json({ ok: false, error: "Stripe not configured" });
+    if (!stripe) return res.status(500).json({ ok: false, error: "Stripe not configured" });
 
     const email = String(req.body?.email || "").trim();
     const cart = Array.isArray(req.body?.cart) ? req.body.cart : [];
-    if (!cart.length)
-      return res.status(400).json({ ok: false, error: "Cart is empty" });
+    if (!cart.length) return res.status(400).json({ ok: false, error: "Cart is empty" });
 
     const orderId = crypto.randomUUID();
-    const userId = getSessionUserId(req);
+    const userIdRaw = getSessionUserId(req);
+    const userId = isUuid(userIdRaw) ? userIdRaw : null;
 
-    // Store cart_json safely as jsonb
     await pool.query(
       `INSERT INTO app.pending_checkout(order_id, user_id, email, cart_json)
        VALUES ($1,$2,$3,$4::jsonb)`,
       [orderId, userId, email || null, JSON.stringify(cart)]
     );
 
-    // Stripe line items from catalog.json
-    const catalog = readJsonSafe(CATALOG_PATH) || {};
+    // Build Stripe line items from DB inventory (fallback to catalog.json)
+    const catalogFallback = readJsonSafe(CATALOG_PATH) || {};
     const line_items = [];
 
     for (const item of cart) {
@@ -477,23 +436,22 @@ app.post("/api/create-checkout-session", async (req, res) => {
       const condition = normalizeCondition(item?.condition);
       const qty = Math.max(1, Number(item?.qty || 0));
 
-      const product = catalog[sku];
-      if (!product)
-        return res
-          .status(400)
-          .json({ ok: false, error: `Unknown SKU: ${sku}` });
+      if (!sku) return res.status(400).json({ ok: false, error: "Missing SKU" });
 
-      const unitCents = centsForCondition(
-        Number(product.price_cents || 0),
-        condition
-      );
+      const invRes = await pool.query(`SELECT name, price_cents FROM app.inventory WHERE sku=$1`, [sku]);
+      const inv = invRes.rows[0] || null;
+
+      const name = String(inv?.name || catalogFallback?.[sku]?.name || sku);
+      const basePriceCents = Number(inv?.price_cents ?? catalogFallback?.[sku]?.price_cents ?? 0);
+
+      const unitCents = centsForCondition(basePriceCents, condition);
 
       line_items.push({
         quantity: qty,
         price_data: {
           currency: "usd",
           unit_amount: unitCents,
-          product_data: { name: `${product.name || sku} (${condition})` },
+          product_data: { name: `${name} (${condition})` },
         },
       });
     }
@@ -503,9 +461,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
       customer_email: email || undefined,
       line_items,
       shipping_address_collection: { allowed_countries: ["US"] },
-      success_url: `${PUBLIC_BASE_URL}/success.html?order=${encodeURIComponent(
-        orderId
-      )}`,
+      success_url: `${PUBLIC_BASE_URL}/success.html?order=${encodeURIComponent(orderId)}`,
       cancel_url: `${PUBLIC_BASE_URL}/buy-cart.html`,
       metadata: {
         orderId,
@@ -517,16 +473,14 @@ app.post("/api/create-checkout-session", async (req, res) => {
     return res.json({ ok: true, url: session.url, id: session.id, orderId });
   } catch (e) {
     console.error("Create checkout session error:", e);
-    return res
-      .status(500)
-      .json({ ok: false, error: e.message || "Could not create checkout session" });
+    return res.status(500).json({ ok: false, error: e.message || "Could not create checkout session" });
   }
 });
 
 /* =========================
-   SELL SUBMIT
-   - Writes order + lines
-   - Increments inventory (since you received cards)
+   SELL SUBMIT (DB-backed)
+   - Writes order + order_lines
+   - INCREMENTS inventory for submitted sell orders
 ========================= */
 app.post("/api/submit", async (req, res) => {
   try {
@@ -534,13 +488,12 @@ app.post("/api/submit", async (req, res) => {
     const email = String(req.body?.email || "").trim();
     const order = Array.isArray(req.body?.order) ? req.body.order : [];
 
-    if (!email || !email.includes("@"))
-      return res.status(400).json({ ok: false, error: "Missing/invalid email" });
-    if (!order.length)
-      return res.status(400).json({ ok: false, error: "Empty sell order" });
+    if (!email || !email.includes("@")) return res.status(400).json({ ok: false, error: "Missing/invalid email" });
+    if (!order.length) return res.status(400).json({ ok: false, error: "Empty sell order" });
 
     const orderId = crypto.randomUUID();
-    const userId = getSessionUserId(req);
+    const userIdRaw = getSessionUserId(req);
+    const userId = isUuid(userIdRaw) ? userIdRaw : null;
 
     const lines = [];
     let totalCents = 0;
@@ -548,8 +501,7 @@ app.post("/api/submit", async (req, res) => {
     for (const l of order) {
       const sku = String(l?.sku || "").trim();
       const cardName = String(l?.name || "").trim();
-      // sell pages usually send "NM/LP/MP/HP" → keep as given OR normalize if you prefer
-      const condition = String(l?.condition || "NM").trim();
+      const condition = normalizeCondition(l?.condition); // normalize to full
       const qty = Math.max(0, Number(l?.qty || 0));
 
       const unitPriceCents = Number(l?.unitPriceCents || 0);
@@ -569,8 +521,7 @@ app.post("/api/submit", async (req, res) => {
       totalCents += lineTotalCents;
     }
 
-    if (!lines.length)
-      return res.status(400).json({ ok: false, error: "No valid items in sell order" });
+    if (!lines.length) return res.status(400).json({ ok: false, error: "No valid items in sell order" });
 
     const client = await pool.connect();
     try {
@@ -603,9 +554,21 @@ app.post("/api/submit", async (req, res) => {
         );
       }
 
-      // ✅ Increment inventory (cards coming IN)
+      // Increment inventory (auto-create row if missing)
       for (const ln of lines) {
-        const col = stockColumnForCondition(ln.condition);
+        const col = stockColumnForCondition(ln.condition); // safe
+        // Ensure NOT NULL name
+        const safeName = (typeof ln.name === "string" && ln.name.trim()) ? ln.name.trim() : ln.sku;
+
+        await client.query(
+          `INSERT INTO app.inventory
+            (sku, name, price_cents, image, stock_nm, stock_lp, stock_mp, stock_hp, updated_at)
+           VALUES
+            ($1, $2, 0, NULL, 0, 0, 0, 0, NOW())
+           ON CONFLICT (sku) DO NOTHING`,
+          [ln.sku, safeName]
+        );
+
         await client.query(
           `UPDATE app.inventory
               SET ${col} = ${col} + $2,
@@ -613,7 +576,6 @@ app.post("/api/submit", async (req, res) => {
             WHERE sku = $1`,
           [ln.sku, ln.qty]
         );
-        // If you want to auto-create missing SKUs in inventory, say so and I’ll add an UPSERT.
       }
 
       await client.query("COMMIT");
@@ -633,133 +595,46 @@ app.post("/api/submit", async (req, res) => {
 
 /* =========================
    PUBLIC API ROUTES
+   - catalog now comes from DB inventory
+   - selllist left as JSON (until you migrate it too)
 ========================= */
 app.get("/api/catalog", async (req, res) => {
   try {
-    const catalog = readJsonSafe(CATALOG_PATH) || {};
-
-    // Pull live inventory from DB
-    const invRes = await pool.query(
-      `SELECT sku, stock_nm, stock_lp, stock_mp, stock_hp
-         FROM app.inventory`
+    const r = await pool.query(
+      `SELECT sku, name, price_cents, image,
+              stock_nm, stock_lp, stock_mp, stock_hp
+         FROM app.inventory
+        ORDER BY sku`
     );
 
-    // Map: sku -> stock object (same shape your frontend expects)
-    const invMap = new Map();
-    for (const r of invRes.rows) {
-      invMap.set(String(r.sku), {
-        "Near Mint": Number(r.stock_nm || 0),
-        "Lightly Played": Number(r.stock_lp || 0),
-        "Moderately Played": Number(r.stock_mp || 0),
-        "Heavily Played": Number(r.stock_hp || 0),
-      });
-    }
-
-    // Merge DB stock into catalog.json items
-    // Keep name/price/image from JSON; stock comes from DB
-    for (const sku of Object.keys(catalog)) {
-      const dbStock = invMap.get(sku);
-
-      // If inventory row exists -> use it
-      if (dbStock) {
-        catalog[sku].stock = dbStock;
-        continue;
-      }
-
-      // If no DB row exists -> default to zeros (or keep existing JSON stock if you prefer)
-      catalog[sku].stock = {
-        "Near Mint": 0,
-        "Lightly Played": 0,
-        "Moderately Played": 0,
-        "Heavily Played": 0,
+    const catalog = {};
+    for (const row of r.rows) {
+      catalog[row.sku] = {
+        name: row.name,
+        price_cents: Number(row.price_cents || 0),
+        stock: {
+          "Near Mint": Number(row.stock_nm || 0),
+          "Lightly Played": Number(row.stock_lp || 0),
+          "Moderately Played": Number(row.stock_mp || 0),
+          "Heavily Played": Number(row.stock_hp || 0),
+        },
+        image: row.image || null,
       };
     }
 
-    return res.json({ ok: true, catalog });
+    res.json({ ok: true, catalog });
   } catch (e) {
-    console.error("catalog route error:", e);
-    return res.status(500).json({ ok: false, error: "Catalog load failed" });
+    console.error("catalog error:", e);
+    res.status(500).json({ ok: false, error: "Catalog load failed" });
   }
 });
 
-app.get("/api/selllist", async (req, res) => {
-  try {
-    const selllist = readJsonSafe(SELLLIST_PATH) || {};
-
-    // Pull live inventory from DB
-    const invRes = await pool.query(
-      `SELECT sku, stock_nm, stock_lp, stock_mp, stock_hp
-         FROM app.inventory`
-    );
-
-    // Map: sku -> stock object (same shape your frontend expects)
-    const invMap = new Map();
-    for (const r of invRes.rows) {
-      invMap.set(String(r.sku), {
-        "Near Mint": Number(r.stock_nm || 0),
-        "Lightly Played": Number(r.stock_lp || 0),
-        "Moderately Played": Number(r.stock_mp || 0),
-        "Heavily Played": Number(r.stock_hp || 0),
-      });
-    }
-
-    // Merge DB stock into selllist.json items
-    // Keep name/price/image/max from JSON; add/overwrite stock from DB
-    for (const sku of Object.keys(selllist)) {
-      const dbStock = invMap.get(sku);
-
-      selllist[sku].stock =
-        dbStock ||
-        selllist[sku].stock || {
-          "Near Mint": 0,
-          "Lightly Played": 0,
-          "Moderately Played": 0,
-          "Heavily Played": 0,
-        };
-    }
-
-    return res.json({ ok: true, selllist });
-  } catch (e) {
-    console.error("selllist route error:", e);
-    return res.status(500).json({ ok: false, error: "Selllist load failed" });
-  }
-});
-
-app.post("/api/admin/seed-inventory", requireAdmin, async (req, res) => {
-  try {
-    const catalog = readJsonSafe(CATALOG_PATH) || {};
-    const selllist = readJsonSafe(SELLLIST_PATH) || {};
-    const merged = { ...catalog, ...selllist };
-
-    let inserted = 0;
-
-    for (const [sku, item] of Object.entries(merged)) {
-      if (!sku) continue;
-
-      const s = item?.stock && typeof item.stock === "object" ? item.stock : {};
-      const nm = Number(s["Near Mint"] ?? 0);
-      const lp = Number(s["Lightly Played"] ?? 0);
-      const mp = Number(s["Moderately Played"] ?? 0);
-      const hp = Number(s["Heavily Played"] ?? 0);
-
-      const r = await pool.query(
-        `INSERT INTO app.inventory (sku, stock_nm, stock_lp, stock_mp, stock_hp, updated_at)
-         VALUES ($1,$2,$3,$4,$5,NOW())
-         ON CONFLICT (sku) DO NOTHING`,
-        [sku, nm, lp, mp, hp]
-      );
-      inserted += r.rowCount;
-    }
-
-    res.json({ ok: true, inserted });
-  } catch (e) {
-    console.error("seed inventory error:", e);
-    res.status(500).json({ ok: false, error: "Seed failed" });
-  }
+app.get("/api/selllist", (req, res) => {
+  res.json({ ok: true, selllist: readJsonSafe(SELLLIST_PATH) });
 });
 
 /* =========================
-   AUTH (DB-backed) - ADDRESS REQUIRED
+   AUTH (DB-backed)
 ========================= */
 app.post("/api/auth/signup", async (req, res) => {
   try {
@@ -767,11 +642,7 @@ app.post("/api/auth/signup", async (req, res) => {
     const password = String(req.body?.password || "");
     const name = String(req.body?.name || "").trim();
 
-    const a =
-      req.body?.address && typeof req.body.address === "object"
-        ? req.body.address
-        : null;
-
+    const a = req.body?.address && typeof req.body.address === "object" ? req.body.address : null;
     const address = {
       line1: String(a?.line1 || "").trim(),
       line2: String(a?.line2 || "").trim(),
@@ -781,26 +652,20 @@ app.post("/api/auth/signup", async (req, res) => {
       country: String(a?.country || "US").trim(),
     };
 
-    if (!email || !email.includes("@"))
+    if (!email || !email.includes("@")) {
       return res.status(400).json({ ok: false, error: "Valid email required" });
-    if (!password || password.length < 8)
-      return res
-        .status(400)
-        .json({ ok: false, error: "Password must be 8+ characters" });
-
+    }
+    if (!password || password.length < 8) {
+      return res.status(400).json({ ok: false, error: "Password must be 8+ characters" });
+    }
     if (!address.line1 || !address.city || !address.state || !address.postal) {
-      return res.status(400).json({
-        ok: false,
-        error: "Address required (line1, city, state, postal).",
-      });
+      return res.status(400).json({ ok: false, error: "Address required (line1, city, state, postal)." });
     }
 
-    const exists = await pool.query(
-      `SELECT 1 FROM app.users WHERE email=$1`,
-      [email]
-    );
-    if (exists.rowCount)
+    const exists = await pool.query(`SELECT 1 FROM app.users WHERE email=$1`, [email]);
+    if (exists.rowCount) {
       return res.status(409).json({ ok: false, error: "Email already in use" });
+    }
 
     const hash = await bcrypt.hash(password, 12);
     const id = crypto.randomUUID();
@@ -812,8 +677,8 @@ app.post("/api/auth/signup", async (req, res) => {
          address_updated_at
        )
        VALUES (
-         $1,$2,$3,$4,
-         $5,$6,$7,$8,$9,$10,
+         $1, $2, $3, $4,
+         $5, $6, $7, $8, $9, $10,
          NOW()
        )`,
       [
@@ -851,12 +716,10 @@ app.post("/api/auth/login", async (req, res) => {
       [email]
     );
     const user = r.rows[0];
-    if (!user)
-      return res.status(401).json({ ok: false, error: "Invalid credentials" });
+    if (!user) return res.status(401).json({ ok: false, error: "Invalid credentials" });
 
     const ok = await bcrypt.compare(password, user.password_hash);
-    if (!ok)
-      return res.status(401).json({ ok: false, error: "Invalid credentials" });
+    if (!ok) return res.status(401).json({ ok: false, error: "Invalid credentials" });
 
     setSession(res, user.id);
     return res.json({ ok: true, user: { id: user.id, email: user.email, name: user.name } });
@@ -912,10 +775,7 @@ app.post("/api/me/address", requireAuth, async (req, res) => {
     };
 
     if (!next.line1 || !next.city || !next.state || !next.postal) {
-      return res.status(400).json({
-        ok: false,
-        error: "Missing required fields (line1, city, state, postal).",
-      });
+      return res.status(400).json({ ok: false, error: "Missing required fields (line1, city, state, postal)." });
     }
 
     const r = await pool.query(
@@ -923,20 +783,10 @@ app.post("/api/me/address", requireAuth, async (req, res) => {
           SET address_line1=$2, address_line2=$3, address_city=$4, address_state=$5,
               address_postal=$6, address_country=$7, address_updated_at=NOW()
         WHERE id=$1`,
-      [
-        req.userId,
-        next.line1,
-        next.line2 || null,
-        next.city,
-        next.state,
-        next.postal,
-        next.country || "US",
-      ]
+      [req.userId, next.line1, next.line2 || null, next.city, next.state, next.postal, next.country || "US"]
     );
 
-    if (r.rowCount === 0)
-      return res.status(404).json({ ok: false, error: "User not found" });
-
+    if (r.rowCount === 0) return res.status(404).json({ ok: false, error: "User not found" });
     return res.json({ ok: true, address: next });
   } catch (e) {
     console.error("save address error:", e);
@@ -1032,6 +882,7 @@ app.get("/api/admin/orders", requireAdmin, async (req, res) => {
     if (!orders.length) return res.json({ ok: true, orders: [] });
 
     const ids = orders.map((o) => o.id);
+
     const linesRes = await pool.query(
       `SELECT order_id, sku, name, condition, qty, unit_price_cents, line_total_cents
          FROM app.order_lines
@@ -1082,6 +933,83 @@ app.get("/api/admin/orders", requireAdmin, async (req, res) => {
   } catch (e) {
     console.error("Admin orders error:", e);
     res.status(500).json({ ok: false, error: "Failed to load orders" });
+  }
+});
+
+/* =========================
+   ADMIN: SEED INVENTORY FROM catalog.json
+   (THIS is where your "name cannot be null" fix lives)
+========================= */
+app.post("/api/admin/seed-inventory", requireAdmin, async (req, res) => {
+  try {
+    const catalog = readJsonSafe(CATALOG_PATH) || {};
+    const entries = Object.entries(catalog);
+
+    const client = await pool.connect();
+    let upserted = 0;
+
+    try {
+      await client.query("BEGIN");
+
+      for (const [rawSku, p] of entries) {
+        const sku = String(rawSku || "").trim();
+        if (!sku) continue;
+
+        const name =
+          p && typeof p === "object" && typeof p.name === "string" && p.name.trim()
+            ? p.name.trim()
+            : sku;
+
+        const priceCents =
+          p && typeof p === "object" && Number.isFinite(Number(p.price_cents))
+            ? Number(p.price_cents)
+            : 0;
+
+        const image =
+          p && typeof p === "object" && typeof p.image === "string" && p.image.trim()
+            ? p.image.trim()
+            : null;
+
+        const stockObj =
+          p && typeof p === "object" && p.stock && typeof p.stock === "object" ? p.stock : {};
+
+        const stockNm = Number(stockObj["Near Mint"] ?? 0) || 0;
+        const stockLp = Number(stockObj["Lightly Played"] ?? 0) || 0;
+        const stockMp = Number(stockObj["Moderately Played"] ?? 0) || 0;
+        const stockHp = Number(stockObj["Heavily Played"] ?? 0) || 0;
+
+        await client.query(
+          `INSERT INTO app.inventory
+            (sku, name, price_cents, image, stock_nm, stock_lp, stock_mp, stock_hp, updated_at)
+           VALUES
+            ($1,$2,$3,$4,$5,$6,$7,$8, NOW())
+           ON CONFLICT (sku) DO UPDATE SET
+            name=EXCLUDED.name,
+            price_cents=EXCLUDED.price_cents,
+            image=EXCLUDED.image,
+            stock_nm=EXCLUDED.stock_nm,
+            stock_lp=EXCLUDED.stock_lp,
+            stock_mp=EXCLUDED.stock_mp,
+            stock_hp=EXCLUDED.stock_hp,
+            updated_at=NOW()`,
+          [sku, name, priceCents, image, stockNm, stockLp, stockMp, stockHp]
+        );
+
+        upserted++;
+      }
+
+      await client.query("COMMIT");
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
+
+    res.json({ ok: true, upserted });
+  } catch (e) {
+    console.error("seed inventory error:", e);
+    res.status(500).json({ ok: false, error: "Seed failed" });
   }
 });
 
