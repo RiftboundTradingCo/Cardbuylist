@@ -158,10 +158,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     return Number.isFinite(p) ? p : 0; // dollars
   }
 
-  function getMaxFor(item, tab) {
+  // Policy max from selllist.json
+  function getPolicyMaxFor(item, tab) {
     const t = normalizeTab(tab);
     const m = Number(item?.max?.[t] ?? 0);
     return Number.isFinite(m) ? m : 0;
+  }
+
+  // ✅ NEW: live remaining from DB (server adds item.remaining.{NM,LP,MP})
+  function getRemainingFor(item, tab) {
+    const t = normalizeTab(tab);
+    const n = Number(item?.remaining?.[t] ?? 0);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  // ✅ NEW: effective cap = min(policyMax, remaining)
+  function getEffectiveCapFor(item, tab) {
+    const policyMax = getPolicyMaxFor(item, tab);
+    const remaining = getRemainingFor(item, tab);
+
+    if (policyMax <= 0) return 0;
+    return Math.min(policyMax, remaining);
   }
 
   // ----- cart grouping (stable) -----
@@ -289,7 +306,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const unitDollars = item ? getPriceFor(item, activeTab) : 0;
       const unitCents = Math.round(unitDollars * 100);
-      const maxCap = item ? getMaxFor(item, activeTab) : 0;
+
+      // ✅ NEW: show both policy max and remaining, and cap buttons by effective cap
+      const policyMax = item ? getPolicyMaxFor(item, activeTab) : 0;
+      const remaining = item ? getRemainingFor(item, activeTab) : 0;
+      const cap = item ? getEffectiveCapFor(item, activeTab) : 0;
 
       let inCartAll = 0;
       let subtotalCents = 0;
@@ -345,7 +366,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                 Subtotal: <strong>${moneyCents(subtotalCents)}</strong>
               </div>
 
-              <div>Max capacity: <strong>${maxCap}</strong></div>
+              <div>
+                Max capacity: <strong>${policyMax}</strong> •
+                Remaining: <strong>${remaining}</strong>
+              </div>
             </div>
           </div>
 
@@ -367,7 +391,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       const minus = li.querySelector(".qty-minus");
 
       if (minus) minus.disabled = activeQty <= 0;
-      if (plus) plus.disabled = !item ? true : (maxCap > 0 ? activeQty >= maxCap : true);
+
+      // ✅ NEW: plus disabled if no item OR cap reached OR cap is 0
+      if (plus) plus.disabled = !item ? true : (cap > 0 ? activeQty >= cap : true);
 
       const thumb = li.querySelector(".cart-thumb");
       if (thumb) thumb.addEventListener("click", () => openModal(thumb.getAttribute("src")));
@@ -401,10 +427,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (e.target.closest(".qty-plus")) {
       const { item } = resolveSellItem(groupKey, "");
-      const maxCap = item ? getMaxFor(item, activeTab) : 0;
+      if (!item) return;
 
+      const cap = getEffectiveCapFor(item, activeTab);
       const cur = getQty(groupKey, activeTab);
-      const next = maxCap > 0 ? Math.min(cur + 1, maxCap) : cur;
+      const next = cap > 0 ? Math.min(cur + 1, cap) : cur;
 
       setQty(groupKey, activeTab, next);
       renderWithScroll(render);
@@ -456,6 +483,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       submitBtn.textContent = "Submitting...";
 
       try {
+        // ✅ Optional but recommended: re-fetch selllist right before submit
+        // so remaining numbers are fresh
+        try { selllist = await fetchSellList(); } catch {}
+
         const groups = groupCart(cart);
         const order = [];
 
