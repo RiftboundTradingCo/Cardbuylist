@@ -566,7 +566,11 @@ app.post("/api/submit", async (req, res) => {
 
 // Decrease "max capacity" on the buylist/selllist table
 for (const ln of lines) {
-  const col = maxColumnForTab(ln.condition); // ln.condition is NM/LP/MP in your sell flow
+  const tab = String(ln.condition || "").toUpperCase(); // NM/LP/MP
+  const col =
+    tab === "LP" ? "max_lp" :
+    tab === "MP" ? "max_mp" :
+    "max_nm";
 
   const r = await client.query(
     `UPDATE app.selllist
@@ -628,70 +632,53 @@ for (const ln of lines) {
 ========================= */
 app.get("/api/catalog", async (req, res) => {
   try {
-    const r = await pool.query(
-      `SELECT sku, name, price_cents, image,
-              stock_nm, stock_lp, stock_mp, stock_hp
-         FROM app.inventory
-        ORDER BY sku`
-    );
-
+    const r = await pool.query(`SELECT sku, name, price_cents, image FROM app.buylist ORDER BY sku`);
     const catalog = {};
     for (const row of r.rows) {
       catalog[row.sku] = {
         name: row.name,
-        price_cents: Number(row.price_cents || 0),
-        stock: {
-          "Near Mint": Number(row.stock_nm || 0),
-          "Lightly Played": Number(row.stock_lp || 0),
-          "Moderately Played": Number(row.stock_mp || 0),
-          "Heavily Played": Number(row.stock_hp || 0),
-        },
+        price_cents: row.price_cents,
         image: row.image || null,
+        // NOTE: stock still comes from app.inventory (your buy-cart uses that)
       };
     }
-
     res.json({ ok: true, catalog });
   } catch (e) {
-    console.error("catalog error:", e);
+    console.error("catalog db error:", e);
     res.status(500).json({ ok: false, error: "Catalog load failed" });
   }
 });
 
+
 app.get("/api/selllist", async (req, res) => {
   try {
-    const selllist = readJsonSafe(SELLLIST_PATH) || {};
-    const skus = Object.keys(selllist);
-
-    if (!skus.length) return res.json({ ok: true, selllist: {} });
-
     const r = await pool.query(
-      `SELECT sku, stock_nm, stock_lp, stock_mp, stock_hp
-         FROM app.inventory
-        WHERE sku = ANY($1::text[])`,
-      [skus]
+      `SELECT sku, name, image, price_nm, price_lp, price_mp, max_nm, max_lp, max_mp
+         FROM app.selllist
+        ORDER BY sku`
     );
 
-    const invBySku = new Map(r.rows.map(row => [row.sku, row]));
-
-    // Merge DB stock into selllist response (so front-end can show changing numbers)
-    for (const sku of skus) {
-      const inv = invBySku.get(sku);
-
-      // keep whatever selllist already has, but add/override stock with live DB numbers
-      selllist[sku] = {
-        ...selllist[sku],
-        stock: {
-          "Near Mint": Number(inv?.stock_nm || 0),
-          "Lightly Played": Number(inv?.stock_lp || 0),
-          "Moderately Played": Number(inv?.stock_mp || 0),
-          "Heavily Played": Number(inv?.stock_hp || 0),
+    const selllist = {};
+    for (const row of r.rows) {
+      selllist[row.sku] = {
+        name: row.name,
+        image: row.image || null,
+        prices: {
+          NM: (row.price_nm || 0) / 100,
+          LP: (row.price_lp || 0) / 100,
+          MP: (row.price_mp || 0) / 100,
+        },
+        max: {
+          NM: row.max_nm || 0,
+          LP: row.max_lp || 0,
+          MP: row.max_mp || 0,
         },
       };
     }
 
     res.json({ ok: true, selllist });
   } catch (e) {
-    console.error("selllist error:", e);
+    console.error("selllist db error:", e);
     res.status(500).json({ ok: false, error: "Selllist load failed" });
   }
 });
