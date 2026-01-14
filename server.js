@@ -997,6 +997,7 @@ app.post("/api/admin/seed-inventory", requireAdmin, async (req, res) => {
 
     const client = await pool.connect();
     let upserted = 0;
+    let currentSku = "";
 
     try {
       await client.query("BEGIN");
@@ -1004,24 +1005,27 @@ app.post("/api/admin/seed-inventory", requireAdmin, async (req, res) => {
       for (const [rawSku, p] of entries) {
         const sku = String(rawSku || "").trim();
         if (!sku) continue;
+        currentSku = sku;
 
-        const name =
-          p && typeof p === "object" && typeof p.name === "string" && p.name.trim()
-            ? p.name.trim()
-            : sku;
+        const obj = p && typeof p === "object" ? p : {};
 
-        const priceCents =
-          p && typeof p === "object" && Number.isFinite(Number(p.price_cents))
-            ? Number(p.price_cents)
-            : 0;
+        const nameRaw =
+          typeof obj.name === "string" ? obj.name.trim() : "";
+
+        // keep as "" here; SQL will enforce fallback to sku if blank
+        const name = nameRaw;
+
+        const priceCents = Number.isFinite(Number(obj.price_cents))
+          ? Number(obj.price_cents)
+          : 0;
 
         const image =
-          p && typeof p === "object" && typeof p.image === "string" && p.image.trim()
-            ? p.image.trim()
+          typeof obj.image === "string" && obj.image.trim()
+            ? obj.image.trim()
             : null;
 
         const stockObj =
-          p && typeof p === "object" && p.stock && typeof p.stock === "object" ? p.stock : {};
+          obj.stock && typeof obj.stock === "object" ? obj.stock : {};
 
         const stockNm = Number(stockObj["Near Mint"] ?? 0) || 0;
         const stockLp = Number(stockObj["Lightly Played"] ?? 0) || 0;
@@ -1029,19 +1033,31 @@ app.post("/api/admin/seed-inventory", requireAdmin, async (req, res) => {
         const stockHp = Number(stockObj["Heavily Played"] ?? 0) || 0;
 
         await client.query(
-          `INSERT INTO app.inventory
+          `
+          INSERT INTO app.inventory
             (sku, name, price_cents, image, stock_nm, stock_lp, stock_mp, stock_hp, updated_at)
-           VALUES
-            ($1,$2,$3,$4,$5,$6,$7,$8, NOW())
-           ON CONFLICT (sku) DO UPDATE SET
-            name=EXCLUDED.name,
-            price_cents=EXCLUDED.price_cents,
-            image=EXCLUDED.image,
-            stock_nm=EXCLUDED.stock_nm,
-            stock_lp=EXCLUDED.stock_lp,
-            stock_mp=EXCLUDED.stock_mp,
-            stock_hp=EXCLUDED.stock_hp,
-            updated_at=NOW()`,
+          VALUES
+            (
+              $1::text,
+              COALESCE(NULLIF($2::text, ''), $1::text),
+              $3::int,
+              $4::text,
+              $5::int,
+              $6::int,
+              $7::int,
+              $8::int,
+              NOW()
+            )
+          ON CONFLICT (sku) DO UPDATE SET
+            name        = EXCLUDED.name,
+            price_cents = EXCLUDED.price_cents,
+            image       = EXCLUDED.image,
+            stock_nm    = EXCLUDED.stock_nm,
+            stock_lp    = EXCLUDED.stock_lp,
+            stock_mp    = EXCLUDED.stock_mp,
+            stock_hp    = EXCLUDED.stock_hp,
+            updated_at  = NOW()
+          `,
           [sku, name, priceCents, image, stockNm, stockLp, stockMp, stockHp]
         );
 
@@ -1049,19 +1065,23 @@ app.post("/api/admin/seed-inventory", requireAdmin, async (req, res) => {
       }
 
       await client.query("COMMIT");
+      return res.json({ ok: true, upserted });
     } catch (e) {
       await client.query("ROLLBACK");
-      throw e;
+      console.error("seed inventory failed on sku:", currentSku, e);
+      return res.status(500).json({
+        ok: false,
+        error: `Seed failed on SKU: ${currentSku}`,
+      });
     } finally {
       client.release();
     }
-
-    res.json({ ok: true, upserted });
   } catch (e) {
     console.error("seed inventory error:", e);
-    res.status(500).json({ ok: false, error: "Seed failed" });
+    return res.status(500).json({ ok: false, error: "Seed failed" });
   }
 });
+
 
 app.post("/api/admin/seed-buylist", requireAdmin, async (req, res) => {
   try {
