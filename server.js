@@ -406,6 +406,16 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+function maxColumnForTab(tab) {
+  switch (String(tab || "").toUpperCase()) {
+    case "NM": return "max_nm";
+    case "LP": return "max_lp";
+    case "MP": return "max_mp";
+    default: return "max_nm";
+  }
+}
+
+
 /* =========================
    STRIPE CHECKOUT SESSION
 ========================= */
@@ -553,6 +563,24 @@ app.post("/api/submit", async (req, res) => {
           ]
         );
       }
+
+// Decrease "max capacity" on the buylist/selllist table
+for (const ln of lines) {
+  const col = maxColumnForTab(ln.condition); // ln.condition is NM/LP/MP in your sell flow
+
+  const r = await client.query(
+    `UPDATE app.selllist
+        SET ${col} = GREATEST(${col} - $2, 0),
+            updated_at = NOW()
+      WHERE sku = $1`,
+    [ln.sku, ln.qty]
+  );
+
+  // Optional: if you want strict behavior (error when sku missing)
+  if (r.rowCount === 0) {
+    throw new Error(`Selllist row missing for sku ${ln.sku}`);
+  }
+}
 
       // Increment inventory (auto-create row if missing)
       for (const ln of lines) {
@@ -1045,6 +1073,111 @@ app.post("/api/admin/seed-inventory", requireAdmin, async (req, res) => {
   } catch (e) {
     console.error("seed inventory error:", e);
     res.status(500).json({ ok: false, error: "Seed failed" });
+  }
+});
+
+app.post("/api/admin/seed-buylist", requireAdmin, async (req, res) => {
+  try {
+    const catalog = readJsonSafe(CATALOG_PATH) || {};
+    const skus = Object.keys(catalog);
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      for (const sku of skus) {
+        const p = catalog[sku] || {};
+        const name = String(p.name || "").trim();
+        const priceCents = Number(p.price_cents || 0);
+        const image = p.image ? String(p.image).trim() : null;
+
+        if (!sku || !name) continue;
+
+        await client.query(
+          `INSERT INTO app.buylist (sku, name, price_cents, image, updated_at)
+           VALUES ($1,$2,$3,$4, now())
+           ON CONFLICT (sku) DO UPDATE
+             SET name=EXCLUDED.name,
+                 price_cents=EXCLUDED.price_cents,
+                 image=EXCLUDED.image,
+                 updated_at=now()`,
+          [sku, name, priceCents, image]
+        );
+      }
+
+      await client.query("COMMIT");
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
+
+    res.json({ ok: true, seeded: skus.length });
+  } catch (e) {
+    console.error("seed-buylist error:", e);
+    res.status(500).json({ ok: false, error: "Seed buylist failed" });
+  }
+});
+
+app.post("/api/admin/seed-selllist", requireAdmin, async (req, res) => {
+  try {
+    const selllist = readJsonSafe(SELLLIST_PATH) || {};
+    const skus = Object.keys(selllist);
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      for (const sku of skus) {
+        const p = selllist[sku] || {};
+        const name = String(p.name || "").trim();
+        const image = p.image ? String(p.image).trim() : null;
+
+        // JS selllist uses dollars; store cents in DB
+        const prices = p.prices || {};
+        const max = p.max || {};
+
+        const price_nm = Math.round(Number(prices.NM || 0) * 100);
+        const price_lp = Math.round(Number(prices.LP || 0) * 100);
+        const price_mp = Math.round(Number(prices.MP || 0) * 100);
+
+        const max_nm = Math.max(0, Number(max.NM ?? 0));
+        const max_lp = Math.max(0, Number(max.LP ?? 0));
+        const max_mp = Math.max(0, Number(max.MP ?? 0));
+
+        if (!sku || !name) continue;
+
+        await client.query(
+          `INSERT INTO app.selllist
+            (sku, name, image, price_nm, price_lp, price_mp, max_nm, max_lp, max_mp, updated_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, now())
+           ON CONFLICT (sku) DO UPDATE
+             SET name=EXCLUDED.name,
+                 image=EXCLUDED.image,
+                 price_nm=EXCLUDED.price_nm,
+                 price_lp=EXCLUDED.price_lp,
+                 price_mp=EXCLUDED.price_mp,
+                 max_nm=EXCLUDED.max_nm,
+                 max_lp=EXCLUDED.max_lp,
+                 max_mp=EXCLUDED.max_mp,
+                 updated_at=now()`,
+          [sku, name, image, price_nm, price_lp, price_mp, max_nm, max_lp, max_mp]
+        );
+      }
+
+      await client.query("COMMIT");
+    } catch (e) {
+      await client.query("ROLLBACK");
+      throw e;
+    } finally {
+      client.release();
+    }
+
+    res.json({ ok: true, seeded: skus.length });
+  } catch (e) {
+    console.error("seed-selllist error:", e);
+    res.status(500).json({ ok: false, error: "Seed selllist failed" });
   }
 });
 

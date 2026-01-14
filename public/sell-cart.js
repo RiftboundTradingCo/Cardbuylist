@@ -129,12 +129,39 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ---------- Selllist ----------
   async function fetchSellList() {
-    const res = await fetch("/api/selllist", { cache: "no-store" });
-    if (!res.ok) throw new Error(`selllist HTTP ${res.status}`);
-    const data = await res.json();
-    if (!data?.ok || !data.selllist) throw new Error("Bad selllist JSON");
-    return data.selllist;
+  const res = await fetch("/api/selllist", { cache: "no-store" });
+  if (!res.ok) throw new Error(`selllist HTTP ${res.status}`);
+  const data = await res.json();
+  if (!data?.ok || !data.selllist) throw new Error("Bad selllist JSON");
+
+  const raw = data.selllist;
+
+  // If server returns an object keyed by sku, keep it.
+  if (!Array.isArray(raw)) return raw;
+
+  // If server returns rows, convert to the old shape your UI expects.
+  const out = {};
+  for (const r of raw) {
+    const sku = String(r.sku || "").trim();
+    if (!sku) continue;
+
+    out[sku] = {
+      name: r.name,
+      image: r.image,
+      prices: {
+        NM: Number(r.price_nm ?? 0),
+        LP: Number(r.price_lp ?? 0),
+        MP: Number(r.price_mp ?? 0),
+      },
+      max: {
+        NM: Number(r.max_nm ?? 0),
+        LP: Number(r.max_lp ?? 0),
+        MP: Number(r.max_mp ?? 0),
+      },
+    };
   }
+  return out;
+}
 
   let selllist = {};
   try {
