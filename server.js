@@ -632,22 +632,43 @@ for (const ln of lines) {
 ========================= */
 app.get("/api/catalog", async (req, res) => {
   try {
-    const r = await pool.query(`SELECT sku, name, price_cents, image FROM app.buylist ORDER BY sku`);
+    const r = await pool.query(`
+      SELECT
+        sku,
+        name,
+        price_cents,
+        image,
+        stock_nm,
+        stock_lp,
+        stock_mp,
+        stock_hp
+      FROM app.inventory
+      ORDER BY name
+    `);
+
     const catalog = {};
+
     for (const row of r.rows) {
       catalog[row.sku] = {
         name: row.name,
         price_cents: row.price_cents,
-        image: row.image || null,
-        // NOTE: stock still comes from app.inventory (your buy-cart uses that)
+        image: row.image,
+        stock: {
+          "Near Mint": row.stock_nm,
+          "Lightly Played": row.stock_lp,
+          "Moderately Played": row.stock_mp,
+          "Heavily Played": row.stock_hp,
+        },
       };
     }
+
     res.json({ ok: true, catalog });
   } catch (e) {
-    console.error("catalog db error:", e);
+    console.error("catalog error:", e);
     res.status(500).json({ ok: false, error: "Catalog load failed" });
   }
 });
+
 
 
 app.get("/api/selllist", async (req, res) => {
