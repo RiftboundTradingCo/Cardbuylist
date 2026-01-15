@@ -1,4 +1,3 @@
-
 document.addEventListener("DOMContentLoaded", async () => {
   const CART_KEY = "sellCart";
 
@@ -10,7 +9,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const emailInput = document.getElementById("sellEmail");
   const submitBtn = document.getElementById("sellSubmitBtn");
 
-  if (!listEl || !totalEl) return;
+  if (!listEl || !totalEl) {
+    console.error("sell-cart.js: Missing #sellCartList or #sellCartTotal");
+    return;
+  }
 
   // The row that contains the email input + submit button
   const checkoutRow = emailInput ? emailInput.closest(".cart-checkout-row") : null;
@@ -21,9 +23,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Sell cart uses NM/LP/MP
   const TAB_ORDER = ["NM", "LP", "MP"];
-  const TAB_TO_COND = { NM: "NM", LP: "LP", MP: "MP" };
 
-  // ---------- helpers ----------
+  // Accept both short + long names (defensive)
+  const LONG_TO_TAB = {
+    "NEAR MINT": "NM",
+    "LIGHTLY PLAYED": "LP",
+    "MODERATELY PLAYED": "MP",
+  };
+
   function showMsg(text, ok = true) {
     if (!msgEl) return;
     msgEl.textContent = text || "";
@@ -31,15 +38,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function safeParse(raw, fallback) {
-    try { return JSON.parse(raw); } catch { return fallback; }
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return fallback;
+    }
   }
 
   function loadCart() {
-    return safeParse(localStorage.getItem(CART_KEY) || "[]", []);
+    const v = safeParse(localStorage.getItem(CART_KEY) || "[]", []);
+    return Array.isArray(v) ? v : [];
   }
 
   function saveCart(cart) {
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    localStorage.setItem(CART_KEY, JSON.stringify(Array.isArray(cart) ? cart : []));
     window.dispatchEvent(new Event("cart:changed"));
   }
 
@@ -47,22 +59,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     return `$${(Number(cents || 0) / 100).toFixed(2)}`;
   }
 
-  function normalizeTab(t) {
-    const u = String(t || "NM").toUpperCase();
-    return TAB_TO_COND[u] ? u : "NM";
+  function normalizeTab(raw) {
+    const s = String(raw || "NM").trim();
+    const up = s.toUpperCase();
+
+    if (TAB_ORDER.includes(up)) return up;
+    if (LONG_TO_TAB[up]) return LONG_TO_TAB[up];
+
+    // Sometimes cart items might store "Near Mint" etc with original casing
+    const up2 = up.replace(/\s+/g, " ").trim();
+    if (LONG_TO_TAB[up2]) return LONG_TO_TAB[up2];
+
+    return "NM";
   }
 
   // Identify an item by SKU if present, else by name
   function getItemKey(item) {
-    const sku = String(item.sku || "").trim();
+    const sku = String(item?.sku || "").trim();
     if (sku) return sku;
-    return `name:${String(item.name || "").trim().toLowerCase()}`;
+    const name = String(item?.name || "").trim().toLowerCase();
+    return `name:${name || "unknown"}`;
   }
 
   function condFromCart(item) {
-    const c = String(item.condition || "").trim().toUpperCase();
-    if (TAB_TO_COND[c]) return c;
-    return "NM";
+    // Accept item.condition (NM/LP/MP) OR full names (Near Mint/...)
+    return normalizeTab(item?.condition || "NM");
   }
 
   // ---------- Logged in UX ----------
@@ -71,7 +92,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function applyLoggedInAsUX() {
     if (!emailInput) return;
 
-    // Determine logged-in user (if any)
     try {
       const meRes = await fetch("/api/me", { cache: "no-store" });
       const me = await meRes.json().catch(() => ({}));
@@ -80,7 +100,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       loggedInEmail = "";
     }
 
-    // Not logged in → keep normal input
     if (!loggedInEmail) {
       emailInput.readOnly = false;
       emailInput.disabled = false;
@@ -89,15 +108,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    // Logged in → fill email and lock it
     emailInput.value = loggedInEmail;
     emailInput.readOnly = true;
 
-    // Hide ONLY the label + input (keep the row so submit button remains)
     if (checkoutLabel) checkoutLabel.style.display = "none";
     emailInput.style.display = "none";
 
-    // Insert a "Logged in as" box at the top of the checkout panel
     if (checkoutBox && !document.getElementById("loggedInAsBox")) {
       const box = document.createElement("div");
       box.id = "loggedInAsBox";
@@ -119,7 +135,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       checkoutBox.insertBefore(box, checkoutBox.firstChild);
     }
 
-    // Optional: make the submit button look aligned when input is hidden
     if (checkoutRow) {
       checkoutRow.style.display = "flex";
       checkoutRow.style.gap = "10px";
@@ -129,39 +144,45 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ---------- Selllist ----------
   async function fetchSellList() {
-  const res = await fetch("/api/selllist", { cache: "no-store" });
-  if (!res.ok) throw new Error(`selllist HTTP ${res.status}`);
-  const data = await res.json();
-  if (!data?.ok || !data.selllist) throw new Error("Bad selllist JSON");
+    const res = await fetch("/api/selllist", { cache: "no-store" });
+    if (!res.ok) throw new Error(`selllist HTTP ${res.status}`);
+    const data = await res.json().catch(() => ({}));
+    if (!data?.ok || data.selllist == null) throw new Error("Bad selllist JSON");
 
-  const raw = data.selllist;
+    const raw = data.selllist;
 
-  // If server returns an object keyed by sku, keep it.
-  if (!Array.isArray(raw)) return raw;
+    // If server returns object keyed by sku, keep it
+    if (!Array.isArray(raw)) return raw;
 
-  // If server returns rows, convert to the old shape your UI expects.
-  const out = {};
-  for (const r of raw) {
-    const sku = String(r.sku || "").trim();
-    if (!sku) continue;
+    // If server returns rows, keep rows by sku in an object
+    const out = {};
+    for (const r of raw) {
+      const sku = String(r?.sku || "").trim();
+      if (!sku) continue;
 
-    out[sku] = {
-      name: r.name,
-      image: r.image,
-      prices: {
-        NM: Number(r.price_nm ?? 0),
-        LP: Number(r.price_lp ?? 0),
-        MP: Number(r.price_mp ?? 0),
-      },
-      max: {
-        NM: Number(r.max_nm ?? 0),
-        LP: Number(r.max_lp ?? 0),
-        MP: Number(r.max_mp ?? 0),
-      },
-    };
+      out[sku] = {
+        // allow both
+        name: r.name,
+        image: r.image,
+        // DB-style columns
+        price_nm: r.price_nm,
+        price_lp: r.price_lp,
+        price_mp: r.price_mp,
+        max_nm: r.max_nm,
+        max_lp: r.max_lp,
+        max_mp: r.max_mp,
+        // optional remaining fields if you add them server-side
+        remaining_nm: r.remaining_nm,
+        remaining_lp: r.remaining_lp,
+        remaining_mp: r.remaining_mp,
+        // also accept old nested shapes if they exist
+        prices: r.prices,
+        max: r.max,
+        remaining: r.remaining,
+      };
+    }
+    return out;
   }
-  return out;
-}
 
   let selllist = {};
   try {
@@ -174,89 +195,96 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function resolveSellItem(groupKey, fallbackName) {
     const sku = groupKey.startsWith("name:") ? "" : groupKey;
-    const item = sku ? selllist[sku] : null;
-    if (item) return { sku, item };
-    return { sku: sku || "", item: null, fallbackName };
+    const item = sku ? selllist?.[sku] : null;
+    return { sku, item, fallbackName };
   }
 
   function getPriceFor(item, tab) {
-  const t = normalizeTab(tab);
+    const t = normalizeTab(tab);
 
-  // Old JSON shape: item.prices.NM
-  if (item?.prices && item.prices[t] != null) {
-    const p = Number(item.prices[t]);
+    // Old JSON: item.prices.NM
+    if (item?.prices && item.prices[t] != null) {
+      const p = Number(item.prices[t]);
+      return Number.isFinite(p) ? p : 0;
+    }
+
+    // DB: price_nm/price_lp/price_mp
+    const col = t === "NM" ? "price_nm" : t === "LP" ? "price_lp" : "price_mp";
+    const p = Number(item?.[col] ?? 0);
     return Number.isFinite(p) ? p : 0;
   }
 
-  // New DB shape: price_nm / price_lp / price_mp
-  const col =
-    t === "NM" ? "price_nm" :
-    t === "LP" ? "price_lp" :
-    "price_mp";
+  function getMaxFor(item, tab) {
+    const t = normalizeTab(tab);
 
-  const p = Number(item?.[col] ?? 0);
-  return Number.isFinite(p) ? p : 0;
-}
+    // Old JSON: item.max.NM
+    if (item?.max && item.max[t] != null) {
+      const m = Number(item.max[t]);
+      return Number.isFinite(m) ? m : 0;
+    }
 
-function getMaxFor(item, tab) {
-  const t = normalizeTab(tab);
-
-  // Old JSON shape: item.max.NM
-  if (item?.max && item.max[t] != null) {
-    const m = Number(item.max[t]);
+    // DB: max_nm/max_lp/max_mp
+    const col = t === "NM" ? "max_nm" : t === "LP" ? "max_lp" : "max_mp";
+    const m = Number(item?.[col] ?? 0);
     return Number.isFinite(m) ? m : 0;
   }
 
-  // New DB shape: max_nm / max_lp / max_mp
-  const col =
-    t === "NM" ? "max_nm" :
-    t === "LP" ? "max_lp" :
-    "max_mp";
-
-  const m = Number(item?.[col] ?? 0);
-  return Number.isFinite(m) ? m : 0;
-}
-
-  // ✅ NEW: live remaining from DB (server adds item.remaining.{NM,LP,MP})
+  // Remaining is OPTIONAL. If not provided by server, we treat remaining as "infinite"
+  // and cap only by max.
   function getRemainingFor(item, tab) {
     const t = normalizeTab(tab);
-    const n = Number(item?.remaining?.[t] ?? 0);
+
+    // If server returns nested remaining: item.remaining.NM
+    if (item?.remaining && item.remaining[t] != null) {
+      const n = Number(item.remaining[t]);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    // If server returns remaining_nm columns
+    const col = t === "NM" ? "remaining_nm" : t === "LP" ? "remaining_lp" : "remaining_mp";
+    if (item?.[col] == null) return Number.POSITIVE_INFINITY;
+
+    const n = Number(item[col]);
     return Number.isFinite(n) ? n : 0;
   }
 
-  // ✅ NEW: effective cap = min(policyMax, remaining)
   function getEffectiveCapFor(item, tab) {
-    const policyMax = getPolicyMaxFor(item, tab);
-    const remaining = getRemainingFor(item, tab);
+    const maxCap = getMaxFor(item, tab);
+    if (maxCap <= 0) return 0;
 
-    if (policyMax <= 0) return 0;
-    return Math.min(policyMax, remaining);
+    const remaining = getRemainingFor(item, tab);
+    if (remaining === Number.POSITIVE_INFINITY) return maxCap;
+
+    return Math.max(0, Math.min(maxCap, remaining));
   }
 
-  // ----- cart grouping (stable) -----
+  // ----- cart grouping -----
   function groupCart(cart) {
     const groups = new Map();
 
     for (const it of cart) {
       const key = getItemKey(it);
       const cond = condFromCart(it); // NM/LP/MP
-      const qty = Math.max(0, Number(it.qty || 0));
+      const qty = Math.max(0, Number(it?.qty || 0));
+      if (!qty) continue;
 
       if (!groups.has(key)) {
         groups.set(key, {
           key,
-          name: String(it.name || it.sku || "").trim(),
+          name: String(it?.name || it?.sku || "").trim(),
           condQty: { NM: 0, LP: 0, MP: 0 },
           activeTab: "NM",
         });
       }
 
       const g = groups.get(key);
-      if (!g.name) g.name = String(it.name || it.sku || "").trim();
+      if (!g.name) g.name = String(it?.name || it?.sku || "").trim();
       g.condQty[cond] = (g.condQty[cond] || 0) + qty;
     }
 
+    // Choose an active tab (first non-zero), else default NM
     for (const g of groups.values()) {
+      g.activeTab = "NM";
       for (const tab of TAB_ORDER) {
         if ((g.condQty[tab] || 0) > 0) {
           g.activeTab = tab;
@@ -272,13 +300,13 @@ function getMaxFor(item, tab) {
 
   function getQty(groupKey, tab) {
     const cart = loadCart();
-    let sum = 0;
     const t = normalizeTab(tab);
+    let sum = 0;
 
     for (const it of cart) {
       if (getItemKey(it) !== groupKey) continue;
-      const c = condFromCart(it);
-      if (c === t) sum += Math.max(0, Number(it.qty || 0));
+      if (condFromCart(it) !== t) continue;
+      sum += Math.max(0, Number(it?.qty || 0));
     }
     return sum;
   }
@@ -296,7 +324,7 @@ function getMaxFor(item, tab) {
         cart.push({ name, condition: t, qty: q });
       } else {
         const { item } = resolveSellItem(groupKey, "");
-        const name = item?.name || "";
+        const name = String(item?.name || "").trim();
         cart.push({ sku: groupKey, name, condition: t, qty: q });
       }
     }
@@ -320,14 +348,20 @@ function getMaxFor(item, tab) {
     modalImg.src = src;
     modal.classList.remove("hidden");
   }
+
   function closeModal() {
     if (!modal || !modalImg) return;
     modal.classList.add("hidden");
     modalImg.src = "";
   }
+
   if (modalClose) modalClose.addEventListener("click", closeModal);
-  if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+  if (modal) modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeModal();
+  });
 
   // ----- render -----
   function render() {
@@ -348,7 +382,8 @@ function getMaxFor(item, tab) {
     for (const g of groups) {
       const { sku, item } = resolveSellItem(g.key, g.name);
 
-      const title = item?.name || g.name || sku || "Unknown";
+      const title = String(item?.name || g.name || sku || "Unknown").trim() || "Unknown";
+
       const img = item?.image
         ? (String(item.image).startsWith("/") ? String(item.image) : "/" + String(item.image))
         : "";
@@ -356,41 +391,39 @@ function getMaxFor(item, tab) {
       const activeTab = normalizeTab(g.activeTab || "NM");
       const activeQty = Number(g.condQty[activeTab] || 0);
 
+      // Prices and caps
       const unitDollars = item ? getPriceFor(item, activeTab) : 0;
       const unitCents = Math.round(unitDollars * 100);
 
-      // ✅ NEW: show both policy max and remaining, and cap buttons by effective cap
-      const policyMax = item ? getPolicyMaxFor(item, activeTab) : 0;
-      const remaining = item ? getRemainingFor(item, activeTab) : 0;
+      const policyMax = item ? getMaxFor(item, activeTab) : 0;
+      const remaining = item ? getRemainingFor(item, activeTab) : Number.POSITIVE_INFINITY;
       const cap = item ? getEffectiveCapFor(item, activeTab) : 0;
 
+      // Totals across all conditions
       let inCartAll = 0;
       let subtotalCents = 0;
 
       for (const tab of TAB_ORDER) {
         const q = Number(g.condQty[tab] || 0);
-        if (q > 0) {
-          inCartAll += q;
-          const u = item ? Math.round(getPriceFor(item, tab) * 100) : 0;
-          subtotalCents += u * q;
-        }
+        if (q <= 0) continue;
+        inCartAll += q;
+        const u = item ? Math.round(getPriceFor(item, tab) * 100) : 0;
+        subtotalCents += u * q;
       }
 
       totalCents += subtotalCents;
 
+      // ✅ Tabs are ALWAYS clickable unless that condition is not allowed (max <= 0) or missing item
       const tabsHtml = TAB_ORDER.map((tab) => {
-        const q = Number(g.condQty[tab] || 0);
-        const cap = item ? getMaxFor(item, tab) : 0;
-        // disable only if this condition is not allowed (cap <= 0) or pricing missing
-        const disabled = !item || cap <= 0 || getPriceFor(item, tab) <= 0;
         const isActive = tab === activeTab;
+        const canUse = !!item && getMaxFor(item, tab) > 0 && getPriceFor(item, tab) > 0;
 
         return `
           <button
-            class="cond-tab${isActive ? " active" : ""}${disabled ? " disabled" : ""}"
+            class="cond-tab${isActive ? " active" : ""}${canUse ? "" : " disabled"}"
             type="button"
             data-tab="${tab}"
-            aria-disabled="${disabled ? "true" : "false"}"
+            aria-disabled="${canUse ? "false" : "true"}"
           >${tab}</button>
         `;
       }).join("");
@@ -399,6 +432,9 @@ function getMaxFor(item, tab) {
       li.className = "cart-item";
       li.dataset.groupKey = g.key;
       li.dataset.activeTab = activeTab;
+
+      const remainingText =
+        remaining === Number.POSITIVE_INFINITY ? "—" : String(Math.max(0, remaining));
 
       li.innerHTML = `
         <div class="cart-card">
@@ -421,9 +457,17 @@ function getMaxFor(item, tab) {
               </div>
 
               <div>
-                Max capacity: <strong>${policyMax}</strong> •
-                Remaining: <strong>${remaining}</strong>
+                Max capacity: <strong>${policyMax}</strong>
+                ${remainingText !== "—" ? ` • Remaining: <strong>${remainingText}</strong>` : ""}
               </div>
+
+              ${
+                !item
+                  ? `<div style="color:#b00020; font-weight:800; margin-top:6px;">
+                       This card isn’t in the sell list right now.
+                     </div>`
+                  : ""
+              }
             </div>
           </div>
 
@@ -443,14 +487,14 @@ function getMaxFor(item, tab) {
 
       const plus = li.querySelector(".qty-plus");
       const minus = li.querySelector(".qty-minus");
+      const thumb = li.querySelector(".cart-thumb");
+
+      if (thumb) thumb.addEventListener("click", () => openModal(thumb.getAttribute("src")));
 
       if (minus) minus.disabled = activeQty <= 0;
 
-      // ✅ NEW: plus disabled if no item OR cap reached OR cap is 0
-      if (plus) plus.disabled = !item || maxCap <= 0 || activeQty >= maxCap;
-
-      const thumb = li.querySelector(".cart-thumb");
-      if (thumb) thumb.addEventListener("click", () => openModal(thumb.getAttribute("src")));
+      // ✅ plus disabled if missing item OR cap is 0 OR reached cap
+      if (plus) plus.disabled = !item || cap <= 0 || activeQty >= cap;
 
       listEl.appendChild(li);
     }
@@ -462,7 +506,7 @@ function getMaxFor(item, tab) {
   await applyLoggedInAsUX();
   render();
 
-  // ===== click handlers =====
+  // ===== click handlers (event delegation) =====
   document.addEventListener("click", (e) => {
     const itemEl = e.target.closest(".cart-item");
     if (!itemEl) return;
@@ -470,15 +514,18 @@ function getMaxFor(item, tab) {
     const groupKey = itemEl.dataset.groupKey;
     const activeTab = normalizeTab(itemEl.dataset.activeTab || "NM");
 
+    // Switch condition tab
     const tabBtn = e.target.closest(".cond-tab");
     if (tabBtn) {
-      if (tabBtn.getAttribute("aria-disabled") === "true") return;
-      if (tabBtn.classList.contains("disabled")) return;
+      const disabled = tabBtn.getAttribute("aria-disabled") === "true" || tabBtn.classList.contains("disabled");
+      if (disabled) return;
+
       itemEl.dataset.activeTab = normalizeTab(tabBtn.dataset.tab || "NM");
       renderWithScroll(render);
       return;
     }
 
+    // Plus
     if (e.target.closest(".qty-plus")) {
       const { item } = resolveSellItem(groupKey, "");
       if (!item) return;
@@ -487,11 +534,14 @@ function getMaxFor(item, tab) {
       const cur = getQty(groupKey, activeTab);
       const next = cap > 0 ? Math.min(cur + 1, cap) : cur;
 
-      setQty(groupKey, activeTab, next);
-      renderWithScroll(render);
+      if (next !== cur) {
+        setQty(groupKey, activeTab, next);
+        renderWithScroll(render);
+      }
       return;
     }
 
+    // Minus
     if (e.target.closest(".qty-minus")) {
       const cur = getQty(groupKey, activeTab);
       const next = Math.max(0, cur - 1);
@@ -501,6 +551,7 @@ function getMaxFor(item, tab) {
       return;
     }
 
+    // Remove condition
     if (e.target.closest(".remove-cond-btn")) {
       setQty(groupKey, activeTab, 0);
       renderWithScroll(render);
@@ -537,9 +588,10 @@ function getMaxFor(item, tab) {
       submitBtn.textContent = "Submitting...";
 
       try {
-        // ✅ Optional but recommended: re-fetch selllist right before submit
-        // so remaining numbers are fresh
-        try { selllist = await fetchSellList(); } catch {}
+        // Refresh selllist so caps/prices are current
+        try {
+          selllist = await fetchSellList();
+        } catch {}
 
         const groups = groupCart(cart);
         const order = [];
@@ -559,10 +611,10 @@ function getMaxFor(item, tab) {
             order.push({
               sku: sku || g.key,
               name: item.name,
-              condition: tab,
+              condition: tab, // NM/LP/MP
               qty,
               unitPriceCents,
-              lineTotalCents
+              lineTotalCents,
             });
           }
         }
@@ -578,30 +630,35 @@ function getMaxFor(item, tab) {
             name: "Sell Customer",
             email,
             totalCents,
-            order
-          })
+            order,
+          }),
         });
 
         const text = await res.text();
         let data = null;
-        try { data = JSON.parse(text); } catch {}
+        try {
+          data = JSON.parse(text);
+        } catch {}
 
         if (!res.ok || !data?.ok) {
           throw new Error((data && data.error) || text || `HTTP ${res.status}`);
         }
 
-        sessionStorage.setItem("sellOrderRecap", JSON.stringify({
-          name: "Sell Customer",
-          email,
-          order,
-          totalCents
-        }));
+        sessionStorage.setItem(
+          "sellOrderRecap",
+          JSON.stringify({
+            name: "Sell Customer",
+            email,
+            order,
+            totalCents,
+          })
+        );
 
         saveCart([]);
         window.location.href = "/recap.html";
       } catch (err) {
         console.error("Sell submit error:", err);
-        showMsg(String(err.message || "Error submitting sell order. Try again."), false);
+        showMsg(String(err?.message || "Error submitting sell order. Try again."), false);
         submitBtn.disabled = false;
         submitBtn.textContent = prevText || "Submit Sell Order";
       }
