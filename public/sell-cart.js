@@ -180,17 +180,42 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function getPriceFor(item, tab) {
-    const t = normalizeTab(tab);
-    const p = Number(item?.prices?.[t] ?? 0);
-    return Number.isFinite(p) ? p : 0; // dollars
+  const t = normalizeTab(tab);
+
+  // Old JSON shape: item.prices.NM
+  if (item?.prices && item.prices[t] != null) {
+    const p = Number(item.prices[t]);
+    return Number.isFinite(p) ? p : 0;
   }
 
-  // Policy max from selllist.json
-  function getPolicyMaxFor(item, tab) {
-    const t = normalizeTab(tab);
-    const m = Number(item?.max?.[t] ?? 0);
+  // New DB shape: price_nm / price_lp / price_mp
+  const col =
+    t === "NM" ? "price_nm" :
+    t === "LP" ? "price_lp" :
+    "price_mp";
+
+  const p = Number(item?.[col] ?? 0);
+  return Number.isFinite(p) ? p : 0;
+}
+
+function getMaxFor(item, tab) {
+  const t = normalizeTab(tab);
+
+  // Old JSON shape: item.max.NM
+  if (item?.max && item.max[t] != null) {
+    const m = Number(item.max[t]);
     return Number.isFinite(m) ? m : 0;
   }
+
+  // New DB shape: max_nm / max_lp / max_mp
+  const col =
+    t === "NM" ? "max_nm" :
+    t === "LP" ? "max_lp" :
+    "max_mp";
+
+  const m = Number(item?.[col] ?? 0);
+  return Number.isFinite(m) ? m : 0;
+}
 
   // ✅ NEW: live remaining from DB (server adds item.remaining.{NM,LP,MP})
   function getRemainingFor(item, tab) {
@@ -355,7 +380,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const tabsHtml = TAB_ORDER.map((tab) => {
         const q = Number(g.condQty[tab] || 0);
-        const disabled = q <= 0;
+        const cap = item ? getMaxFor(item, tab) : 0;
+        // disable only if this condition is not allowed (cap <= 0) or pricing missing
+        const disabled = !item || cap <= 0 || getPriceFor(item, tab) <= 0;
         const isActive = tab === activeTab;
 
         return `
@@ -420,7 +447,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (minus) minus.disabled = activeQty <= 0;
 
       // ✅ NEW: plus disabled if no item OR cap reached OR cap is 0
-      if (plus) plus.disabled = !item ? true : (cap > 0 ? activeQty >= cap : true);
+      if (plus) plus.disabled = !item || maxCap <= 0 || activeQty >= maxCap;
 
       const thumb = li.querySelector(".cart-thumb");
       if (thumb) thumb.addEventListener("click", () => openModal(thumb.getAttribute("src")));
