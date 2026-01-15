@@ -21,15 +21,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   // The checkout container
   const checkoutBox = document.querySelector(".cart-checkout");
 
-  // Sell cart uses NM/LP/MP
-  const TAB_ORDER = ["NM", "LP", "MP"];
+// Sell cart tabs
+const TAB_ORDER = ["NM", "LP", "MP"];
 
-  // Accept both short + long names (defensive)
-  const LONG_TO_TAB = {
-    "NEAR MINT": "NM",
-    "LIGHTLY PLAYED": "LP",
-    "MODERATELY PLAYED": "MP",
-  };
+// Accept both tab codes and full names
+const FULL_TO_TAB = {
+  "NEAR MINT": "NM",
+  "LIGHTLY PLAYED": "LP",
+  "MODERATELY PLAYED": "MP",
+};
 
   function showMsg(text, ok = true) {
     if (!msgEl) return;
@@ -50,6 +50,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     return Array.isArray(v) ? v : [];
   }
 
+function loadCart() {
+  const cart = safeParse(localStorage.getItem(CART_KEY) || "[]", []);
+  if (!Array.isArray(cart)) return [];
+
+  let changed = false;
+  for (const it of cart) {
+    const before = it.condition;
+    const after = normalizeTab(before);     // converts "Lightly Played" -> "LP"
+    if (before !== after) {
+      it.condition = after;
+      changed = true;
+    }
+  }
+  if (changed) localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  return cart;
+}
+
   function saveCart(cart) {
     localStorage.setItem(CART_KEY, JSON.stringify(Array.isArray(cart) ? cart : []));
     window.dispatchEvent(new Event("cart:changed"));
@@ -59,19 +76,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     return `$${(Number(cents || 0) / 100).toFixed(2)}`;
   }
 
-  function normalizeTab(raw) {
-    const s = String(raw || "NM").trim();
-    const up = s.toUpperCase();
-
-    if (TAB_ORDER.includes(up)) return up;
-    if (LONG_TO_TAB[up]) return LONG_TO_TAB[up];
-
-    // Sometimes cart items might store "Near Mint" etc with original casing
-    const up2 = up.replace(/\s+/g, " ").trim();
-    if (LONG_TO_TAB[up2]) return LONG_TO_TAB[up2];
-
-    return "NM";
-  }
+  function normalizeTab(t) {
+  const s = String(t || "").trim().toUpperCase();
+  if (s === "NM" || s === "LP" || s === "MP") return s;
+  if (FULL_TO_TAB[s]) return FULL_TO_TAB[s];
+  return "NM";
+}
 
   // Identify an item by SKU if present, else by name
   function getItemKey(item) {
@@ -82,9 +92,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function condFromCart(item) {
-    // Accept item.condition (NM/LP/MP) OR full names (Near Mint/...)
-    return normalizeTab(item?.condition || "NM");
-  }
+  // item.condition might be "LP" OR "Lightly Played"
+  return normalizeTab(item?.condition);
+}
 
   // ---------- Logged in UX ----------
   let loggedInEmail = "";
