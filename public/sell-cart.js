@@ -415,18 +415,25 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       // ✅ Tabs are ALWAYS clickable unless that condition is not allowed (max <= 0) or missing item
       const tabsHtml = TAB_ORDER.map((tab) => {
-        const isActive = tab === activeTab;
-        const canUse = !!item && getMaxFor(item, tab) > 0 && getPriceFor(item, tab) > 0;
+  const isActive = tab === activeTab;
 
-        return `
-          <button
-            class="cond-tab${isActive ? " active" : ""}${canUse ? "" : " disabled"}"
-            type="button"
-            data-tab="${tab}"
-            aria-disabled="${canUse ? "false" : "true"}"
-          >${tab}</button>
-        `;
-      }).join("");
+  // Allow switching if there is qty in cart for that tab,
+  // even if selllist says it's unavailable.
+  const qtyInCart = Number(g.condQty[tab] || 0);
+
+  const allowedBySelllist = !!item && getMaxFor(item, tab) > 0 && getPriceFor(item, tab) > 0;
+  const canUse = allowedBySelllist || qtyInCart > 0;
+
+  return `
+    <button
+      class="cond-tab${isActive ? " active" : ""}${canUse ? "" : " disabled"}"
+      type="button"
+      data-tab="${tab}"
+      aria-disabled="${canUse ? "false" : "true"}"
+    >${tab}</button>
+  `;
+}).join("");
+
 
       const li = document.createElement("li");
       li.className = "cart-item";
