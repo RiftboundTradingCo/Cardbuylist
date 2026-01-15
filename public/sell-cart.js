@@ -423,26 +423,30 @@ function loadCart() {
 
       totalCents += subtotalCents;
 
-      // ✅ Tabs are ALWAYS clickable unless that condition is not allowed (max <= 0) or missing item
       const tabsHtml = TAB_ORDER.map((tab) => {
+  const q = Number(g.condQty[tab] || 0);
+
+  // Selllist "allowed" rule (only matters for adding more)
+  const allowedBySelllist =
+    !!item &&
+    getMaxFor(item, tab) > 0 &&
+    getPriceFor(item, tab) > 0;
+
+  // ✅ Important: if qty exists in cart, tab must be clickable
+  const disabled = !(allowedBySelllist || q > 0);
+
   const isActive = tab === activeTab;
-
-  // Allow switching if there is qty in cart for that tab,
-  // even if selllist says it's unavailable.
-  const qtyInCart = Number(g.condQty[tab] || 0);
-
-  const allowedBySelllist = !!item && getMaxFor(item, tab) > 0 && getPriceFor(item, tab) > 0;
-  const canUse = allowedBySelllist || qtyInCart > 0;
 
   return `
     <button
-      class="cond-tab${isActive ? " active" : ""}${canUse ? "" : " disabled"}"
+      class="cond-tab${isActive ? " active" : ""}${disabled ? " disabled" : ""}"
       type="button"
       data-tab="${tab}"
-      aria-disabled="${canUse ? "false" : "true"}"
-    >${tab}</button>
+      aria-disabled="${disabled ? "true" : "false"}"
+    >${tab}${q > 0 ? ` (${q})` : ""}</button>
   `;
 }).join("");
+
 
 
       const li = document.createElement("li");
@@ -511,6 +515,7 @@ function loadCart() {
       if (minus) minus.disabled = activeQty <= 0;
 
       // ✅ plus disabled if missing item OR cap is 0 OR reached cap
+      const cap = item ? getEffectiveCapFor(item, activeTab) : 0;
       if (plus) plus.disabled = !item || cap <= 0 || activeQty >= cap;
 
       listEl.appendChild(li);
