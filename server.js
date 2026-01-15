@@ -618,6 +618,61 @@ for (const ln of lines) {
       client.release();
     }
 
+// ... inside app.post("/api/submit", async (req, res) => { ... })
+
+    // after COMMIT, before return res.json(...)
+    // ---------------------------------------
+    // EMAILS (SELL ORDER)
+    // ---------------------------------------
+    if (resend && EMAIL_FROM) {
+      const totalNice = `$${(totalCents / 100).toFixed(2)}`;
+
+      // build readable lines for the email
+      const emailLines = lines.map((l) => {
+        const unit = `$${(Number(l.unitPriceCents || 0) / 100).toFixed(2)}`;
+        const lineT = `$${(Number(l.lineTotalCents || 0) / 100).toFixed(2)}`;
+        return `${l.qty}x ${l.name} — ${l.condition} — ${unit} each = ${lineT}`;
+      });
+
+      // 1) send to you (OWNER_EMAIL)
+      if (OWNER_EMAIL) {
+        try {
+          await resend.emails.send({
+            from: EMAIL_FROM,
+            to: OWNER_EMAIL,
+            subject: `New SELL order ${orderId}`,
+            text:
+              `Sell Order: ${orderId}\n` +
+              `Customer: ${name} <${email}>\n` +
+              `Total: ${totalNice}\n\n` +
+              emailLines.join("\n"),
+          });
+        } catch (e) {
+          console.error("Sell email to owner failed:", e);
+        }
+      }
+
+      // 2) send receipt/confirmation to customer
+      if (email) {
+        try {
+          await resend.emails.send({
+            from: EMAIL_FROM,
+            to: email,
+            subject: `Riftbound Sell Order Confirmation (${orderId})`,
+            text:
+              `Thanks! We received your sell order.\n` +
+              `Order: ${orderId}\n` +
+              `Total: ${totalNice}\n\n` +
+              emailLines.join("\n"),
+          });
+        } catch (e) {
+          console.error("Sell email to customer failed:", e);
+        }
+      }
+    }
+
+    return res.json({ ok: true, orderId });
+
     return res.json({ ok: true, orderId });
   } catch (e) {
     console.error("Sell submit error:", e);
