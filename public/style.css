@@ -1354,3 +1354,34 @@ body {
   border: 1px solid rgba(0,0,0,.15);
   background: rgba(255,255,255,.7);
 }
+
+.account-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.account-link {
+  background: none;
+  border: none;
+  padding: 6px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  color: #2563eb; /* same blue as links */
+}
+
+.account-link:hover {
+  text-decoration: underline;
+}
+
+.logout-link {
+  color: #b00020; /* red */
+}
+
+.logout-link:hover {
+  color: #8a0018;
+}
+
