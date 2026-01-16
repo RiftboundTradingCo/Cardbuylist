@@ -1385,3 +1385,47 @@ body {
   color: #8a0018;
 }
 
+.account-header {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.account-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.account-header-top h1 {
+  margin: 0;
+}
+
+.account-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.account-link {
+  background: none;
+  border: none;
+  padding: 6px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  color: #2563eb;
+}
+
+.account-link:hover {
+  text-decoration: underline;
+}
+
+.logout-link {
+  color: #b00020;
+}
+
+.logout-link:hover {
+  color: #8a0018;
+}
+
