@@ -1,4 +1,6 @@
 document.addEventListener("DOMContentLoaded", async () => {
+  console.log("✅ sell.js loaded (Sell Cards page)");
+
   const GRID_ID = "sellGrid";
   const CART_KEY = "sellCart";
 
@@ -28,36 +30,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   if (modalClose) modalClose.addEventListener("click", closeModal);
-  if (modal) modal.addEventListener("click", (e) => {
-      if (e.target === modal) closeModal();
-    });
-  document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeModal();
-});
-
-  // IMPORTANT: prevent links from navigating to the image
-    document.addEventListener("click", (e) => {
-    // Change ".card-img" to whatever class your sell page uses for card images
-    const img = e.target.closest(".card-img, .card-zoom-img, img[data-zoom]");
-    if (!img) return;
-
-    // If the image is inside <a href="...">, prevent navigation
-    const a = img.closest("a");
-    if (a) {
-      e.preventDefault();
-      e.stopPropagation();
-  }
-
-  openModal(img.src);
-});
+  if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
 
   // ---------- helpers ----------
   function safeParse(raw, fallback) {
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return fallback;
-    }
+    try { return JSON.parse(raw); } catch { return fallback; }
   }
 
   function loadCart() {
@@ -66,7 +44,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function saveCart(cart) {
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    // ✅ badges + cross-page sync
     window.dispatchEvent(new Event("cart:changed"));
     if (typeof window.updateCartBadges === "function") window.updateCartBadges();
   }
@@ -74,13 +51,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   function normalizeTab(t) {
     const u = String(t || "NM").toUpperCase();
     return TAB_ORDER.includes(u) ? u : "NM";
-  }
-
-  // identify item by sku if present, else by name
-  function getItemKey(item) {
-    const sku = String(item.sku || "").trim();
-    if (sku) return sku;
-    return `name:${String(item.name || "").trim().toLowerCase()}`;
   }
 
   function money(n) {
@@ -93,10 +63,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     return encodeURI(s.startsWith("/") ? s : `/${s}`);
   }
 
+  function clampQty(n) {
+    const x = Number(n);
+    if (!Number.isFinite(x) || x < 1) return 1;
+    if (x > 999) return 999;
+    return Math.floor(x);
+  }
+
   function getCartQty(cart, sku, tab) {
     const t = normalizeTab(tab);
+    const s = String(sku || "").trim();
     return cart.reduce((sum, it) => {
-      if (String(it.sku || "") !== sku) return sum;
+      if (String(it.sku || "").trim() !== s) return sum;
       if (normalizeTab(it.condition) !== t) return sum;
       return sum + Math.max(0, Number(it.qty || 0));
     }, 0);
@@ -104,24 +82,37 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function setCartQty(cart, sku, name, tab, qty) {
     const t = normalizeTab(tab);
+    const s = String(sku || "").trim();
     const q = Math.max(0, Number(qty || 0));
 
     // remove existing line for sku+tab
-    let next = cart.filter(
-      (it) => !(String(it.sku || "") === sku && normalizeTab(it.condition) === t)
-    );
+    let next = cart.filter((it) => {
+      return !(String(it.sku || "").trim() === s && normalizeTab(it.condition) === t);
+    });
 
     // add consolidated line if q>0
-    if (q > 0) next.push({ sku, name, condition: t, qty: q });
+    if (q > 0) next.push({ sku: s, name, condition: t, qty: q });
 
     return next;
+  }
+
+  function getPriceFor(p, tab) {
+    const t = normalizeTab(tab);
+    const v = Number(p?.prices?.[t] ?? 0);
+    return Number.isFinite(v) ? v : 0;
+  }
+
+  function getMaxFor(p, tab) {
+    const t = normalizeTab(tab);
+    const v = Number(p?.max?.[t] ?? 0);
+    return Number.isFinite(v) ? v : 0;
   }
 
   // ---------- data ----------
   async function fetchSellList() {
     const res = await fetch("/api/selllist", { cache: "no-store" });
     if (!res.ok) throw new Error(`selllist HTTP ${res.status}`);
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     if (!data?.ok || !data.selllist) throw new Error("Bad selllist JSON");
     return data.selllist;
   }
@@ -132,7 +123,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let searchQuery = "";
 
   function applySearch() {
-    const q = searchQuery.trim().toLowerCase();
+    const q = String(searchQuery || "").trim().toLowerCase();
     if (!q) {
       FILTERED_ITEMS = ALL_ITEMS.slice();
     } else {
@@ -161,137 +152,143 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  // ---------- UI refresh per card ----------
+  function refreshCard(cardEl) {
+    const sku = String(cardEl.dataset.sku || "").trim();
+    const p = selllist[sku];
+    if (!p) return;
+
+    const tab = normalizeTab(cardEl.dataset.activeTab || "NM");
+
+    // active tab highlight + disabled tabs
+    cardEl.querySelectorAll(".cond-tab").forEach((b) => {
+      const bTab = normalizeTab(b.dataset.tab || "NM");
+      const price = getPriceFor(p, bTab);
+      const maxCap = getMaxFor(p, bTab);
+      const disabled = price <= 0 || maxCap <= 0;
+
+      b.classList.toggle("active", bTab === tab);
+      b.classList.toggle("disabled", disabled);
+      b.setAttribute("aria-disabled", disabled ? "true" : "false");
+    });
+
+    // numbers
+    const cart = loadCart();
+    const inCart = getCartQty(cart, sku, tab);
+    const price = getPriceFor(p, tab);
+    const maxCap = getMaxFor(p, tab);
+    const remaining = Math.max(0, maxCap - inCart);
+
+    const priceText = cardEl.querySelector(".priceText");
+    const maxText = cardEl.querySelector(".maxText");
+    const inCartText = cardEl.querySelector(".inCartText");
+    const remText = cardEl.querySelector(".remText");
+
+    if (priceText) priceText.textContent = money(price);
+    if (maxText) maxText.textContent = String(maxCap);
+    if (inCartText) inCartText.textContent = String(inCart);
+    if (remText) remText.textContent = String(remaining);
+
+    // button enabled?
+    const addBtn = cardEl.querySelector(".addBtn");
+    if (addBtn) addBtn.disabled = !(price > 0 && maxCap > 0 && remaining > 0);
+
+    // qty buttons clamp behavior
+    const qtyInput = cardEl.querySelector(".qty-input");
+    const plusBtn = cardEl.querySelector(".qty-plus");
+    const minusBtn = cardEl.querySelector(".qty-minus");
+
+    const desired = clampQty(qtyInput?.value || 1);
+    const allowedAdd = Math.max(0, remaining);
+
+    if (qtyInput) qtyInput.value = String(Math.max(1, Math.min(desired, Math.max(1, allowedAdd || 1))));
+    if (minusBtn) minusBtn.disabled = clampQty(qtyInput?.value || 1) <= 1;
+    if (plusBtn) plusBtn.disabled = allowedAdd <= 1;
+  }
+
   // ---------- render ----------
   function renderGrid() {
     const items = FILTERED_ITEMS.length ? FILTERED_ITEMS : ALL_ITEMS;
-
     gridEl.innerHTML = "";
 
     for (const p of items) {
-      const sku = p.sku;
-      const name = p.name || sku;
+      const sku = String(p.sku || "").trim();
+      const name = String(p.name || sku);
       const imgSrc = normalizeImagePath(p.image);
-
-      const defaultTab = "NM";
-      const price = Number(p?.prices?.[defaultTab] ?? 0);
-      const maxCap = Number(p?.max?.[defaultTab] ?? 0);
 
       const card = document.createElement("div");
       card.className = "store-card";
       card.dataset.sku = sku;
       card.dataset.activeTab = "NM";
 
-   card.innerHTML = `
-  <div class="product-card">
-    ${imgSrc ? `<img class="card-zoom-img" src="${imgSrc}" alt="${name}"/>` : ""}
+      card.innerHTML = `
+        <div class="product-card">
+          ${imgSrc ? `<img class="card-zoom-img" src="${imgSrc}" alt="${name}"/>` : ""}
 
-    <h3 class="product-title">${name}</h3>
+          <h3 class="product-title">${name}</h3>
 
-    <div class="cond-tabs" role="tablist" aria-label="Condition">
-      ${["NM","LP","MP"].map(tab => `
-        <button class="cond-tab${tab==="NM" ? " active":""}" type="button" data-tab="${tab}">
-          ${tab}
-        </button>
-      `).join("")}
-    </div>
+          <div class="cond-tabs" role="tablist" aria-label="Condition">
+            ${TAB_ORDER.map(tab => `
+              <button class="cond-tab${tab === "NM" ? " active" : ""}" type="button" data-tab="${tab}">
+                ${tab}
+              </button>
+            `).join("")}
+          </div>
 
-    <div class="product-meta">
-      <div>Buy Price: <strong class="priceText">$0.00</strong></div>
-      <div>Max capacity: <strong class="maxText">0</strong></div>
-      <div>In cart: <strong class="inCartText">0</strong> • Remaining: <strong class="remText">0</strong></div>
-    </div>
+          <div class="product-meta">
+            <div>Buy Price: <strong class="priceText">$0.00</strong></div>
+            <div>Max capacity: <strong class="maxText">0</strong></div>
+            <div>In cart: <strong class="inCartText">0</strong> • Remaining: <strong class="remText">0</strong></div>
+          </div>
 
-    <div class="qty-controls">
-      <button class="qty-minus" type="button">−</button>
-      <input class="qty-input" type="text" value="1" inputmode="numeric" />
-      <button class="qty-plus" type="button">+</button>
-    </div>
+          <div class="qty-controls">
+            <button class="qty-minus" type="button">−</button>
+            <input class="qty-input" type="text" value="1" inputmode="numeric" />
+            <button class="qty-plus" type="button">+</button>
+          </div>
 
-    <button class="addBtn" type="button">Add to Sell Order</button>
-  </div>
-`;
+          <button class="addBtn" type="button">Add to Sell Order</button>
+        </div>
+      `;
 
-
-      // init cart stats
-      refreshCardCartStats(card);
-
-      // click image to zoom
-      const imgEl = card.querySelector(".sell-card-img");
-      if (imgEl) imgEl.addEventListener("click", () => openModal(imgEl.getAttribute("src")));
+      // initial paint
+      refreshCard(card);
 
       gridEl.appendChild(card);
     }
   }
 
-  function refreshCardUI(cardEl) {
-    const sku = String(cardEl.dataset.sku || "");
-    const p = selllist[sku];
-    if (!p) return;
-
-    const tab = normalizeTab(cardEl.dataset.activeTab || "NM");
-
-    // update active tab styling
-    cardEl.querySelectorAll(".cond-tab").forEach((b) => b.classList.remove("active"));
-    const activeBtn = cardEl.querySelector(`.cond-tab[data-tab="${tab}"]`);
-    if (activeBtn) activeBtn.classList.add("active");
-
-    const price = Number(p?.prices?.[tab] ?? 0);
-    const maxCap = Number(p?.max?.[tab] ?? 0);
-
-    const unitEl = cardEl.querySelector(".sell-unit");
-    const maxEl = cardEl.querySelector(".sell-max");
-    if (unitEl) unitEl.textContent = money(price);
-    if (maxEl) maxEl.textContent = String(Number.isFinite(maxCap) ? maxCap : 0);
-
-    refreshCardCartStats(cardEl);
-  }
-
-  function refreshCardCartStats(cardEl) {
-    const sku = String(cardEl.dataset.sku || "");
-    const p = selllist[sku];
-    if (!p) return;
-
-    const tab = normalizeTab(cardEl.dataset.activeTab || "NM");
-    const cart = loadCart();
-
-    const inCart = getCartQty(cart, sku, tab);
-    const maxCap = Number(p?.max?.[tab] ?? 0);
-    const remaining = Math.max(0, maxCap - inCart);
-
-    const inCartEl = cardEl.querySelector(".sell-incart");
-    const remainEl = cardEl.querySelector(".sell-remain");
-    if (inCartEl) inCartEl.textContent = String(inCart);
-    if (remainEl) remainEl.textContent = String(remaining);
-
-    // optional: disable Add if none left
-    const addBtn = cardEl.querySelector(".sell-add-btn");
-    if (addBtn) addBtn.disabled = maxCap > 0 ? remaining <= 0 : true;
-  }
-
-  function clampQty(n) {
-    const x = Number(n);
-    if (!Number.isFinite(x) || x < 1) return 1;
-    if (x > 999) return 999;
-    return Math.floor(x);
-  }
-
-  // ---------- interactions ----------
+  // ---------- interactions (delegation) ----------
   document.addEventListener("click", (e) => {
-    const cardEl = e.target.closest(".sell-card");
+    // image zoom
+    const zoomImg = e.target.closest(".card-zoom-img");
+    if (zoomImg) {
+      // prevent navigating if wrapped in a link
+      const a = zoomImg.closest("a");
+      if (a) { e.preventDefault(); e.stopPropagation(); }
+      openModal(zoomImg.src);
+      return;
+    }
+
+    const cardEl = e.target.closest(".store-card");
     if (!cardEl) return;
 
-    const sku = String(cardEl.dataset.sku || "");
+    const sku = String(cardEl.dataset.sku || "").trim();
     const p = selllist[sku];
     if (!p) return;
 
     // tab switch
     const tabBtn = e.target.closest(".cond-tab");
     if (tabBtn) {
+      if (tabBtn.getAttribute("aria-disabled") === "true") return;
+      if (tabBtn.classList.contains("disabled")) return;
+
       cardEl.dataset.activeTab = normalizeTab(tabBtn.dataset.tab || "NM");
-      refreshCardUI(cardEl);
+      refreshCard(cardEl);
       return;
     }
 
+    const tab = normalizeTab(cardEl.dataset.activeTab || "NM");
     const qtyInput = cardEl.querySelector(".qty-input");
 
     // qty -
@@ -299,48 +296,59 @@ document.addEventListener("DOMContentLoaded", async () => {
       const cur = clampQty(qtyInput?.value || 1);
       const next = Math.max(1, cur - 1);
       if (qtyInput) qtyInput.value = String(next);
+      refreshCard(cardEl);
       return;
     }
 
     // qty +
     if (e.target.closest(".qty-plus")) {
+      const cart = loadCart();
+      const inCart = getCartQty(cart, sku, tab);
+      const maxCap = getMaxFor(p, tab);
+      const remaining = Math.max(0, maxCap - inCart);
+
       const cur = clampQty(qtyInput?.value || 1);
-      const next = Math.min(999, cur + 1);
+      const next = Math.min(cur + 1, Math.max(1, remaining));
       if (qtyInput) qtyInput.value = String(next);
+      refreshCard(cardEl);
       return;
     }
 
-    // add to sell cart
-    if (e.target.closest(".sell-add-btn")) {
-      const tab = normalizeTab(cardEl.dataset.activeTab || "NM");
-      const desired = clampQty(qtyInput?.value || 1);
+    // add
+    if (e.target.closest(".addBtn")) {
+      const price = getPriceFor(p, tab);
+      const maxCap = getMaxFor(p, tab);
+      if (price <= 0 || maxCap <= 0) return;
 
-      const maxCap = Number(p?.max?.[tab] ?? 0);
       const cart = loadCart();
       const already = getCartQty(cart, sku, tab);
+      const remaining = Math.max(0, maxCap - already);
 
-      // clamp so we never exceed max capacity
-      let canAdd = desired;
-      if (maxCap > 0) canAdd = Math.max(0, Math.min(desired, maxCap - already));
+      const desired = clampQty(qtyInput?.value || 1);
+      const canAdd = Math.max(0, Math.min(desired, remaining));
 
       if (canAdd <= 0) {
         alert("You’ve reached the max capacity for that condition.");
+        refreshCard(cardEl);
         return;
       }
 
-      const name = p.name || sku;
+      const name = String(p.name || sku);
       const nextQty = already + canAdd;
       const nextCart = setCartQty(cart, sku, name, tab, nextQty);
 
       saveCart(nextCart);
-      refreshCardCartStats(cardEl);
+
+      // reset qty to 1 after add (like buy page)
+      if (qtyInput) qtyInput.value = "1";
+      refreshCard(cardEl);
       return;
     }
   });
 
   // keep page in sync if cart changes elsewhere
   window.addEventListener("cart:changed", () => {
-    document.querySelectorAll(".sell-card").forEach(refreshCardCartStats);
+    document.querySelectorAll(".store-card").forEach(refreshCard);
   });
 
   // ---------- init ----------
@@ -348,8 +356,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     selllist = await fetchSellList();
   } catch (err) {
     console.error("sell.js selllist error:", err);
-    gridEl.innerHTML = `<p style="padding:16px;">Could not load sell list.</p>`;
-    selllist = {};
+    gridEl.innerHTML = `<div class="cart-card" style="margin:16px;">Could not load sell list.</div>`;
     return;
   }
 
@@ -361,13 +368,3 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (typeof window.updateCartBadges === "function") window.updateCartBadges();
 });
-
-
-
-
-
-
-
-
-
-
