@@ -680,40 +680,71 @@ for (const ln of lines) {
   }
 });
 
-/* =========================
-   PUBLIC API ROUTES
-   - catalog now comes from DB inventory
-   - selllist left as JSON (until you migrate it too)
-========================= */
 app.get("/api/catalog", async (req, res) => {
   try {
     const r = await pool.query(`
       SELECT
-        sku,
-        name,
-        price_cents,
-        image,
-        stock_nm,
-        stock_lp,
-        stock_mp,
-        stock_hp
-      FROM app.inventory
-      ORDER BY name
+        c.sku,
+        c.name,
+        c.set_name,
+        c.number,
+        c.rarity,
+        c.image,
+        COALESCE(
+          jsonb_agg(
+            jsonb_build_object(
+              'condition', v.condition,
+              'foil', v.foil,
+              'stock', v.stock,
+              'price_cents', v.price_cents
+            )
+          ) FILTER (WHERE v.sku IS NOT NULL),
+          '[]'::jsonb
+        ) AS variants
+      FROM app.cards c
+      LEFT JOIN app.card_variants v ON v.sku = c.sku
+      GROUP BY c.sku
+      ORDER BY c.name
     `);
 
     const catalog = {};
 
+    function findVariant(variants, condition, foil) {
+      return (variants || []).find(v => v.condition === condition && v.foil === foil) || null;
+    }
+
     for (const row of r.rows) {
+      const variants = Array.isArray(row.variants) ? row.variants : [];
+
+      // Non-foil stocks for your current UI condition buttons
+      const vNM = findVariant(variants, "NM", false);
+      const vLP = findVariant(variants, "LP", false);
+      const vMP = findVariant(variants, "MP", false);
+      const vHP = findVariant(variants, "HP", false);
+
+      // Keep "base" price_cents for compatibility with your existing buy.js.
+      // We'll use NM non-foil price if present, else 0.
+      const basePriceCents = Number(vNM?.price_cents ?? 0) || 0;
+
       catalog[row.sku] = {
+        // existing fields buy.js expects
         name: row.name,
-        price_cents: row.price_cents,
-        image: row.image,
+        price_cents: basePriceCents,
+        image: row.image || null,
         stock: {
-          "Near Mint": row.stock_nm,
-          "Lightly Played": row.stock_lp,
-          "Moderately Played": row.stock_mp,
-          "Heavily Played": row.stock_hp,
+          "Near Mint": Number(vNM?.stock ?? 0) || 0,
+          "Lightly Played": Number(vLP?.stock ?? 0) || 0,
+          "Moderately Played": Number(vMP?.stock ?? 0) || 0,
+          "Heavily Played": Number(vHP?.stock ?? 0) || 0,
         },
+
+        // new metadata for future filters (does not break old code)
+        set: row.set_name || null,
+        number: row.number || null,
+        rarity: row.rarity || null,
+
+        // full variants so you can later price by condition + foil
+        variants,
       };
     }
 
@@ -724,40 +755,6 @@ app.get("/api/catalog", async (req, res) => {
   }
 });
 
-
-
-app.get("/api/selllist", async (req, res) => {
-  try {
-    const r = await pool.query(
-      `SELECT sku, name, image, price_nm, price_lp, price_mp, max_nm, max_lp, max_mp
-         FROM app.selllist
-        ORDER BY sku`
-    );
-
-    const selllist = {};
-    for (const row of r.rows) {
-      selllist[row.sku] = {
-        name: row.name,
-        image: row.image || null,
-        prices: {
-          NM: (row.price_nm || 0) / 100,
-          LP: (row.price_lp || 0) / 100,
-          MP: (row.price_mp || 0) / 100,
-        },
-        max: {
-          NM: row.max_nm || 0,
-          LP: row.max_lp || 0,
-          MP: row.max_mp || 0,
-        },
-      };
-    }
-
-    res.json({ ok: true, selllist });
-  } catch (e) {
-    console.error("selllist db error:", e);
-    res.status(500).json({ ok: false, error: "Selllist load failed" });
-  }
-});
 
 /* =========================
    AUTH (DB-backed)

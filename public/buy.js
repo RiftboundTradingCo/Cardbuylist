@@ -28,12 +28,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     HP: "Heavily Played",
   };
 
-  const CONDITION_MULT = {
-    "Near Mint": 1.0,
-    "Lightly Played": 0.9,
-    "Moderately Played": 0.8,
-    "Heavily Played": 0.65,
-  };
+  // For DB variants we use short codes in the DB: NM/LP/MP/HP
+  function tabToDbCond(tab) {
+    const t = String(tab || "NM").toUpperCase();
+    return ["NM", "LP", "MP", "HP"].includes(t) ? t : "NM";
+  }
+
+  function normalizeImagePath(p) {
+    const s = String(p || "").trim();
+    if (!s) return "";
+    const withSlash = s.startsWith("/") ? s : `/${s}`;
+    return encodeURI(withSlash);
+  }
 
   // ---------- storage ----------
   function loadBuyCart() {
@@ -46,12 +52,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.dispatchEvent(new Event("cart:changed"));
   }
 
-  function qtyInCart(sku, condition) {
+  function normalizeConditionLong(c) {
+    const allowed = Object.values(TAB_TO_COND);
+    const s = String(c || "Near Mint").trim();
+    return allowed.includes(s) ? s : "Near Mint";
+  }
+
+  function qtyInCart(sku, conditionLong) {
     const cart = loadBuyCart();
     const s = String(sku || "").trim();
-    const c = String(condition || "Near Mint").trim();
+    const c = normalizeConditionLong(conditionLong);
     return cart.reduce((sum, it) => {
-      if (String(it.sku || "").trim() === s && String(it.condition || "Near Mint").trim() === c) {
+      if (String(it.sku || "").trim() === s && normalizeConditionLong(it.condition) === c) {
         return sum + Math.max(0, Number(it.qty || 0));
       }
       return sum;
@@ -67,46 +79,60 @@ document.addEventListener("DOMContentLoaded", async () => {
     try { return JSON.parse(raw); } catch { return fallback; }
   }
 
-  function normalizeCondition(c) {
-    const allowed = Object.keys(CONDITION_MULT);
-    const s = String(c || "Near Mint").trim();
-    return allowed.includes(s) ? s : "Near Mint";
+  // ---------- variant helpers (NEW) ----------
+  function getVariants(product) {
+    return Array.isArray(product?.variants) ? product.variants : [];
   }
 
-  function unitCentsFor(baseCents, condition) {
-    const cond = normalizeCondition(condition);
-    const mult = CONDITION_MULT[cond] ?? 1.0;
-    return Math.round(Number(baseCents || 0) * mult);
+  function findVariant(product, tab, foil = false) {
+    const dbCond = tabToDbCond(tab);
+    const vars = getVariants(product);
+    return vars.find(v => String(v?.condition) === dbCond && Boolean(v?.foil) === Boolean(foil)) || null;
   }
 
-  function getStockForCondition(product, condition) {
-    const cond = normalizeCondition(condition);
+  // price for selected condition:
+  // - prefer DB variant.price_cents if present
+  // - else fall back to legacy base price_cents
+  function unitCentsFor(product, tab) {
+    const v = findVariant(product, tab, false);
+    const p = Number(v?.price_cents);
+    if (Number.isFinite(p) && p >= 0) return p;
+
+    // legacy fallback
+    return Number(product?.price_cents || 0) || 0;
+  }
+
+  // stock for selected condition:
+  // - prefer DB variant.stock if present
+  // - else fall back to legacy product.stock["Near Mint"...]
+  function stockFor(product, tab) {
+    const v = findVariant(product, tab, false);
+    const s = Number(v?.stock);
+    if (Number.isFinite(s)) return s;
+
+    // legacy fallback (your old shape)
+    const long = TAB_TO_COND[String(tab || "NM").toUpperCase()] || "Near Mint";
     if (product?.stock && typeof product.stock === "object") {
-      return Number(product.stock[cond] ?? 0);
+      return Number(product.stock[long] ?? 0) || 0;
     }
-    return Number(product?.stock ?? 0); // fallback old format
+    return Number(product?.stock ?? 0) || 0;
   }
 
-  function remainingStock(product, sku, condition) {
-    const stock = getStockForCondition(product, condition);
-    const inCart = qtyInCart(sku, condition);
+  function remainingStock(product, sku, tab) {
+    const stock = stockFor(product, tab);
+    const longCond = TAB_TO_COND[String(tab || "NM").toUpperCase()] || "Near Mint";
+    const inCart = qtyInCart(sku, longCond);
     return Math.max(0, stock - inCart);
   }
 
-  function normalizeImagePath(p) {
-    const s = String(p || "").trim();
-    if (!s) return "";
-    const withSlash = s.startsWith("/") ? s : `/${s}`;
-    return encodeURI(withSlash);
-  }
-
   // HARD LIMIT add
-  function addToCartHardLimited(sku, product, condition, addQty) {
+  function addToCartHardLimited(sku, product, tab, addQty) {
     const s = String(sku || "").trim();
-    const cond = normalizeCondition(condition);
+    const t = String(tab || "NM").toUpperCase();
+    const condLong = TAB_TO_COND[t] || "Near Mint";
     const qtyToAdd = Math.max(1, Number(addQty || 1));
 
-    const rem = remainingStock(product, s, cond);
+    const rem = remainingStock(product, s, t);
     if (rem <= 0) return { ok: false, error: "Out of stock" };
 
     const actualAdd = Math.min(qtyToAdd, rem);
@@ -114,11 +140,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const cart = loadBuyCart();
     const idx = cart.findIndex(it =>
       String(it.sku || "").trim() === s &&
-      normalizeCondition(it.condition) === cond
+      normalizeConditionLong(it.condition) === condLong
     );
 
     if (idx >= 0) cart[idx].qty = Math.max(0, Number(cart[idx].qty || 0)) + actualAdd;
-    else cart.push({ sku: s, condition: cond, qty: actualAdd });
+    else cart.push({ sku: s, condition: condLong, qty: actualAdd });
 
     saveBuyCart(cart);
     return { ok: true, added: actualAdd };
@@ -159,19 +185,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     const lines = [];
     for (const it of cart) {
       const sku = String(it.sku || "").trim();
-      const cond = normalizeCondition(it.condition);
+      const condLong = normalizeConditionLong(it.condition);
       const qty = Math.max(0, Number(it.qty || 0));
       if (!sku || qty <= 0) continue;
 
       count += qty;
 
       const product = catalog?.[sku];
-      const baseCents = Number(product?.price_cents || 0);
-      const unit = unitCentsFor(baseCents, cond);
+      const tab =
+        condLong === "Near Mint" ? "NM" :
+        condLong === "Lightly Played" ? "LP" :
+        condLong === "Moderately Played" ? "MP" :
+        "HP";
+
+      const unit = unitCentsFor(product, tab);
       subtotalCents += unit * qty;
 
       const name = String(product?.name || sku);
-      lines.push(`${qty} × ${name} — ${cond} — ${money(unit * qty)}`);
+      lines.push(`${qty} × ${name} — ${condLong} — ${money(unit * qty)}`);
     }
 
     if (miniCountEl) miniCountEl.textContent = String(count);
@@ -256,14 +287,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const name = String(product.name || sku);
       const imgSrc = normalizeImagePath(product.image);
-      const baseCents = Number(product.price_cents || 0);
 
-      // default active tab
-      const activeTab = "NM";
-      const activeCond = TAB_TO_COND[activeTab];
+      // default active tab prefers the first one that has stock
+      let activeTab = "NM";
+      for (const t of TAB_ORDER) {
+        if (stockFor(product, t) > 0) { activeTab = t; break; }
+      }
 
-      const stockActive = getStockForCondition(product, activeCond);
-      const remActive = remainingStock(product, sku, activeCond);
+      const unitCents = unitCentsFor(product, activeTab);
+      const stockActive = stockFor(product, activeTab);
+      const remActive = remainingStock(product, sku, activeTab);
 
       const card = document.createElement("div");
       card.className = "store-card";
@@ -277,8 +310,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
           <div class="cond-tabs" role="tablist" aria-label="Condition">
             ${TAB_ORDER.map(tab => {
-              const cond = TAB_TO_COND[tab];
-              const stock = getStockForCondition(product, cond);
+              const stock = stockFor(product, tab);
               const disabled = stock <= 0;
               return `<button
                 class="cond-tab${tab === activeTab ? " active" : ""}${disabled ? " disabled" : ""}"
@@ -290,7 +322,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           </div>
 
           <div class="product-meta">
-            <div>Price: <strong class="priceText">${money(unitCentsFor(baseCents, activeCond))}</strong></div>
+            <div>Price: <strong class="priceText">${money(unitCents)}</strong></div>
             <div>In stock: <strong class="stockText">${stockActive}</strong></div>
           </div>
 
@@ -311,6 +343,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (addBtn) addBtn.disabled = remActive <= 0;
       if (plusBtn) plusBtn.disabled = remActive <= 1; // qty selector starts at 1
+      if (qtyInput) qtyInput.value = "1";
 
       gridEl.appendChild(card);
     });
@@ -360,8 +393,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const product = catalog[sku];
     if (!product) return;
 
-    const baseCents = Number(product.price_cents || 0);
-
     // tab switch
     const tabBtn = e.target.closest(".cond-tab");
     if (tabBtn) {
@@ -369,23 +400,21 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (tabBtn.classList.contains("disabled")) return;
 
       const tab = String(tabBtn.dataset.tab || "NM").toUpperCase();
-      const cond = TAB_TO_COND[tab] || "Near Mint";
-
       card.dataset.activeTab = tab;
 
-      // update UI
+      // update tab UI
       card.querySelectorAll(".cond-tab").forEach(b => {
         b.classList.toggle("active", String(b.dataset.tab || "") === tab);
       });
 
-      const stock = getStockForCondition(product, cond);
-      const rem = remainingStock(product, sku, cond);
+      const stock = stockFor(product, tab);
+      const rem = remainingStock(product, sku, tab);
 
       const stockText = card.querySelector(".stockText");
       if (stockText) stockText.textContent = String(stock);
 
       const priceText = card.querySelector(".priceText");
-      if (priceText) priceText.textContent = money(unitCentsFor(baseCents, cond));
+      if (priceText) priceText.textContent = money(unitCentsFor(product, tab));
 
       const addBtn = card.querySelector(".addBtn");
       const plusBtn = card.querySelector(".qty-plus");
@@ -399,13 +428,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     const tab = String(card.dataset.activeTab || "NM").toUpperCase();
-    const cond = TAB_TO_COND[tab] || "Near Mint";
-
     const qtyInput = card.querySelector(".qty-input");
     const plusBtn = card.querySelector(".qty-plus");
     const addBtn = card.querySelector(".addBtn");
 
-    const rem = remainingStock(product, sku, cond);
+    const rem = remainingStock(product, sku, tab);
 
     // plus
     if (e.target.closest(".qty-plus")) {
@@ -424,7 +451,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       const next = Math.max(1, cur - 1);
       if (qtyInput) qtyInput.value = String(next);
 
-      // re-evaluate plus
       if (plusBtn) plusBtn.disabled = rem <= 1 || next >= rem;
       if (addBtn) addBtn.disabled = rem <= 0;
       return;
@@ -433,10 +459,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     // add
     if (e.target.closest(".addBtn")) {
       const desiredQty = Math.max(1, Number(qtyInput?.value || 1));
-      const r = addToCartHardLimited(sku, product, cond, desiredQty);
+      const r = addToCartHardLimited(sku, product, tab, desiredQty);
 
       // Always re-clamp after adding
-      const rem2 = remainingStock(product, sku, cond);
+      const rem2 = remainingStock(product, sku, tab);
       if (addBtn) addBtn.disabled = rem2 <= 0;
       if (plusBtn) plusBtn.disabled = rem2 <= 1;
       if (qtyInput) qtyInput.value = "1";
@@ -451,5 +477,3 @@ document.addEventListener("DOMContentLoaded", async () => {
   // keep mini cart updated if other pages modify cart
   window.addEventListener("cart:changed", () => renderMiniCart(catalog));
 });
-
-
