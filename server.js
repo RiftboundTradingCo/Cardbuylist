@@ -682,78 +682,96 @@ for (const ln of lines) {
 
 app.get("/api/catalog", async (req, res) => {
   try {
-    const r = await pool.query(`
-      SELECT
-        c.sku,
-        c.name,
-        c.set_name,
-        c.number,
-        c.rarity,
-        c.image,
-        COALESCE(
-          jsonb_agg(
-            jsonb_build_object(
-              'condition', v.condition,
-              'foil', v.foil,
-              'stock', v.stock,
-              'price_cents', v.price_cents
-            )
-          ) FILTER (WHERE v.sku IS NOT NULL),
-          '[]'::jsonb
-        ) AS variants
-      FROM app.cards c
-      LEFT JOIN app.card_variants v ON v.sku = c.sku
-      GROUP BY c.sku
-      ORDER BY c.name
+    // 1) Find which schema actually has the inventory table
+    const t = await pool.query(`
+      SELECT table_schema
+      FROM information_schema.tables
+      WHERE table_name = 'inventory'
+        AND table_schema IN ('app','public')
+      ORDER BY CASE WHEN table_schema='app' THEN 0 ELSE 1 END
+      LIMIT 1
     `);
 
+    const schema = t.rows?.[0]?.table_schema;
+    if (!schema) {
+      return res.status(500).json({ ok: false, error: "Inventory table not found (app/public)." });
+    }
+
+    // 2) Detect which columns exist
+    const c = await pool.query(
+      `
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema=$1 AND table_name='inventory'
+      `,
+      [schema]
+    );
+    const cols = new Set(c.rows.map(r => r.column_name));
+
+    const hasSplitStock =
+      cols.has("stock_nm") && cols.has("stock_lp") && cols.has("stock_mp") && cols.has("stock_hp");
+    const hasSingleStock = cols.has("stock");
+
+    // 3) Query inventory in a way that matches your schema
+    let r;
+    if (hasSplitStock) {
+      r = await pool.query(`
+        SELECT sku, name, price_cents, image, stock_nm, stock_lp, stock_mp, stock_hp
+        FROM ${schema}.inventory
+        ORDER BY name
+      `);
+    } else if (hasSingleStock) {
+      r = await pool.query(`
+        SELECT sku, name, price_cents, image, stock
+        FROM ${schema}.inventory
+        ORDER BY name
+      `);
+    } else {
+      return res.status(500).json({
+        ok: false,
+        error: `Inventory table missing stock columns (need stock OR stock_nm/stock_lp/stock_mp/stock_hp).`,
+      });
+    }
+
+    // 4) Build catalog in the format your buy.js expects
     const catalog = {};
-
-    function findVariant(variants, condition, foil) {
-      return (variants || []).find(v => v.condition === condition && v.foil === foil) || null;
-    }
-
     for (const row of r.rows) {
-      const variants = Array.isArray(row.variants) ? row.variants : [];
-
-      // Non-foil stocks for your current UI condition buttons
-      const vNM = findVariant(variants, "NM", false);
-      const vLP = findVariant(variants, "LP", false);
-      const vMP = findVariant(variants, "MP", false);
-      const vHP = findVariant(variants, "HP", false);
-
-      // Keep "base" price_cents for compatibility with your existing buy.js.
-      // We'll use NM non-foil price if present, else 0.
-      const basePriceCents = Number(vNM?.price_cents ?? 0) || 0;
-
-      catalog[row.sku] = {
-        // existing fields buy.js expects
-        name: row.name,
-        price_cents: basePriceCents,
-        image: row.image || null,
-        stock: {
-          "Near Mint": Number(vNM?.stock ?? 0) || 0,
-          "Lightly Played": Number(vLP?.stock ?? 0) || 0,
-          "Moderately Played": Number(vMP?.stock ?? 0) || 0,
-          "Heavily Played": Number(vHP?.stock ?? 0) || 0,
-        },
-
-        // new metadata for future filters (does not break old code)
-        set: row.set_name || null,
-        number: row.number || null,
-        rarity: row.rarity || null,
-
-        // full variants so you can later price by condition + foil
-        variants,
-      };
+      if (hasSplitStock) {
+        catalog[row.sku] = {
+          name: row.name,
+          price_cents: row.price_cents,
+          image: row.image,
+          stock: {
+            "Near Mint": Number(row.stock_nm || 0),
+            "Lightly Played": Number(row.stock_lp || 0),
+            "Moderately Played": Number(row.stock_mp || 0),
+            "Heavily Played": Number(row.stock_hp || 0),
+          },
+        };
+      } else {
+        // single stock column -> treat as NM for now
+        const nm = Number(row.stock || 0);
+        catalog[row.sku] = {
+          name: row.name,
+          price_cents: row.price_cents,
+          image: row.image,
+          stock: {
+            "Near Mint": nm,
+            "Lightly Played": 0,
+            "Moderately Played": 0,
+            "Heavily Played": 0,
+          },
+        };
+      }
     }
 
-    res.json({ ok: true, catalog });
+    return res.json({ ok: true, catalog });
   } catch (e) {
-    console.error("catalog error:", e);
-    res.status(500).json({ ok: false, error: "Catalog load failed" });
+    console.error("catalog error:", e); // IMPORTANT: this will show the real cause in Render logs
+    return res.status(500).json({ ok: false, error: "Catalog load failed" });
   }
 });
+
 
 
 /* =========================
