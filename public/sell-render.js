@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// ===== Image zoom modal (SELL CARDS page only) =====
+// ---------- image zoom modal ----------
 const modal = document.getElementById("imageModal");
 const modalImg = document.getElementById("imageModalImg");
 const modalClose = document.getElementById("imageModalClose");
@@ -86,25 +86,24 @@ function closeModal() {
 }
 
 if (modalClose) modalClose.addEventListener("click", closeModal);
-if (modal) modal.addEventListener("click", (e) => {
-  if (e.target === modal) closeModal();
-});
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeModal();
-});
+if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
 
-// IMPORTANT: prevent links from navigating to the image
+// Event delegation so it works for dynamically-rendered cards
 document.addEventListener("click", (e) => {
-  // Change ".card-img" to whatever class your sell page uses for card images
-  const img = e.target.closest(".card-img, .card-zoom-img, img[data-zoom]");
+  const img = e.target.closest("img");
   if (!img) return;
 
-  // If the image is inside <a href="...">, prevent navigation
-  const a = img.closest("a");
-  if (a) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
+  // Only zoom card images (adjust selectors to match your sell page)
+  const isCardImage =
+    img.classList.contains("card-img") ||
+    img.classList.contains("card-image") ||
+    img.classList.contains("sell-card-img") ||
+    img.hasAttribute("data-zoom");
 
-  openModal(img.src);
+  if (!isCardImage) return;
+
+  const src = img.getAttribute("src");
+  if (src) openModal(src);
 });
+

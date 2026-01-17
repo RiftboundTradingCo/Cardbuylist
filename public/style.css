@@ -688,39 +688,40 @@ body::before{
 }
 
 /* ---------- Image Modal (zoom) ---------- */
-.image-modal.hidden{ display:none; }
+.image-modal.hidden { display: none; }
 
 .image-modal{
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.82);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding: 24px;
+  background: rgba(0,0,0,.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 9999;
+  padding: 24px;
 }
 
 .image-modal img{
-  max-width: min(92vw, 900px);
-  max-height: 92vh;
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0,0,0,.55);
+  max-width: min(900px, 95vw);
+  max-height: 90vh;
+  border-radius: 14px;
+  box-shadow: 0 20px 70px rgba(0,0,0,.45);
+  background: #fff;
 }
 
 .image-modal-close{
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 14px;
+  right: 14px;
   width: 44px;
   height: 44px;
-  border-radius: 999px;
-  border: 0;
-  cursor: pointer;
-  font-size: 28px;
-  line-height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.35);
   background: rgba(255,255,255,.15);
-  color:#fff;
+  color: #fff;
+  font-size: 28px;
+  font-weight: 900;
+  cursor: pointer;
 }
 
 /* ---------- Mobile header tweaks ---------- */
