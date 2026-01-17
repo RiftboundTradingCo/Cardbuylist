@@ -177,42 +177,40 @@ document.addEventListener("DOMContentLoaded", async () => {
       const maxCap = Number(p?.max?.[defaultTab] ?? 0);
 
       const card = document.createElement("div");
-      card.className = "buy-card sell-card"; // reuse your buy-card styling
+      card.className = "store-card";
       card.dataset.sku = sku;
-      card.dataset.activeTab = defaultTab;
+      card.dataset.activeTab = "NM";
 
-      card.innerHTML = `
-        <div class="buy-card-inner">
-          ${
-            imgSrc
-              ? `<img class="buy-card-img sell-card-img" src="${imgSrc}" alt="${name}" />`
-              : ""
-          }
+   card.innerHTML = `
+  <div class="product-card">
+    ${imgSrc ? `<img class="card-zoom-img" src="${imgSrc}" alt="${name}"/>` : ""}
 
-          <h3 class="buy-card-title">${name}</h3>
+    <h3 class="product-title">${name}</h3>
 
-          <div class="cond-tabs buy-cond-tabs" role="tablist" aria-label="Condition">
-            ${TAB_ORDER.map(
-              (t) =>
-                `<button class="cond-tab${t === defaultTab ? " active" : ""}" type="button" data-tab="${t}">${t}</button>`
-            ).join("")}
-          </div>
+    <div class="cond-tabs" role="tablist" aria-label="Condition">
+      ${["NM","LP","MP"].map(tab => `
+        <button class="cond-tab${tab==="NM" ? " active":""}" type="button" data-tab="${tab}">
+          ${tab}
+        </button>
+      `).join("")}
+    </div>
 
-          <div class="buy-card-meta">
-            <div>Buy Price: <strong class="sell-unit">${money(price)}</strong></div>
-            <div>Max capacity: <strong class="sell-max">${Number.isFinite(maxCap) ? maxCap : 0}</strong></div>
-            <div>In cart: <strong class="sell-incart">0</strong> • Remaining: <strong class="sell-remain">0</strong></div>
-          </div>
+    <div class="product-meta">
+      <div>Buy Price: <strong class="priceText">$0.00</strong></div>
+      <div>Max capacity: <strong class="maxText">0</strong></div>
+      <div>In cart: <strong class="inCartText">0</strong> • Remaining: <strong class="remText">0</strong></div>
+    </div>
 
-          <div class="buy-qty-row">
-            <button class="qty-minus" type="button">−</button>
-            <input class="qty-input" type="number" min="1" max="999" value="1" />
-            <button class="qty-plus" type="button">+</button>
-          </div>
+    <div class="qty-controls">
+      <button class="qty-minus" type="button">−</button>
+      <input class="qty-input" type="text" value="1" inputmode="numeric" />
+      <button class="qty-plus" type="button">+</button>
+    </div>
 
-          <button class="buy-add-btn sell-add-btn" type="button">Add to Sell Order</button>
-        </div>
-      `;
+    <button class="addBtn" type="button">Add to Sell Order</button>
+  </div>
+`;
+
 
       // init cart stats
       refreshCardCartStats(card);
