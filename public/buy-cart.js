@@ -3,22 +3,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const listEl = document.getElementById("buyCartList");
   const totalEl = document.getElementById("buyCartTotal");
-  const msgEl = document.getElementById("checkoutMsg");     
+  const msgEl = document.getElementById("checkoutMsg");
   const clearBtn = document.getElementById("buyClearCartBtn");
 
   const emailInput = document.getElementById("buyEmail");
-  const checkoutBtn = document.getElementById("checkoutBtn"); 
-  const shippingBtn = document.getElementById("shippingCalcBtn"); // optional if you use it
-
-  const CART_KEY = "buyCart";
-
-  // If your buy-cart has a checkout button etc, keep those as-is.
-  const checkoutBtn = document.getElementById("buyCheckoutBtn");
+  const checkoutBtn = document.getElementById("checkoutBtn");
+  const shippingBtn = document.getElementById("shippingCalcBtn"); // optional
 
   if (!listEl) {
     console.warn("buy-cart: missing #buyCartList. Check buy-cart.html IDs.");
     return;
   }
+
 
   // Buy cart uses full condition strings (same as buy.js)
   const TAB_ORDER = ["NM", "LP", "MP", "HP"];
@@ -215,11 +211,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-if (!cart.length) {
-  listEl.innerHTML = `<li class="cart-item"><div class="cart-card">Your buy cart is empty.</div></li>`;
-  if (totalEl) totalEl.textContent = "0.00";
-  return;
-}
 
     let totalCents = 0;
 
