@@ -399,17 +399,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       const tabsHtml = TAB_ORDER.map((tab) => {
   const isActive = tab === activeTab;
 
-  const tabQty = Number(g.condQty?.[tab] || 0);          // ✅ qty in cart for this condition
-  const tabMax = item ? getMaxFor(item, tab) : 0;        // policy max
-  const tabPrice = item ? getPriceFor(item, tab) : 0;    // dollars
+  const tabMax = item ? getMaxFor(item, tab) : 0;
+  const tabPrice = item ? getPriceFor(item, tab) : 0;
+  const disabled = !item || tabMax <= 0 || tabPrice <= 0;
 
-  const hasInCart = tabQty > 0;
-
-  // ✅ Allow clicking if it's in cart (so you can view/remove),
-  // OR if it's addable (max>0 and price>0).
-  const canUseTab = hasInCart || (tabMax > 0 && tabPrice > 0);
-
-  const disabled = !item || !canUseTab;
+  const tabQty = Number(g.condQty?.[tab] || 0);
 
   return `
     <button
@@ -417,9 +411,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       type="button"
       data-tab="${tab}"
       aria-disabled="${disabled ? "true" : "false"}"
-    >${tab}</button>
+    >
+      <span class="tab-label">${tab}</span>
+      ${tabQty > 0 ? `<span class="tab-badge">${tabQty}</span>` : ``}
+    </button>
   `;
 }).join("");
+
 
 
       const li = document.createElement("li");
