@@ -695,7 +695,47 @@ app.get("/api/catalog", async (req, res) => {
 app.get("/api/selllist", async (req, res) => {
   try {
     const r = await pool.query(
-      `SELECT sku, name, image, price_nm, price_lp, price_mp, max_nm
+      `
+      SELECT
+        sku,
+        name,
+        image,
+        price_nm,
+        price_lp,
+        price_mp,
+        max_nm,
+        max_lp,
+        max_mp
+      FROM app.selllist
+      ORDER BY sku
+      `
+    );
+
+    const selllist = {};
+    for (const row of r.rows) {
+      selllist[row.sku] = {
+        name: row.name,
+        image: row.image || null,
+        prices: {
+          NM: (Number(row.price_nm) || 0) / 100,
+          LP: (Number(row.price_lp) || 0) / 100,
+          MP: (Number(row.price_mp) || 0) / 100,
+        },
+        max: {
+          NM: Number(row.max_nm) || 0,
+          LP: Number(row.max_lp) || 0,
+          MP: Number(row.max_mp) || 0,
+        },
+      };
+    }
+
+    return res.json({ ok: true, selllist });
+  } catch (e) {
+    console.error("selllist db error:", e);
+    return res.status(500).json({ ok: false, error: "Selllist load failed" });
+  }
+});
+
 
     const schema = t.rows?.[0]?.table_schema;
     if (!schema) {
