@@ -327,6 +327,57 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   render();
 
+async function startCheckout() {
+  // pull cart from localStorage
+  const cart = loadCart();
+  if (!Array.isArray(cart) || cart.length === 0) {
+    showMsg("Your cart is empty.", false);
+    return;
+  }
+
+  // email: try logged-in user first, else input
+  let email = "";
+  try {
+    const meRes = await fetch("/api/me", { cache: "no-store" });
+    const me = await meRes.json().catch(() => ({}));
+    email = me?.ok && me?.user?.email ? String(me.user.email).trim() : "";
+  } catch {}
+
+  if (!email) email = String(emailInput?.value || "").trim();
+
+  if (!email || !email.includes("@")) {
+    showMsg("Please enter a valid email for receipt.", false);
+    return;
+  }
+
+  checkoutBtn.disabled = true;
+  const prev = checkoutBtn.textContent;
+  checkoutBtn.textContent = "Starting checkout…";
+
+  try {
+    const res = await fetch("/api/create-checkout-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, cart }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.ok || !data?.url) {
+      throw new Error(data?.error || `Checkout failed (HTTP ${res.status})`);
+    }
+
+    window.location.assign(data.url);
+  } catch (err) {
+    console.error("Checkout error:", err);
+    showMsg(err?.message || "Could not start checkout.", false);
+  } finally {
+    checkoutBtn.disabled = false;
+    checkoutBtn.textContent = prev || "Checkout";
+  }
+}
+
+if (checkoutBtn) checkoutBtn.addEventListener("click", startCheckout);
+
   // ---------- clicks ----------
   document.addEventListener("click", (e) => {
     const itemEl = e.target.closest(".cart-item");
