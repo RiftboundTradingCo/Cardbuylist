@@ -29,6 +29,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const TAB_ORDER = ["NM", "LP", "MP"];
   const TAB_TO_COND = { NM: "NM", LP: "LP", MP: "MP" };
 
+  // Persist which tab user selected per group so re-render doesn't reset it
+  const activeTabByGroup = new Map();
+
   // ---------- helpers ----------
   function showMsg(text, ok = true) {
     if (!msgEl) return;
@@ -366,7 +369,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         ? (String(item.image).startsWith("/") ? String(item.image) : "/" + String(item.image))
         : "";
 
-      const activeTab = normalizeTab(g.activeTab || "NM");
+      const remembered = activeTabByGroup.get(g.key);
+      const activeTab = normalizeTab(remembered || g.activeTab || "NM");
       const activeQty = Number(g.condQty[activeTab] || 0);
 
       const unitDollars = item ? getPriceFor(item, activeTab) : 0;
@@ -495,13 +499,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const tabBtn = e.target.closest(".cond-tab");
     if (tabBtn) {
-      if (tabBtn.getAttribute("aria-disabled") === "true") return;
-      if (tabBtn.classList.contains("disabled")) return;
+  if (tabBtn.getAttribute("aria-disabled") === "true") return;
+  if (tabBtn.classList.contains("disabled")) return;
 
-      itemEl.dataset.activeTab = normalizeTab(tabBtn.dataset.tab || "NM");
-      renderWithScroll(render);
-      return;
-    }
+  const nextTab = normalizeTab(tabBtn.dataset.tab || "NM");
+
+  // ✅ remember user selection so render() keeps it
+  activeTabByGroup.set(groupKey, nextTab);
+
+  itemEl.dataset.activeTab = nextTab;
+  renderWithScroll(render);
+  return;
+}
+
 
     if (e.target.closest(".qty-plus")) {
       const { item } = resolveSellItem(groupKey, "");
