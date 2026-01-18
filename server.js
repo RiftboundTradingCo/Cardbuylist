@@ -692,6 +692,11 @@ app.get("/api/catalog", async (req, res) => {
       LIMIT 1
     `);
 
+app.get("/api/selllist", async (req, res) => {
+  try {
+    const r = await pool.query(
+      `SELECT sku, name, image, price_nm, price_lp, price_mp, max_nm
+
     const schema = t.rows?.[0]?.table_schema;
     if (!schema) {
       return res.status(500).json({ ok: false, error: "Inventory table not found (app/public)." });
