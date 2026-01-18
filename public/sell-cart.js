@@ -393,21 +393,30 @@ document.addEventListener("DOMContentLoaded", async () => {
       // ✅ FIX: DO NOT disable tabs just because qty is 0.
       // Tabs should be clickable as long as that condition is allowed (max > 0) and has a price.
       const tabsHtml = TAB_ORDER.map((tab) => {
-        const isActive = tab === activeTab;
-        const tabMax = item ? getMaxFor(item, tab) : 0;
-        const tabPrice = item ? getPriceFor(item, tab) : 0;
+  const isActive = tab === activeTab;
 
-        const disabled = !item || tabMax <= 0 || tabPrice <= 0;
+  const tabQty = Number(g.condQty?.[tab] || 0);          // ✅ qty in cart for this condition
+  const tabMax = item ? getMaxFor(item, tab) : 0;        // policy max
+  const tabPrice = item ? getPriceFor(item, tab) : 0;    // dollars
 
-        return `
-          <button
-            class="cond-tab${isActive ? " active" : ""}${disabled ? " disabled" : ""}"
-            type="button"
-            data-tab="${tab}"
-            aria-disabled="${disabled ? "true" : "false"}"
-          >${tab}</button>
-        `;
-      }).join("");
+  const hasInCart = tabQty > 0;
+
+  // ✅ Allow clicking if it's in cart (so you can view/remove),
+  // OR if it's addable (max>0 and price>0).
+  const canUseTab = hasInCart || (tabMax > 0 && tabPrice > 0);
+
+  const disabled = !item || !canUseTab;
+
+  return `
+    <button
+      class="cond-tab${isActive ? " active" : ""}${disabled ? " disabled" : ""}"
+      type="button"
+      data-tab="${tab}"
+      aria-disabled="${disabled ? "true" : "false"}"
+    >${tab}</button>
+  `;
+}).join("");
+
 
       const li = document.createElement("li");
       li.className = "cart-item";
