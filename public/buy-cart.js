@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const checkoutBtn = document.getElementById("checkoutBtn"); 
   const shippingBtn = document.getElementById("shippingCalcBtn"); // optional if you use it
 
+  const CART_KEY = "buyCart";
 
   // If your buy-cart has a checkout button etc, keep those as-is.
   const checkoutBtn = document.getElementById("buyCheckoutBtn");
@@ -213,6 +214,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (totalEl) totalEl.textContent = "0.00";
       return;
     }
+
+if (!cart.length) {
+  listEl.innerHTML = `<li class="cart-item"><div class="cart-card">Your buy cart is empty.</div></li>`;
+  if (totalEl) totalEl.textContent = "0.00";
+  return;
+}
 
     let totalCents = 0;
 
