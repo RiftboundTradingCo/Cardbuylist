@@ -1492,3 +1492,28 @@ body {
 .cond-tab.disabled .tab-badge{
   opacity: .55;
 }
+.cond-tab{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab-badge{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  background: rgba(15,23,42,.14);
+  color: rgba(15,23,42,.85);
+}
+
+.cond-tab.active .tab-badge{
+  background: rgba(255,255,255,.25);
+  color: #fff;
+}

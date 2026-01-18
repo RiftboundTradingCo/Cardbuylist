@@ -1,37 +1,31 @@
 document.addEventListener("DOMContentLoaded", async () => {
-  const BUY_CART_KEY = "buyCart";
+  const CART_KEY = "buyCart";
 
   const listEl = document.getElementById("buyCartList");
   const totalEl = document.getElementById("buyCartTotal");
-  const msgEl = document.getElementById("checkoutMsg");
-
+  const msgEl = document.getElementById("checkoutMsg");     
   const clearBtn = document.getElementById("buyClearCartBtn");
-  const checkoutBtn = document.getElementById("checkoutBtn");
-  const shipBtn = document.getElementById("shippingCalcBtn");
 
   const emailInput = document.getElementById("buyEmail");
-  const emailLabel = emailInput ? emailInput.closest("label") : null;
+  const checkoutBtn = document.getElementById("checkoutBtn"); 
+  const shippingBtn = document.getElementById("shippingCalcBtn"); // optional if you use it
 
-  if (!listEl || !totalEl) {
-    console.error("Missing #buyCartList or #buyCartTotal");
+
+  // If your buy-cart has a checkout button etc, keep those as-is.
+  const checkoutBtn = document.getElementById("buyCheckoutBtn");
+
+  if (!listEl) {
+    console.warn("buy-cart: missing #buyCartList. Check buy-cart.html IDs.");
     return;
   }
 
-  // ----------------------------
-  // Condition normalization
-  // ----------------------------
+  // Buy cart uses full condition strings (same as buy.js)
+  const TAB_ORDER = ["NM", "LP", "MP", "HP"];
   const TAB_TO_COND = {
     NM: "Near Mint",
     LP: "Lightly Played",
     MP: "Moderately Played",
     HP: "Heavily Played",
-  };
-
-  const COND_TO_TAB = {
-    "Near Mint": "NM",
-    "Lightly Played": "LP",
-    "Moderately Played": "MP",
-    "Heavily Played": "HP",
   };
 
   const CONDITION_MULT = {
@@ -41,23 +35,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     "Heavily Played": 0.65,
   };
 
-  function normalizeCondition(raw) {
-    const s = String(raw || "").trim();
-    const up = s.toUpperCase();
-
-    if (TAB_TO_COND[up]) return TAB_TO_COND[up];
-    if (CONDITION_MULT[s]) return s;
-
-    return "Near Mint";
-  }
-
-  function money(cents) {
-    return `$${(Number(cents || 0) / 100).toFixed(2)}`;
-  }
-
-  function showMsg(t, ok = true) {
+  // ---------- helpers ----------
+  function showMsg(text, ok = true) {
     if (!msgEl) return;
-    msgEl.textContent = t || "";
+    msgEl.textContent = text || "";
     msgEl.style.color = ok ? "#1b7f3a" : "#b00020";
   }
 
@@ -66,373 +47,329 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function loadCart() {
-    const cart = safeParse(localStorage.getItem(BUY_CART_KEY) || "[]", []);
-    return Array.isArray(cart) ? cart : [];
+    return safeParse(localStorage.getItem(CART_KEY) || "[]", []);
   }
 
   function saveCart(cart) {
-    localStorage.setItem(BUY_CART_KEY, JSON.stringify(cart));
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
     window.dispatchEvent(new Event("cart:changed"));
+    if (typeof window.updateCartBadges === "function") window.updateCartBadges();
   }
 
-  async function fetchCatalog() {
-    const res = await fetch("/api/catalog", { cache: "no-store" });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.ok || !data.catalog) throw new Error("Catalog load failed");
-    return data.catalog;
+  function moneyCents(cents) {
+    return `$${(Number(cents || 0) / 100).toFixed(2)}`;
   }
 
-  function getStockForCondition(product, conditionFull) {
-    if (!product) return 0;
-    if (product.stock && typeof product.stock === "object") {
-      return Number(product.stock[conditionFull] ?? 0);
-    }
-    return Number(product.stock ?? 0);
+  function normalizeTab(t) {
+    const u = String(t || "NM").toUpperCase();
+    return TAB_TO_COND[u] ? u : "NM";
   }
 
-  function calcUnitCents(baseCents, conditionFull) {
-    const mult = CONDITION_MULT[conditionFull] ?? 1.0;
+  function normalizeCond(cond) {
+    const s = String(cond || "").trim();
+    return CONDITION_MULT[s] ? s : "Near Mint";
+  }
+
+  function unitCentsFor(baseCents, condition) {
+    const cond = normalizeCond(condition);
+    const mult = CONDITION_MULT[cond] ?? 1.0;
     return Math.round(Number(baseCents || 0) * mult);
   }
 
-  // ----------------------------
-  // Logged in UX + address fetch
-  // ----------------------------
-  let loggedInEmail = "";
-  let loggedInAddress = null; // {line1,line2,city,state,postal,country} or null
-
-  async function applyLoggedInUX() {
-    if (!emailInput) return;
-
-    try {
-      const meRes = await fetch("/api/me", { cache: "no-store" });
-      const me = await meRes.json().catch(() => ({}));
-
-      loggedInEmail = me?.ok && me?.user?.email ? String(me.user.email).trim() : "";
-      loggedInAddress = me?.ok && me?.user?.address ? me.user.address : null;
-    } catch {
-      loggedInEmail = "";
-      loggedInAddress = null;
-    }
-
-    if (!loggedInEmail) {
-      if (emailLabel) emailLabel.style.display = "";
-      emailInput.readOnly = false;
-      return;
-    }
-
-    emailInput.value = loggedInEmail;
-    emailInput.readOnly = true;
-
-    if (emailLabel) emailLabel.style.display = "none";
-
-    const leftCol = document.querySelector(".cart-top-left");
-    if (leftCol && !document.getElementById("loggedInAsBox")) {
-      const box = document.createElement("div");
-      box.id = "loggedInAsBox";
-      box.style.cssText = `
-        margin-top: 10px;
-        padding: 10px 12px;
-        border-radius: 12px;
-        background: rgba(255,255,255,.92);
-        border: 1px solid rgba(0,0,0,.12);
-        max-width: 340px;
-      `;
-
-      const hasAddr =
-        loggedInAddress &&
-        loggedInAddress.line1 &&
-        loggedInAddress.city &&
-        loggedInAddress.state &&
-        loggedInAddress.postal;
-
-      box.innerHTML = `
-        <div style="font-size:12px; opacity:.75; font-weight:800; margin-bottom:4px;">Logged in as</div>
-        <div style="font-size:15px; font-weight:800;">${loggedInEmail}</div>
-        <div style="font-size:12px; opacity:.75; margin-top:6px; font-weight:700;">
-          (We’ll email your receipt here)
-        </div>
-        ${
-          hasAddr
-            ? `<div style="font-size:12px; opacity:.75; margin-top:6px; font-weight:700;">
-                 Shipping address on file ✓
-               </div>`
-            : `<div style="font-size:12px; color:#b00020; margin-top:6px; font-weight:800;">
-                 No shipping address on file
-               </div>
-               <div style="font-size:12px; opacity:.75; margin-top:4px;">
-                 Add one in <a href="/account.html" style="font-weight:900;">My Account</a>
-               </div>`
-        }
-      `;
-
-      leftCol.appendChild(box);
-    }
+  function normalizeImagePath(p) {
+    const s = String(p || "").trim();
+    if (!s) return "";
+    return encodeURI(s.startsWith("/") ? s : `/${s}`);
   }
 
-  // ----------------------------
-  // Catalog + render
-  // ----------------------------
+  // ---------- catalog ----------
+  async function fetchCatalog() {
+    const res = await fetch("/api/catalog", { cache: "no-store" });
+    if (!res.ok) throw new Error(`catalog HTTP ${res.status}`);
+    const data = await res.json().catch(() => ({}));
+    if (!data?.ok || !data.catalog) throw new Error("Bad catalog JSON");
+    return data.catalog; // keyed by sku
+  }
+
   let catalog = {};
   try {
     catalog = await fetchCatalog();
   } catch (e) {
-    console.error("catalog error:", e);
-    showMsg("Could not load inventory right now.", false);
+    console.error("buy-cart catalog error:", e);
+    showMsg("Could not load catalog right now.", false);
     catalog = {};
   }
 
+  // ---------- modal (optional, if your buy-cart.html has it) ----------
+  const modal = document.getElementById("imageModal");
+  const modalImg = document.getElementById("imageModalImg");
+  const modalClose = document.getElementById("imageModalClose");
+
+  function openModal(src) {
+    if (!modal || !modalImg) return;
+    modalImg.src = src;
+    modal.classList.remove("hidden");
+  }
+  function closeModal() {
+    if (!modal || !modalImg) return;
+    modal.classList.add("hidden");
+    modalImg.src = "";
+  }
+  if (modalClose) modalClose.addEventListener("click", closeModal);
+  if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+
+  // ---------- grouping ----------
   function groupCart(cart) {
-    const map = new Map();
+    const groups = new Map();
 
     for (const it of cart) {
       const sku = String(it?.sku || "").trim();
       if (!sku) continue;
 
-      const condFull = normalizeCondition(it?.condition);
+      const cond = normalizeCond(it?.condition);
+      const tab = Object.keys(TAB_TO_COND).find(k => TAB_TO_COND[k] === cond) || "NM";
       const qty = Math.max(0, Number(it?.qty || 0));
       if (qty <= 0) continue;
 
-      const key = `${sku}__${condFull}`;
-      const prev = map.get(key) || { sku, conditionFull: condFull, qty: 0 };
-      prev.qty += qty;
-      map.set(key, prev);
-    }
-
-    return [...map.values()];
-  }
-
-  function clampToStock(lines) {
-    let changed = false;
-    const out = [];
-
-    for (const l of lines) {
-      const product = catalog[l.sku];
-      const stock = getStockForCondition(product, l.conditionFull);
-
-      if (stock <= 0) {
-        changed = true;
-        continue;
+      if (!groups.has(sku)) {
+        const p = catalog?.[sku] || {};
+        groups.set(sku, {
+          sku,
+          name: String(p?.name || sku),
+          image: String(p?.image || ""),
+          condQty: { NM: 0, LP: 0, MP: 0, HP: 0 },
+          activeTab: "NM",
+        });
       }
 
-      if (l.qty > stock) {
-        l.qty = stock;
-        changed = true;
-      }
-
-      out.push(l);
+      const g = groups.get(sku);
+      g.condQty[tab] = (g.condQty[tab] || 0) + qty;
     }
 
-    return { out, changed };
+    // pick default active tab = first condition with qty
+    for (const g of groups.values()) {
+      for (const tab of TAB_ORDER) {
+        if ((g.condQty[tab] || 0) > 0) {
+          g.activeTab = tab;
+          break;
+        }
+      }
+    }
+
+    const arr = [...groups.values()];
+    arr.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    return arr;
   }
 
-  function flatten(lines) {
-    return lines.map(l => ({ sku: l.sku, condition: l.conditionFull, qty: l.qty }));
+  function getQty(sku, tab) {
+    const t = normalizeTab(tab);
+    const cond = TAB_TO_COND[t];
+    const cart = loadCart();
+    return cart.reduce((sum, it) => {
+      if (String(it?.sku || "").trim() !== sku) return sum;
+      if (normalizeCond(it?.condition) !== cond) return sum;
+      return sum + Math.max(0, Number(it?.qty || 0));
+    }, 0);
+  }
+
+  function setQty(sku, tab, nextQty) {
+    const t = normalizeTab(tab);
+    const cond = TAB_TO_COND[t];
+    const q = Math.max(0, Number(nextQty || 0));
+
+    let cart = loadCart();
+
+    // remove existing sku+cond line
+    cart = cart.filter(it => {
+      const s = String(it?.sku || "").trim();
+      const c = normalizeCond(it?.condition);
+      return !(s === sku && c === cond);
+    });
+
+    if (q > 0) {
+      cart.push({ sku, condition: cond, qty: q });
+    }
+
+    saveCart(cart);
+  }
+
+  // ---------- render ----------
+  function renderWithScroll(fn) {
+    const prev = window.scrollY;
+    fn();
+    requestAnimationFrame(() => window.scrollTo(0, prev));
   }
 
   function render() {
-    const raw = loadCart();
-    const grouped = groupCart(raw);
-    const clamped = clampToStock(grouped);
-
-    if (clamped.changed) saveCart(flatten(clamped.out));
+    const cart = loadCart();
+    const groups = groupCart(cart);
 
     listEl.innerHTML = "";
     showMsg("");
 
-    if (!clamped.out.length) {
-      listEl.innerHTML = `<li class="buy-cart-empty">Your cart is empty.</li>`;
-      totalEl.textContent = "0.00";
+    if (!groups.length) {
+      listEl.innerHTML = `<li class="cart-item"><div class="cart-card">Your buy cart is empty.</div></li>`;
+      if (totalEl) totalEl.textContent = "0.00";
       return;
     }
 
     let totalCents = 0;
 
-    for (const l of clamped.out) {
-      const product = catalog[l.sku];
-      const name = String(product?.name || l.sku);
-      const imgUrl = String(product?.image || "").trim();
-      const base = Number(product?.price_cents || 0);
+    for (const g of groups) {
+      const p = catalog?.[g.sku] || null;
+      const title = String(p?.name || g.name || g.sku);
+      const imgSrc = p?.image ? normalizeImagePath(p.image) : "";
 
-      const stock = getStockForCondition(product, l.conditionFull);
-      const unitCents = calcUnitCents(base, l.conditionFull);
+      const baseCents = Number(p?.price_cents || 0);
 
-      const lineTotal = unitCents * l.qty;
-      totalCents += lineTotal;
+      const activeTab = normalizeTab(g.activeTab || "NM");
+      const activeCond = TAB_TO_COND[activeTab];
+      const activeQty = Number(g.condQty[activeTab] || 0);
 
-      const tab = COND_TO_TAB[l.conditionFull] || "NM";
-      const canPlus = stock > 0 ? l.qty < stock : false;
+      // subtotal across all conditions
+      let inCartAll = 0;
+      let subtotalCents = 0;
+
+      for (const tab of TAB_ORDER) {
+        const q = Number(g.condQty[tab] || 0);
+        if (q <= 0) continue;
+        inCartAll += q;
+        const cond = TAB_TO_COND[tab];
+        const unit = unitCentsFor(baseCents, cond);
+        subtotalCents += unit * q;
+      }
+
+      totalCents += subtotalCents;
+
+      // tabs with badges
+      const tabsHtml = TAB_ORDER.map(tab => {
+        const isActive = tab === activeTab;
+        const badgeQty = Number(g.condQty[tab] || 0);
+        const badge = badgeQty > 0 ? `<span class="tab-badge">${badgeQty}</span>` : "";
+        return `
+          <button class="cond-tab${isActive ? " active" : ""}" type="button" data-tab="${tab}">
+            ${tab}${badge}
+          </button>
+        `;
+      }).join("");
+
+      const unitCents = unitCentsFor(baseCents, activeCond);
 
       const li = document.createElement("li");
-      li.className = "buy-cart-item";
-      li.dataset.sku = l.sku;
-      li.dataset.cond = l.conditionFull;
+      li.className = "cart-item";
+      li.dataset.sku = g.sku;
+      li.dataset.activeTab = activeTab;
 
       li.innerHTML = `
         <div class="cart-card">
-  <div class="cart-image">
-    ${
-      imgUrl
-        ? `<img src="${imgUrl}" alt="${name}" loading="lazy" onerror="this.style.display='none'">`
-        : ""
-    }
-  </div>
-           <div class="cart-main">
-            <h3 class="cart-title">${name}</h3>
+          ${imgSrc ? `<img class="cart-thumb" src="${imgSrc}" alt="${title}" data-zoom="1">` : ""}
+
+          <div class="cart-main">
+            <h3 class="cart-title">${title}</h3>
+
+            <div class="cond-tabs" role="tablist" aria-label="Condition">
+              ${tabsHtml}
+            </div>
+
             <div class="cart-meta">
-              <div>Condition: <strong>${tab}</strong></div>
-              <div>In stock: <strong>${stock}</strong></div>
-              <div>Unit: <strong>${money(unitCents)}</strong></div>
+              <div>Condition: <strong>${activeTab}</strong></div>
+              <div>Unit: <strong>${moneyCents(unitCents)}</strong></div>
+
+              <div class="cart-subline">
+                In cart (all conditions): <strong>${inCartAll}</strong> •
+                Subtotal: <strong>${moneyCents(subtotalCents)}</strong>
+              </div>
             </div>
           </div>
 
           <div class="cart-right">
             <div class="qty-controls">
-              <button class="cart-minus" type="button">−</button>
-              <span class="cart-qty">${l.qty}</span>
-              <button class="cart-plus" type="button" ${canPlus ? "" : "disabled"}>+</button>
+              <button class="qty-minus" type="button">−</button>
+              <span class="qty-value">${activeQty}</span>
+              <button class="qty-plus" type="button">+</button>
             </div>
 
-            <div class="line-price">${money(lineTotal)}</div>
+            <div class="line-price">${moneyCents(unitCents * activeQty)}</div>
 
-            <button class="cart-remove" type="button">Remove</button>
+            <button class="remove-cond-btn" type="button">Remove condition</button>
           </div>
         </div>
       `;
 
+      // button disabling
+      const minus = li.querySelector(".qty-minus");
+      const plus = li.querySelector(".qty-plus");
+      if (minus) minus.disabled = activeQty <= 0;
+
+      // Optional: if you want to cap by stock, you can do it here.
+      // For now, we won't hard-disable plus unless you want stock enforcement in cart too.
+      if (plus) plus.disabled = false;
+
+      const thumb = li.querySelector(".cart-thumb");
+      if (thumb) thumb.addEventListener("click", () => openModal(thumb.getAttribute("src")));
+
       listEl.appendChild(li);
     }
 
-    totalEl.textContent = (totalCents / 100).toFixed(2);
+    if (totalEl) totalEl.textContent = (totalCents / 100).toFixed(2);
   }
 
-  // ----------------------------
-  // Events
-  // ----------------------------
+  render();
+
+  // ---------- clicks ----------
   document.addEventListener("click", (e) => {
-    const itemEl = e.target.closest(".buy-cart-item");
+    const itemEl = e.target.closest(".cart-item");
     if (!itemEl) return;
 
     const sku = String(itemEl.dataset.sku || "").trim();
-    const condFull = String(itemEl.dataset.cond || "").trim();
-    if (!sku || !condFull) return;
+    if (!sku) return;
 
-    const product = catalog[sku];
-    const stock = getStockForCondition(product, condFull);
+    const activeTab = normalizeTab(itemEl.dataset.activeTab || "NM");
 
-    const grouped = groupCart(loadCart());
-    const idx = grouped.findIndex(x => x.sku === sku && x.conditionFull === condFull);
-    if (idx < 0) return;
-
-    if (e.target.closest(".cart-plus")) {
-      if (stock <= 0) return;
-      grouped[idx].qty = Math.min(stock, grouped[idx].qty + 1);
-      saveCart(flatten(grouped));
-      render();
+    // tab switch
+    const tabBtn = e.target.closest(".cond-tab");
+    if (tabBtn) {
+      itemEl.dataset.activeTab = normalizeTab(tabBtn.dataset.tab || "NM");
+      renderWithScroll(render);
       return;
     }
 
-    if (e.target.closest(".cart-minus")) {
-      grouped[idx].qty = Math.max(0, grouped[idx].qty - 1);
-      if (grouped[idx].qty <= 0) grouped.splice(idx, 1);
-      saveCart(flatten(grouped));
-      render();
+    // qty +
+    if (e.target.closest(".qty-plus")) {
+      const cur = getQty(sku, activeTab);
+      const next = cur + 1;
+      setQty(sku, activeTab, next);
+      renderWithScroll(render);
       return;
     }
 
-    if (e.target.closest(".cart-remove")) {
-      grouped.splice(idx, 1);
-      saveCart(flatten(grouped));
-      render();
+    // qty -
+    if (e.target.closest(".qty-minus")) {
+      const cur = getQty(sku, activeTab);
+      const next = Math.max(0, cur - 1);
+      setQty(sku, activeTab, next);
+      renderWithScroll(render);
+      return;
+    }
+
+    // remove condition
+    if (e.target.closest(".remove-cond-btn")) {
+      setQty(sku, activeTab, 0);
+      renderWithScroll(render);
       return;
     }
   });
 
+  // ---------- clear ----------
   if (clearBtn) {
     clearBtn.addEventListener("click", () => {
       saveCart([]);
-      render();
+      showMsg("Cart cleared.");
+      renderWithScroll(render);
     });
   }
 
-  if (shipBtn) {
-    shipBtn.addEventListener("click", () => {
-      alert("Shipping calculator coming soon!");
-    });
-  }
-
-  // ----------------------------
-  // Checkout
-  // ----------------------------
-  if (checkoutBtn) {
-    checkoutBtn.addEventListener("click", async () => {
-      const email = String(loggedInEmail || emailInput?.value || "").trim();
-      if (!email || !email.includes("@")) {
-        showMsg("Please enter a valid email for your receipt.", false);
-        return;
-      }
-
-      // slim cart to prevent bloat
-      const cart = loadCart();
-      const slimCart = (cart || []).map(it => ({
-        sku: String(it?.sku || "").trim(),
-        condition: String(it?.condition || "").trim(),
-        qty: Number(it?.qty || 0)
-      })).filter(it => it.sku && it.qty > 0);
-
-      if (!slimCart.length) {
-        showMsg("Your cart is empty.", false);
-        return;
-      }
-
-      // If logged in, require address on file (recommended)
-      if (loggedInEmail) {
-        const a = loggedInAddress;
-        const hasAddr = a && a.line1 && a.city && a.state && a.postal;
-        if (!hasAddr) {
-          showMsg("Please add a shipping address in My Account before checkout.", false);
-          return;
-        }
-      }
-
-      checkoutBtn.disabled = true;
-
-      try {
-        const res = await fetch("/api/create-checkout-session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          // send address if we have one (server can ignore if not needed)
-          body: JSON.stringify({
-            email,
-            cart: slimCart,
-            address: loggedInAddress || null
-          }),
-        });
-
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data.ok || !data.url) {
-          throw new Error(data.error || `Checkout failed (HTTP ${res.status})`);
-        }
-
-        window.location.assign(data.url);
-      } catch (err) {
-        console.error("Checkout error:", err);
-        showMsg(err?.message || "Could not start checkout.", false);
-      } finally {
-        checkoutBtn.disabled = false;
-      }
-    });
-  }
-
-  // ----------------------------
-  // init
-  // ----------------------------
-  await applyLoggedInUX();
-  render();
+  // keep in sync if other pages modify cart
+  window.addEventListener("cart:changed", () => renderWithScroll(render));
 });
-
-
-
-
-
-
