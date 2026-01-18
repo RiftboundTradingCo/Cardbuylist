@@ -25,6 +25,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     HP: "Heavily Played",
   };
 
+  // Remember active tab per sku so render() doesn't reset it
+  const activeTabBySku = new Map();
+
   const CONDITION_MULT = {
     "Near Mint": 1.0,
     "Lightly Played": 0.9,
@@ -144,15 +147,24 @@ document.addEventListener("DOMContentLoaded", async () => {
       g.condQty[tab] = (g.condQty[tab] || 0) + qty;
     }
 
-    // pick default active tab = first condition with qty
-    for (const g of groups.values()) {
-      for (const tab of TAB_ORDER) {
-        if ((g.condQty[tab] || 0) > 0) {
-          g.activeTab = tab;
-          break;
-        }
-      }
-    }
+      // pick active tab:
+       // - if user previously selected a tab for this sku, keep it (if it exists in TAB_ORDER)
+       // - otherwise pick the first condition that has qty > 0
+     for (const g of groups.values()) {
+        const remembered = normalizeTab(activeTabBySku.get(g.sku) || "");
+     if ((g.condQty[remembered] || 0) > 0) {
+        g.activeTab = remembered;
+        continue;
+     }
+
+     for (const tab of TAB_ORDER) {
+       if ((g.condQty[tab] || 0) > 0) {
+       g.activeTab = tab;
+       break;
+     }
+   }
+ }
+
 
     const arr = [...groups.values()];
     arr.sort((a, b) => String(a.name).localeCompare(String(b.name)));
@@ -328,7 +340,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     // tab switch
     const tabBtn = e.target.closest(".cond-tab");
     if (tabBtn) {
-      itemEl.dataset.activeTab = normalizeTab(tabBtn.dataset.tab || "NM");
+      const nextTab = normalizeTab(tabBtn.dataset.tab || "NM");
+      activeTabBySku.set(sku, nextTab);
+      itemEl.dataset.activeTab = nextTab;
       renderWithScroll(render);
       return;
     }
