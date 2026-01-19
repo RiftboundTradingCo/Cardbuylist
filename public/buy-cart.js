@@ -426,7 +426,6 @@ async function applyLoggedInAsUX() {
     checkoutBtn.disabled = false;
     checkoutBtn.textContent = prev || "Checkout";
   }
-}
 
 await applyLoggedInAsUX();
 render();
