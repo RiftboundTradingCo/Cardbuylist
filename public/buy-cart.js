@@ -74,10 +74,6 @@ async function applyLoggedInAsUX() {
   }
 }
 
-await applyLoggedInAsUX();
-render();
-
-
 
   // Buy cart uses full condition strings (same as buy.js)
   const TAB_ORDER = ["NM", "LP", "MP", "HP"];
@@ -390,13 +386,6 @@ render();
 
   render();
 
-async function startCheckout() {
-  // pull cart from localStorage
-  const cart = loadCart();
-  if (!Array.isArray(cart) || cart.length === 0) {
-    showMsg("Your cart is empty.", false);
-    return;
-  }
 
   // email: try logged-in user first, else input
   let email = "";
@@ -440,16 +429,32 @@ async function startCheckout() {
 }
 
 if (checkoutBtn) {
-  checkoutBtn.addEventListener("click", () => {
+  checkoutBtn.addEventListener("click", async () => {
     const cart = loadCart();
     if (!Array.isArray(cart) || cart.length === 0) {
       showMsg("Your cart is empty.", false);
       return;
     }
+
+    // prefer cached loggedInEmail (set by applyLoggedInAsUX)
+    let email = String(loggedInEmail || "").trim();
+
+    // fallback to input
+    if (!email) email = String(emailInput?.value || "").trim();
+
+    if (!email || !email.includes("@")) {
+      showMsg("Please enter a valid email for receipt.", false);
+      return;
+    }
+
+    sessionStorage.setItem("buyCheckoutEmail", email);
     window.location.href = "/shipping.html";
   });
 }
 
+
+await applyLoggedInAsUX();
+render();
 
 
   // ---------- clicks ----------

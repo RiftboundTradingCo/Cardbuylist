@@ -11,6 +11,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const emailEl = document.getElementById("shipEmail");
   const topLeft = document.querySelector(".cart-top-left");
 
+  const savedEmail = sessionStorage.getItem("buyCheckoutEmail") || "";
+  if (emailEl && savedEmail && !emailEl.value) emailEl.value = savedEmail;
+
   function showMsg(t, ok = true) {
     if (!msgEl) return;
     msgEl.textContent = t || "";
