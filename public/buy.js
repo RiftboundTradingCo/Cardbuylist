@@ -299,6 +299,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       const remActive = remainingStock(product, sku, activeTab);
 
       const card = document.createElement("div");
+      const setCode = p.set_code || "";
+      const rarity = p.rarity || "";
+      const number = p.number || p.card_number || "";
       card.className = "store-card";
       card.dataset.sku = sku;
       card.dataset.activeTab = activeTab;
