@@ -406,26 +406,12 @@ async function applyLoggedInAsUX() {
   const prev = checkoutBtn.textContent;
   checkoutBtn.textContent = "Starting checkout…";
 
-  try {
-    const res = await fetch("/api/create-checkout-session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, cart }),
-    });
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data?.ok || !data?.url) {
       throw new Error(data?.error || `Checkout failed (HTTP ${res.status})`);
     }
 
-    window.location.assign(data.url);
-  } catch (err) {
-    console.error("Checkout error:", err);
-    showMsg(err?.message || "Could not start checkout.", false);
-  } finally {
-    checkoutBtn.disabled = false;
-    checkoutBtn.textContent = prev || "Checkout";
-  }
 
 await applyLoggedInAsUX();
 render();
