@@ -299,21 +299,29 @@ document.addEventListener("DOMContentLoaded", async () => {
       const remActive = remainingStock(product, sku, activeTab);
 
       const card = document.createElement("div");
-      const setCode = p.set_code || "";
-      const rarity = p.rarity || "";
-      const number = p.number || p.card_number || "";
-      card.className = "store-card";
-      card.dataset.sku = sku;
-      card.dataset.activeTab = activeTab;
-      card.dataset.rarity = String(rarity || "");
-      card.dataset.set = String(setCode || "");
+
+// ✅ FIX: use `product` (the object you actually have)
+const setCode = String(product?.set_code || "");
+const rarity  = String(product?.rarity || "");
+const number  = String(product?.number || product?.card_number || "");
+const isFoil  = !!product?.foil;
+
+card.className = "store-card";
+card.dataset.sku = sku;
+card.dataset.activeTab = activeTab;
+card.dataset.rarity = rarity;
+card.dataset.set = setCode;
+
+// optional: make rarity safe for CSS class names
+const rarityClass = rarity.toLowerCase().replace(/[^a-z0-9_-]/g, "");
 
 const metaBits = [
   setCode ? `<span class="meta-pill">${setCode}</span>` : "",
   number ? `<span class="meta-pill">#${number}</span>` : "",
-  rarity ? `<span class="meta-pill rarity-${rarity}">${rarity}</span>` : "",
-  p.foil ? `<span class="meta-pill">Foil</span>` : "",
+  rarity ? `<span class="meta-pill rarity-${rarityClass}">${rarity}</span>` : "",
+  isFoil ? `<span class="meta-pill">Foil</span>` : "",
 ].filter(Boolean).join(" ");
+
 
       card.innerHTML = `
         <div class="product-card">
