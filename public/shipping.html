@@ -1,43 +1,71 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Shipping Information</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
+<main class="page cart-page">
+  <h1 class="page-title">Shipping</h1>
+  <p class="page-subtitle">Confirm your shipping info before checkout.</p>
 
-<header class="topbar">
-  <a class="brand" href="/index.html">
-    <img src="/images/riftbound-logo.jpg" alt="Riftbound Trading Co" class="site-logo" />
-    <span class="brand-name">Riftbound Trading Co</span>
-  </a>
+  <section class="cart-topbar">
+    <div class="cart-top-left">
+      <div class="cart-total-line">
+        <span class="cart-total-label">Order Subtotal:</span>
+        <span class="cart-total-value">$<span id="shipSubtotal">0.00</span></span>
+      </div>
+      <div class="cart-total-line">
+        <span class="cart-total-label">Shipping:</span>
+        <span class="cart-total-value">$<span id="shipCost">0.00</span></span>
+      </div>
+      <div class="cart-total-line">
+        <span class="cart-total-label">Total:</span>
+        <span class="cart-total-value">$<span id="shipTotal">0.00</span></span>
+      </div>
+    </div>
 
-  <nav class="navlinks">
-    <a class="nav-sell" href="/index.html">Sell Cards</a>
-    <a class="nav-link" href="/sell-cart.html">
-  Sell Cart
-  <span class="cart-badge cart-badge--gem hidden" data-cart="sell" data-count="0">
-    <img src="/images/yellow-badge.png" alt="">
-    <span class="cart-badge__count">0</span>
-  </span>
-</a>
-    <a class="nav-buy" href="/buy.html">Buy Cards</a>
-    <a class="nav-link" href="/buy-cart.html">
-  Buy Cart
-  <span class="cart-badge cart-badge--gem hidden" data-cart="buy" data-count="0">
-    <img src="/images/red-badge.png" alt="">
-    <span class="cart-badge__count">0</span>
-  </span>
-</a>
-    <a class="nav-contact" href="/contact.html">Contact</a>
-  </nav>
-</header>
+    <div class="cart-top-right">
+      <button id="continueToCheckoutBtn" class="cart-primary" type="button">
+        Continue to Checkout
+      </button>
+      <p id="shipMsg" class="cart-msg"></p>
+    </div>
+  </section>
 
+  <section class="cart-card" style="max-width: 900px; margin: 18px auto;">
+    <h3 style="margin-top:0;">Shipping Address</h3>
 
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+      <label>Full Name
+        <input id="shipName" type="text" placeholder="Full name" />
+      </label>
 
-<h1>Shipping Information</h1>
-<p>Our current shipping times are 24-48 hours after an order is placed. We are shipping from WA state. Please be aware once a package is with the shipping company we can not control the speed in which it moves, but are happy to help in any problems that arise. 
-  We have differnt options for shipping so please read caarefully which option you are getting before finishing your order. We do not offer untracked options at this time to both protect the seller and buyer. Please e-email us if you have any other questions.</p>
+      <label>Email
+        <input id="shipEmail" type="email" placeholder="you@example.com" />
+      </label>
 
-</body>
-</html>
+      <label style="grid-column:1/3;">Address Line 1
+        <input id="shipLine1" type="text" />
+      </label>
+
+      <label style="grid-column:1/3;">Address Line 2 (optional)
+        <input id="shipLine2" type="text" />
+      </label>
+
+      <label>City
+        <input id="shipCity" type="text" />
+      </label>
+
+      <label>State
+        <input id="shipState" type="text" />
+      </label>
+
+      <label>Postal Code
+        <input id="shipPostal" type="text" />
+      </label>
+
+      <label>Country
+        <input id="shipCountry" type="text" value="US" />
+      </label>
+    </div>
+
+    <h3>Shipping Method</h3>
+    <div id="shipMethods"></div>
+  </section>
+</main>
+
+<script src="/shipping.js?v=1"></script>

@@ -376,7 +376,17 @@ async function startCheckout() {
   }
 }
 
-if (checkoutBtn) checkoutBtn.addEventListener("click", startCheckout);
+if (checkoutBtn) {
+  checkoutBtn.addEventListener("click", () => {
+    const cart = loadCart();
+    if (!cart.length) {
+      showMsg("Your cart is empty.", false);
+      return;
+    }
+    window.location.href = "/shipping.html";
+  });
+}
+
 
   // ---------- clicks ----------
   document.addEventListener("click", (e) => {
