@@ -859,7 +859,6 @@ for (const ln of lines) {
 
 app.get("/api/catalog", async (req, res) => {
   try {
-
     const t = await pool.query(`
       SELECT table_schema
       FROM information_schema.tables
@@ -875,11 +874,9 @@ app.get("/api/catalog", async (req, res) => {
     }
 
     const c = await pool.query(
-      `
-      SELECT column_name
-      FROM information_schema.columns
-      WHERE table_schema=$1 AND table_name='inventory'
-      `,
+      `SELECT column_name
+         FROM information_schema.columns
+        WHERE table_schema=$1 AND table_name='inventory'`,
       [schema]
     );
     const cols = new Set(c.rows.map(r => r.column_name));
@@ -888,36 +885,31 @@ app.get("/api/catalog", async (req, res) => {
       cols.has("stock_nm") && cols.has("stock_lp") && cols.has("stock_mp") && cols.has("stock_hp");
     const hasSingleStock = cols.has("stock");
 
-    // new optional metadata columns
     const hasMeta =
       cols.has("set_code") && cols.has("card_number") && cols.has("rarity") && cols.has("foil");
 
-    // 3) Query inventory in a way that matches your schema
     let r;
     if (hasSplitStock) {
       r = await pool.query(`
-        SELECT sku, name, price_cents, image,
-               stock_nm, stock_lp, stock_mp, stock_hp
-               ${hasMeta ? ", set_code, card_number, rarity, foil" : ""}
-        FROM ${schema}".inventory
+        SELECT sku, name, price_cents, image, stock_nm, stock_lp, stock_mp, stock_hp
+        ${hasMeta ? ", set_code, card_number, rarity, foil" : ""}
+        FROM ${schema}.inventory
         ORDER BY name
       `);
     } else if (hasSingleStock) {
       r = await pool.query(`
-        SELECT sku, name, price_cents, image,
-               stock
-               ${hasMeta ? ", set_code, card_number, rarity, foil" : ""}
+        SELECT sku, name, price_cents, image, stock
+        ${hasMeta ? ", set_code, card_number, rarity, foil" : ""}
         FROM ${schema}.inventory
         ORDER BY name
       `);
     } else {
       return res.status(500).json({
         ok: false,
-        error: `Inventory table missing stock columns (need stock OR stock_nm/stock_lp/stock_mp/stock_hp).`,
+        error: "Inventory missing stock columns.",
       });
     }
 
-    // 4) Build catalog in the format your buy.js expects (keyed by SKU)
     const catalog = {};
     for (const row of r.rows) {
       const meta = hasMeta ? {
@@ -925,15 +917,11 @@ app.get("/api/catalog", async (req, res) => {
         card_number: row.card_number || null,
         rarity: row.rarity || null,
         foil: !!row.foil,
-      } : {
-        set_code: null,
-        card_number: null,
-        rarity: null,
-        foil: false,
-      };
+      } : { set_code: null, card_number: null, rarity: null, foil: false };
 
       if (hasSplitStock) {
         catalog[row.sku] = {
+          sku: row.sku,
           name: row.name,
           price_cents: row.price_cents,
           image: row.image,
@@ -946,9 +934,9 @@ app.get("/api/catalog", async (req, res) => {
           ...meta,
         };
       } else {
-        // single stock column -> treat as NM for now
         const nm = Number(row.stock || 0);
         catalog[row.sku] = {
+          sku: row.sku,
           name: row.name,
           price_cents: row.price_cents,
           image: row.image,
@@ -969,6 +957,7 @@ app.get("/api/catalog", async (req, res) => {
     return res.status(500).json({ ok: false, error: "Catalog load failed" });
   }
 });
+
 
 app.get("/api/selllist", async (req, res) => {
   try {
