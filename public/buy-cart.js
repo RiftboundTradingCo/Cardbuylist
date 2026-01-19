@@ -412,6 +412,14 @@ async function applyLoggedInAsUX() {
       throw new Error(data?.error || `Checkout failed (HTTP ${res.status})`);
     }
 
+    window.location.assign(data.url);
+  } catch (err) {
+    console.error("Checkout error:", err);
+    showMsg(err?.message || "Could not start checkout.", false);
+  } finally {
+    checkoutBtn.disabled = false;
+    checkoutBtn.textContent = prev || "Checkout";
+  }
 
 await applyLoggedInAsUX();
 render();
