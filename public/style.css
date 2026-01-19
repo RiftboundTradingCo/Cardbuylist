@@ -1517,3 +1517,40 @@ body {
   background: rgba(255,255,255,.25);
   color: #fff;
 }
+
+.filters-row{
+  display:flex;
+  gap:10px;
+  margin:10px 0 14px;
+  max-width: 900px;
+}
+.filters-row select{
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid rgba(0,0,0,.12);
+  background: rgba(255,255,255,.92);
+  font-weight:800;
+}
+
+.product-meta-pills{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin: 8px 0 0;
+  justify-content:center;
+}
+.meta-pill{
+  font-size:12px;
+  font-weight:900;
+  padding:4px 8px;
+  border-radius:999px;
+  background: rgba(0,0,0,.06);
+  border:1px solid rgba(0,0,0,.10);
+}
+
+/* optional rarity accents */
+.rarity-Common{ }
+.rarity-Uncommon{ }
+.rarity-Rare{ }
+.rarity-Epic{ }
+.rarity-Showcase{ }

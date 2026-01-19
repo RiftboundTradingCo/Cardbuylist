@@ -156,6 +156,83 @@ function requireAdmin(req, res, next) {
   if (token !== ADMIN_TOKEN) return res.status(401).json({ ok: false, error: "Unauthorized" });
   next();
 }
+/* =========================
+   ADMIN API ENDPOINTS
+========================= */
+
+app.get("/api/admin/inventory", requireAdmin, async (req, res) => {
+  try {
+    const r = await pool.query(`
+      SELECT sku, name, price_cents, stock, image, set_code, card_number, rarity, foil
+      FROM app.inventory
+      ORDER BY name ASC
+    `);
+    return res.json({ ok: true, items: r.rows });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ ok: false, error: "Failed to load inventory" });
+  }
+});
+
+app.put("/api/admin/inventory/:sku", requireAdmin, async (req, res) => {
+  try {
+    const sku = String(req.params.sku || "").trim();
+    if (!sku) return res.status(400).json({ ok: false, error: "Missing SKU" });
+
+    const {
+      name,
+      price_cents,
+      stock,
+      image,
+      set_code,
+      card_number,
+      rarity,
+      foil,
+    } = req.body || {};
+
+    // Normalize
+    const nName = name == null ? null : String(name).trim();
+    const nPrice = price_cents == null ? null : Number(price_cents);
+    const nStock = stock == null ? null : Number(stock);
+    const nImage = image == null ? null : String(image).trim();
+    const nSet = set_code == null ? null : String(set_code).trim();
+    const nNum = card_number == null ? null : String(card_number).trim();
+    const nRarity = rarity == null ? null : String(rarity).trim();
+    const nFoil = !!foil;
+
+    if (nPrice != null && (!Number.isFinite(nPrice) || nPrice < 0)) {
+      return res.status(400).json({ ok: false, error: "Invalid price_cents" });
+    }
+    if (nStock != null && (!Number.isFinite(nStock) || nStock < 0)) {
+      return res.status(400).json({ ok: false, error: "Invalid stock" });
+    }
+
+    const r = await pool.query(
+      `
+      UPDATE app.inventory
+      SET
+        name = COALESCE($2, name),
+        price_cents = COALESCE($3, price_cents),
+        stock = COALESCE($4, stock),
+        image = COALESCE($5, image),
+        set_code = $6,
+        card_number = $7,
+        rarity = $8,
+        foil = $9
+      WHERE sku = $1
+      RETURNING sku, name, price_cents, stock, image, set_code, card_number, rarity, foil
+      `,
+      [sku, nName, nPrice, nStock, nImage, nSet, nNum, nRarity, nFoil]
+    );
+
+    if (!r.rowCount) return res.status(404).json({ ok: false, error: "SKU not found" });
+
+    return res.json({ ok: true, item: r.rows[0] });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ ok: false, error: e.message || "Update failed" });
+  }
+});
 
 /* =========================
    STRIPE WEBHOOK (RAW BODY)
@@ -429,6 +506,29 @@ function maxColumnForTab(tab) {
     case "LP": return "max_lp";
     case "MP": return "max_mp";
     default: return "max_nm";
+  }
+}
+
+async function requireAdmin(req, res, next) {
+  try {
+    const userIdRaw = getSessionUserId(req);
+    if (!userIdRaw || !isUuid(userIdRaw)) {
+      return res.status(401).json({ ok: false, error: "Not signed in" });
+    }
+
+    const r = await pool.query(
+      `SELECT is_admin FROM app.users WHERE id=$1`,
+      [userIdRaw]
+    );
+
+    const isAdmin = !!r.rows[0]?.is_admin;
+    if (!isAdmin) return res.status(403).json({ ok: false, error: "Admin only" });
+
+    req.adminUserId = userIdRaw;
+    next();
+  } catch (e) {
+    console.error("requireAdmin error:", e);
+    return res.status(500).json({ ok: false, error: "Auth error" });
   }
 }
 
@@ -768,6 +868,108 @@ app.get("/api/catalog", async (req, res) => {
       ORDER BY CASE WHEN table_schema='app' THEN 0 ELSE 1 END
       LIMIT 1
     `);
+
+    const schema = t.rows?.[0]?.table_schema;
+    if (!schema) {
+      return res.status(500).json({ ok: false, error: "Inventory table not found (app/public)." });
+    }
+
+    // 2) Detect which columns exist
+    const c = await pool.query(
+      `
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema=$1 AND table_name='inventory'
+      `,
+      [schema]
+    );
+    const cols = new Set(c.rows.map(r => r.column_name));
+
+    const hasSplitStock =
+      cols.has("stock_nm") && cols.has("stock_lp") && cols.has("stock_mp") && cols.has("stock_hp");
+    const hasSingleStock = cols.has("stock");
+
+    // new optional metadata columns
+    const hasMeta =
+      cols.has("set_code") && cols.has("card_number") && cols.has("rarity") && cols.has("foil");
+
+    // 3) Query inventory in a way that matches your schema
+    let r;
+    if (hasSplitStock) {
+      r = await pool.query(`
+        SELECT sku, name, price_cents, image,
+               stock_nm, stock_lp, stock_mp, stock_hp
+               ${hasMeta ? ", set_code, card_number, rarity, foil" : ""}
+        FROM ${schema}.inventory
+        ORDER BY name
+      `);
+    } else if (hasSingleStock) {
+      r = await pool.query(`
+        SELECT sku, name, price_cents, image,
+               stock
+               ${hasMeta ? ", set_code, card_number, rarity, foil" : ""}
+        FROM ${schema}.inventory
+        ORDER BY name
+      `);
+    } else {
+      return res.status(500).json({
+        ok: false,
+        error: `Inventory table missing stock columns (need stock OR stock_nm/stock_lp/stock_mp/stock_hp).`,
+      });
+    }
+
+    // 4) Build catalog in the format your buy.js expects (keyed by SKU)
+    const catalog = {};
+    for (const row of r.rows) {
+      const meta = hasMeta ? {
+        set_code: row.set_code || null,
+        card_number: row.card_number || null,
+        rarity: row.rarity || null,
+        foil: !!row.foil,
+      } : {
+        set_code: null,
+        card_number: null,
+        rarity: null,
+        foil: false,
+      };
+
+      if (hasSplitStock) {
+        catalog[row.sku] = {
+          name: row.name,
+          price_cents: row.price_cents,
+          image: row.image,
+          stock: {
+            "Near Mint": Number(row.stock_nm || 0),
+            "Lightly Played": Number(row.stock_lp || 0),
+            "Moderately Played": Number(row.stock_mp || 0),
+            "Heavily Played": Number(row.stock_hp || 0),
+          },
+          ...meta,
+        };
+      } else {
+        // single stock column -> treat as NM for now
+        const nm = Number(row.stock || 0);
+        catalog[row.sku] = {
+          name: row.name,
+          price_cents: row.price_cents,
+          image: row.image,
+          stock: {
+            "Near Mint": nm,
+            "Lightly Played": 0,
+            "Moderately Played": 0,
+            "Heavily Played": 0,
+          },
+          ...meta,
+        };
+      }
+    }
+
+    return res.json({ ok: true, catalog });
+  } catch (e) {
+    console.error("catalog error:", e);
+    return res.status(500).json({ ok: false, error: "Catalog load failed" });
+  }
+});
 
 app.get("/api/selllist", async (req, res) => {
   try {

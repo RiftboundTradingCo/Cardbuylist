@@ -302,6 +302,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       card.className = "store-card";
       card.dataset.sku = sku;
       card.dataset.activeTab = activeTab;
+      card.dataset.rarity = String(rarity || "");
+      card.dataset.set = String(setCode || "");
+
+
+const setCode = p.set_code || "";
+const rarity = p.rarity || "";
+const number = p.number || p.card_number || "";
+
+const metaBits = [
+  setCode ? `<span class="meta-pill">${setCode}</span>` : "",
+  number ? `<span class="meta-pill">#${number}</span>` : "",
+  rarity ? `<span class="meta-pill rarity-${rarity}">${rarity}</span>` : "",
+  p.foil ? `<span class="meta-pill">Foil</span>` : "",
+].filter(Boolean).join(" ");
 
       card.innerHTML = `
         <div class="product-card">
@@ -324,6 +338,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <div class="product-meta">
             <div>Price: <strong class="priceText">${money(unitCents)}</strong></div>
             <div>In stock: <strong class="stockText">${stockActive}</strong></div>
+            <div class="product-meta-pills">${metaBits}</div>
           </div>
 
           <div class="qty-controls">

@@ -1,0 +1,40 @@
+<main class="page cart-page">
+  <h1 class="page-title">Inventory Admin</h1>
+  <p class="page-subtitle">Edit set/number/rarity/foil/price/stock for each SKU.</p>
+
+  <section class="cart-topbar">
+    <div class="cart-top-left">
+      <label class="cart-email" style="max-width:560px;">
+        Search
+        <input id="adminSearch" type="text" placeholder="Search name / SKU / set / rarity..." />
+      </label>
+    </div>
+
+    <div class="cart-top-right">
+      <button id="adminReload" class="cart-secondary" type="button">Reload</button>
+      <p id="adminMsg" class="cart-msg"></p>
+    </div>
+  </section>
+
+  <section class="cart-card" style="max-width: 1200px; margin: 18px auto; overflow:auto;">
+    <table id="adminTable" style="width:100%; border-collapse:collapse; min-width: 1050px;">
+      <thead>
+        <tr style="text-align:left;">
+          <th style="padding:10px;">Image</th>
+          <th style="padding:10px;">SKU</th>
+          <th style="padding:10px;">Name</th>
+          <th style="padding:10px;">Set</th>
+          <th style="padding:10px;">Number</th>
+          <th style="padding:10px;">Rarity</th>
+          <th style="padding:10px;">Foil</th>
+          <th style="padding:10px;">Price (cents)</th>
+          <th style="padding:10px;">Stock</th>
+          <th style="padding:10px;">Save</th>
+        </tr>
+      </thead>
+      <tbody id="adminTbody"></tbody>
+    </table>
+  </section>
+</main>
+
+<script src="/admin-inventory.js?v=1"></script>
