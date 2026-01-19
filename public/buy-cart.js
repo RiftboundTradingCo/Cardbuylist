@@ -384,43 +384,6 @@ async function applyLoggedInAsUX() {
     if (totalEl) totalEl.textContent = (totalCents / 100).toFixed(2);
   }
 
-  render();
-
-
-  // email: try logged-in user first, else input
-  let email = "";
-  try {
-    const meRes = await fetch("/api/me", { cache: "no-store" });
-    const me = await meRes.json().catch(() => ({}));
-    email = me?.ok && me?.user?.email ? String(me.user.email).trim() : "";
-  } catch {}
-
-  if (!email) email = String(emailInput?.value || "").trim();
-
-  if (!email || !email.includes("@")) {
-    showMsg("Please enter a valid email for receipt.", false);
-    return;
-  }
-
-  checkoutBtn.disabled = true;
-  const prev = checkoutBtn.textContent;
-  checkoutBtn.textContent = "Starting checkout…";
-
-
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data?.ok || !data?.url) {
-      throw new Error(data?.error || `Checkout failed (HTTP ${res.status})`);
-    }
-
-    window.location.assign(data.url);
-  } catch (err) {
-    console.error("Checkout error:", err);
-    showMsg(err?.message || "Could not start checkout.", false);
-  } finally {
-    checkoutBtn.disabled = false;
-    checkoutBtn.textContent = prev || "Checkout";
-  }
-
 await applyLoggedInAsUX();
 render();
 
