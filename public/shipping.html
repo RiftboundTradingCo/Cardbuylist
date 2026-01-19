@@ -1,60 +1,90 @@
-<main class="page cart-page">
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Shipping • Riftbound Trading Co</title>
 
-  <h1 class="page-title">Shipping</h1>
-  <p class="page-subtitle">Choose a shipping method. You’ll enter your address in Stripe Checkout.</p>
+  <!-- IMPORTANT: include your existing site CSS files (same ones as other pages) -->
+  <link rel="stylesheet" href="/style.css?v=1" />
+  <!-- If you have additional css files your cart pages rely on, include them too -->
+  <!-- <link rel="stylesheet" href="/cart.css?v=1" /> -->
+</head>
 
-  <!-- TOP PANEL -->
-  <section class="cart-topbar">
-    <div class="cart-top-left">
-      <div class="cart-total-line">
-        <span class="cart-total-label">Order Subtotal:</span>
-        <span class="cart-total-value">$<span id="shipSubtotal">0.00</span></span>
+<body>
+
+  <!-- If your site uses a shared header/nav, keep the same markup here too.
+       (If your header is injected elsewhere, you can remove this block.) -->
+  <!-- <header>...</header> -->
+
+  <main class="page cart-page">
+
+    <h1 class="page-title">Shipping</h1>
+    <p class="page-subtitle">Choose a shipping method. You’ll enter your address in Stripe Checkout.</p>
+
+    <!-- TOP PANEL (matches cart pages) -->
+    <section class="cart-topbar">
+      <div class="cart-top-left">
+        <div class="cart-total-line">
+          <span class="cart-total-label">Order Subtotal:</span>
+          <span class="cart-total-value">$<span id="shipSubtotal">0.00</span></span>
+        </div>
+
+        <div class="cart-total-line">
+          <span class="cart-total-label">Shipping:</span>
+          <span class="cart-total-value">$<span id="shipCost">0.00</span></span>
+        </div>
+
+        <div class="cart-total-line">
+          <span class="cart-total-label">Total:</span>
+          <span class="cart-total-value">$<span id="shipTotal">0.00</span></span>
+        </div>
+
+        <!-- Email: keep IDs shipping.js expects -->
+        <label class="cart-email" for="shipEmail" style="margin-top:10px;">
+          Email for receipt
+          <input type="email" id="shipEmail" placeholder="you@example.com" />
+        </label>
+
+        <!-- Logged-in box (shipping.js will inject it if logged in) -->
+        <!-- no extra markup needed -->
       </div>
 
-      <div class="cart-total-line">
-        <span class="cart-total-label">Shipping:</span>
-        <span class="cart-total-value">$<span id="shipCost">0.00</span></span>
+      <div class="cart-top-right">
+        <button id="continueToCheckoutBtn" class="cart-primary" type="button">
+          Continue to Checkout
+        </button>
+
+        <p id="shipMsg" class="cart-msg"></p>
       </div>
+    </section>
 
-      <div class="cart-total-line">
-        <span class="cart-total-label">Total:</span>
-        <span class="cart-total-value">$<span id="shipTotal">0.00</span></span>
-      </div>
+    <!-- SHIPPING METHOD CARD -->
+    <section class="cart-card" style="max-width: 980px; margin: 18px auto;">
+      <h3 style="margin-top:0;">Shipping Method</h3>
 
-      <!-- Email (hidden when logged in) -->
-      <label class="cart-email" id="shipEmailLabel" for="shipEmail" style="margin-top:10px;">
-        Email for receipt
-        <input type="email" id="shipEmail" placeholder="you@example.com" />
-      </label>
+      <p style="margin-top:6px; opacity:.85; font-weight:700;">
+        Shipping address will be collected in Stripe Checkout.
+        <br />
+        Free shipping automatically appears when your subtotal is $99+.
+      </p>
 
-      <!-- Logged in banner (injected by JS) -->
-      <div id="loggedInAsBox" style="display:none;"></div>
-    </div>
+      <!-- shipping.js renders radio options here -->
+      <div id="shipMethods"></div>
+    </section>
 
-    <div class="cart-top-right">
-      <button id="continueToCheckoutBtn" class="cart-primary" type="button">
-        Continue to Checkout
-      </button>
+  </main>
 
-      <p id="shipMsg" class="cart-msg"></p>
-    </div>
-  </section>
+  <!-- image modal (kept for consistency with other pages; ok if unused) -->
+  <div id="imageModal" class="image-modal hidden">
+    <button id="imageModalClose" class="image-modal-close" type="button">×</button>
+    <img id="imageModalImg" alt="Card preview">
+  </div>
 
-  <!-- Shipping methods -->
-  <section class="cart-card" style="max-width: 900px; margin: 18px auto;">
-    <h3 style="margin:0 0 8px;">Shipping Method</h3>
-    <p style="margin:0 0 12px; opacity:.85;">
-      Shipping address will be collected in Stripe Checkout.
-      <br />
-      Free shipping automatically appears when your subtotal is $99+.
-    </p>
+  <script src="/shipping.js?v=1"></script>
+  <script src="/cart-badge.js?v=1"></script>
+  <script src="/sell-cart-badge.js?v=1"></script>
+</body>
+</html>
 
-    <div id="shipMethods"></div>
-  </section>
-
-</main>
-
-<script src="/shipping.js?v=2"></script>
-<script src="/cart-badge.js?v=1"></script>
-<script src="/sell-cart-badge.js?v=1"></script>
 
