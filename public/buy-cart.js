@@ -428,8 +428,12 @@ async function applyLoggedInAsUX() {
   }
 }
 
+await applyLoggedInAsUX();
+render();
+
+// ===== Checkout button -> go to shipping page (do NOT call Stripe from cart page) =====
 if (checkoutBtn) {
-  checkoutBtn.addEventListener("click", async () => {
+  checkoutBtn.addEventListener("click", () => {
     const cart = loadCart();
     if (!Array.isArray(cart) || cart.length === 0) {
       showMsg("Your cart is empty.", false);
@@ -439,7 +443,7 @@ if (checkoutBtn) {
     // prefer cached loggedInEmail (set by applyLoggedInAsUX)
     let email = String(loggedInEmail || "").trim();
 
-    // fallback to input
+    // fallback to visible input (only shown when not logged in)
     if (!email) email = String(emailInput?.value || "").trim();
 
     if (!email || !email.includes("@")) {
@@ -447,14 +451,13 @@ if (checkoutBtn) {
       return;
     }
 
+    // store for shipping page (so shipping.html can preload it)
     sessionStorage.setItem("buyCheckoutEmail", email);
+
+    // go to shipping selection page
     window.location.href = "/shipping.html";
   });
 }
-
-
-await applyLoggedInAsUX();
-render();
 
 
   // ---------- clicks ----------
