@@ -15,6 +15,69 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
+// ---------- Logged in UX (same pattern as sell cart) ----------
+let loggedInEmail = "";
+
+async function applyLoggedInAsUX() {
+  if (!emailInput) return;
+
+  try {
+    const meRes = await fetch("/api/me", { cache: "no-store" });
+    const me = await meRes.json().catch(() => ({}));
+    loggedInEmail = me?.ok && me?.user?.email ? String(me.user.email).trim() : "";
+  } catch {
+    loggedInEmail = "";
+  }
+
+  // Not logged in → normal input
+  if (!loggedInEmail) {
+    emailInput.readOnly = false;
+    emailInput.disabled = false;
+    emailInput.style.display = "";
+    // show label if you hid it before
+    const label = emailInput.closest("label");
+    if (label) label.style.display = "";
+    return;
+  }
+
+  // Logged in → fill + hide input (like sell cart)
+  emailInput.value = loggedInEmail;
+  emailInput.readOnly = true;
+
+  const label = emailInput.closest("label");
+  if (label) label.style.display = "none";
+  emailInput.style.display = "none";
+
+  // Insert a "Logged in as" box inside the topbar left panel
+  const topLeft = document.querySelector(".cart-top-left");
+  if (topLeft && !document.getElementById("loggedInAsBoxBuy")) {
+    const box = document.createElement("div");
+    box.id = "loggedInAsBoxBuy";
+    box.style.cssText = `
+      margin-top: 10px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(0,0,0,.12);
+      max-width: 560px;
+    `;
+    box.innerHTML = `
+      <div style="font-size:12px; opacity:.75; font-weight:800; margin-bottom:4px;">Logged in as</div>
+      <div style="font-size:15px; font-weight:800;">${loggedInEmail}</div>
+      <div style="font-size:12px; opacity:.75; margin-top:6px; font-weight:700;">
+        (We’ll email your receipt here)
+      </div>
+    `;
+
+    // Put it after the subtotal line
+    topLeft.appendChild(box);
+  }
+}
+
+await applyLoggedInAsUX();
+render();
+
+
 
   // Buy cart uses full condition strings (same as buy.js)
   const TAB_ORDER = ["NM", "LP", "MP", "HP"];
