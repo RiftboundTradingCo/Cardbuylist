@@ -1,8 +1,9 @@
 <main class="page cart-page">
-  <h1 class="page-title">Shipping</h1>
-  <p class="page-subtitle">Choose a shipping method, then you’ll enter your address in Stripe Checkout.</p>
 
-  <!-- TOP PANEL (matches cart styling) -->
+  <h1 class="page-title">Shipping</h1>
+  <p class="page-subtitle">Choose a shipping method. You’ll enter your address in Stripe Checkout.</p>
+
+  <!-- TOP PANEL -->
   <section class="cart-topbar">
     <div class="cart-top-left">
       <div class="cart-total-line">
@@ -20,11 +21,14 @@
         <span class="cart-total-value">$<span id="shipTotal">0.00</span></span>
       </div>
 
-      <!-- Stripe will collect address, we only need email here -->
-      <label class="cart-email" for="shipEmail">
+      <!-- Email (hidden when logged in) -->
+      <label class="cart-email" id="shipEmailLabel" for="shipEmail" style="margin-top:10px;">
         Email for receipt
-        <input type="email" id="shipEmail" placeholder="you@example.com" autocomplete="email" />
+        <input type="email" id="shipEmail" placeholder="you@example.com" />
       </label>
+
+      <!-- Logged in banner (injected by JS) -->
+      <div id="loggedInAsBox" style="display:none;"></div>
     </div>
 
     <div class="cart-top-right">
@@ -36,25 +40,21 @@
     </div>
   </section>
 
-  <!-- SHIPPING METHOD CARD -->
+  <!-- Shipping methods -->
   <section class="cart-card" style="max-width: 900px; margin: 18px auto;">
-    <h3 style="margin-top:0;">Shipping Method</h3>
-    <p class="muted" style="margin-top:-6px;">
+    <h3 style="margin:0 0 8px;">Shipping Method</h3>
+    <p style="margin:0 0 12px; opacity:.85;">
       Shipping address will be collected in Stripe Checkout.
+      <br />
+      Free shipping automatically appears when your subtotal is $99+.
     </p>
 
     <div id="shipMethods"></div>
-
-    <div class="muted" style="margin-top:12px; font-size:13px;">
-      Free shipping automatically appears when your subtotal is $99+.
-    </div>
   </section>
+
 </main>
 
-<!-- image modal (optional; safe to include even if unused) -->
-<div id="imageModal" class="image-modal hidden">
-  <button id="imageModalClose" class="image-modal-close" type="button">×</button>
-  <img id="imageModalImg" alt="Card preview">
-</div>
+<script src="/shipping.js?v=2"></script>
+<script src="/cart-badge.js?v=1"></script>
+<script src="/sell-cart-badge.js?v=1"></script>
 
-<script src="/shipping.js?v=1"></script>

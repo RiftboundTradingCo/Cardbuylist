@@ -442,7 +442,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
 
     const email = String(req.body?.email || "").trim();
     const cart = Array.isArray(req.body?.cart) ? req.body.cart : [];
-    const shippingMethodId = String(req.body?.shippingMethodId || "").trim(); // "free" | "standard" | "priority" | "express"
+    const shippingMethodIdRaw = String(req.body?.shippingMethodId || "standard").trim(); // free|standard|priority|express
 
     if (!cart.length) return res.status(400).json({ ok: false, error: "Cart is empty" });
     if (!email || !email.includes("@")) return res.status(400).json({ ok: false, error: "Valid email required" });
@@ -451,6 +451,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
     const userIdRaw = getSessionUserId(req);
     const userId = isUuid(userIdRaw) ? userIdRaw : null;
 
+    // Save pending checkout
     await pool.query(
       `INSERT INTO app.pending_checkout(order_id, user_id, email, cart_json)
        VALUES ($1,$2,$3,$4::jsonb)`,
@@ -461,12 +462,9 @@ app.post("/api/create-checkout-session", async (req, res) => {
     const catalogFallback = readJsonSafe(CATALOG_PATH) || {};
     const line_items = [];
 
-    // We also compute subtotal (so we can decide free shipping)
-    let subtotalCents = 0;
-
     for (const item of cart) {
       const sku = String(item?.sku || "").trim();
-      const condition = normalizeCondition(item?.condition);
+      const condition = normalizeCondition(item?.condition); // uses your CONDITION_MULT helper
       const qty = Math.max(1, Number(item?.qty || 0));
 
       if (!sku) return res.status(400).json({ ok: false, error: "Missing SKU" });
@@ -480,8 +478,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
       const name = String(inv?.name || catalogFallback?.[sku]?.name || sku);
       const basePriceCents = Number(inv?.price_cents ?? catalogFallback?.[sku]?.price_cents ?? 0);
 
-      const unitCents = centsForCondition(basePriceCents, condition);
-      subtotalCents += unitCents * qty;
+      const unitCents = centsForCondition(basePriceCents, condition); // your helper
 
       line_items.push({
         quantity: qty,
@@ -493,70 +490,67 @@ app.post("/api/create-checkout-session", async (req, res) => {
       });
     }
 
-    // ---- Shipping options (Stripe Checkout) ----
+    // ---- Subtotal (items only) for free-shipping eligibility ----
+    const subtotalCents = line_items.reduce((sum, li) => {
+      const unit = Number(li?.price_data?.unit_amount || 0);
+      const qty = Number(li?.quantity || 0);
+      return sum + unit * qty;
+    }, 0);
+
     const FREE_THRESHOLD_CENTS = 9900;
 
-    const SHIPPING = {
+    // ---- Build Stripe shipping_options (fixed_amount) ----
+    const SHIPPING_METHODS = {
       free:     { id: "free",     label: "Free Shipping (3–5 business days)", cents: 0,    minDays: 3, maxDays: 5 },
-      standard: { id: "standard", label: "Standard (3–5 business days)",      cents: 499,  minDays: 3, maxDays: 5 },
-      priority: { id: "priority", label: "Priority (2–3 business days)",      cents: 899,  minDays: 2, maxDays: 3 },
-      express:  { id: "express",  label: "Express (1–2 business days)",       cents: 1499, minDays: 1, maxDays: 2 },
+      standard: { id: "standard", label: "Standard (3–5 business days)",      cents: 599,  minDays: 3, maxDays: 5 },
+      priority: { id: "priority", label: "Priority (2–3 business days)",      cents: 999,  minDays: 2, maxDays: 3 },
+      express:  { id: "express",  label: "Express (1–2 business days)",       cents: 1999, minDays: 1, maxDays: 2 },
     };
 
-    // Base options always offered
-    let options = [SHIPPING.standard, SHIPPING.priority, SHIPPING.express];
+    const allowFree = subtotalCents >= FREE_THRESHOLD_CENTS;
 
-    // Add free shipping if eligible
-    if (subtotalCents >= FREE_THRESHOLD_CENTS) {
-      // include free + upgrades (priority/express). You can also keep standard if you want.
-      options = [SHIPPING.free, SHIPPING.priority, SHIPPING.express];
-    }
+    // Validate requested selection
+    let shippingMethodId = SHIPPING_METHODS[shippingMethodIdRaw] ? shippingMethodIdRaw : "standard";
+    if (shippingMethodId === "free" && !allowFree) shippingMethodId = "standard";
 
-    // If the user selected a method on your shipping page, put it first so Stripe preselects it
-    if (shippingMethodId) {
-      const idx = options.findIndex(o => o.id === shippingMethodId);
-      if (idx > 0) {
-        const [picked] = options.splice(idx, 1);
-        options.unshift(picked);
-      }
-      // If they selected "free" but they're not eligible, ignore it (Stripe will show paid options)
-      if (shippingMethodId === "free" && subtotalCents < FREE_THRESHOLD_CENTS) {
-        // no-op; free won't be in the list
-      }
-    } else {
-      // No selection: if eligible, keep Free first automatically
-      // (already handled by ordering above)
-    }
+    // Choose which methods to offer
+    let offered = ["standard", "priority", "express"];
+    if (allowFree) offered = ["free", "priority", "express"]; // or include standard too if you want
 
-    const shipping_options = options.map(o => ({
-      shipping_rate_data: {
-        type: "fixed_amount",
-        fixed_amount: { amount: o.cents, currency: "usd" },
-        display_name: o.label,
-        delivery_estimate: {
-          minimum: { unit: "business_day", value: o.minDays },
-          maximum: { unit: "business_day", value: o.maxDays },
+    // Put selected method first so Stripe preselects it
+    offered = [shippingMethodId, ...offered.filter((id) => id !== shippingMethodId)];
+
+    const shipping_options = offered.map((id) => {
+      const o = SHIPPING_METHODS[id];
+      return {
+        shipping_rate_data: {
+          type: "fixed_amount",
+          fixed_amount: { amount: o.cents, currency: "usd" },
+          display_name: o.label,
+          delivery_estimate: {
+            minimum: { unit: "business_day", value: o.minDays },
+            maximum: { unit: "business_day", value: o.maxDays },
+          },
         },
-      },
-    }));
+      };
+    });
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: email || undefined,
       line_items,
-      shipping_address_collection: { allowed_countries: ["US"] },
 
-      // ✅ real Stripe shipping options
+      shipping_address_collection: { allowed_countries: ["US"] },
       shipping_options,
 
       success_url: `${PUBLIC_BASE_URL}/success.html?order=${encodeURIComponent(orderId)}`,
-      cancel_url: `${PUBLIC_BASE_URL}/shipping.html`, // send them back to shipping page
+      cancel_url: `${PUBLIC_BASE_URL}/shipping.html`,
 
       metadata: {
         orderId,
         userId: userId || "",
         email,
-        shippingMethodId: shippingMethodId || "",
+        shippingMethodId,
         subtotalCents: String(subtotalCents),
       },
     });
@@ -567,6 +561,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
     return res.status(500).json({ ok: false, error: e.message || "Could not create checkout session" });
   }
 });
+
 
 
 /* =========================
