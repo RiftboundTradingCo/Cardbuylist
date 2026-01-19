@@ -859,7 +859,7 @@ for (const ln of lines) {
 
 app.get("/api/catalog", async (req, res) => {
   try {
-    // 1) Find which schema actually has the inventory table
+
     const t = await pool.query(`
       SELECT table_schema
       FROM information_schema.tables
@@ -874,7 +874,6 @@ app.get("/api/catalog", async (req, res) => {
       return res.status(500).json({ ok: false, error: "Inventory table not found (app/public)." });
     }
 
-    // 2) Detect which columns exist
     const c = await pool.query(
       `
       SELECT column_name
@@ -900,7 +899,7 @@ app.get("/api/catalog", async (req, res) => {
         SELECT sku, name, price_cents, image,
                stock_nm, stock_lp, stock_mp, stock_hp
                ${hasMeta ? ", set_code, card_number, rarity, foil" : ""}
-        FROM ${schema}.inventory
+        FROM ${schema}".inventory
         ORDER BY name
       `);
     } else if (hasSingleStock) {
