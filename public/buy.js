@@ -308,11 +308,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       card.dataset.rarity = String(rarity || "");
       card.dataset.set = String(setCode || "");
 
-
-const setCode = p.set_code || "";
-const rarity = p.rarity || "";
-const number = p.number || p.card_number || "";
-
 const metaBits = [
   setCode ? `<span class="meta-pill">${setCode}</span>` : "",
   number ? `<span class="meta-pill">#${number}</span>` : "",
