@@ -849,8 +849,6 @@ for (const ln of lines) {
     }
 
     return res.json({ ok: true, orderId });
-
-    return res.json({ ok: true, orderId });
   } catch (e) {
     console.error("Sell submit error:", e);
     return res.status(500).json({ ok: false, error: e.message || "Could not submit" });
@@ -893,14 +891,14 @@ app.get("/api/catalog", async (req, res) => {
       r = await pool.query(`
         SELECT sku, name, price_cents, image, stock_nm, stock_lp, stock_mp, stock_hp
         ${hasMeta ? ", set_code, card_number, rarity, foil" : ""}
-        FROM ${schema}.inventory
+        FROM "${schema}".inventory
         ORDER BY name
       `);
     } else if (hasSingleStock) {
       r = await pool.query(`
         SELECT sku, name, price_cents, image, stock
         ${hasMeta ? ", set_code, card_number, rarity, foil" : ""}
-        FROM ${schema}.inventory
+        FROM "${schema}".inventory
         ORDER BY name
       `);
     } else {
@@ -1000,87 +998,6 @@ app.get("/api/selllist", async (req, res) => {
   } catch (e) {
     console.error("selllist db error:", e);
     return res.status(500).json({ ok: false, error: "Selllist load failed" });
-  }
-});
-
-
-    const schema = t.rows?.[0]?.table_schema;
-    if (!schema) {
-      return res.status(500).json({ ok: false, error: "Inventory table not found (app/public)." });
-    }
-
-    // 2) Detect which columns exist
-    const c = await pool.query(
-      `
-      SELECT column_name
-      FROM information_schema.columns
-      WHERE table_schema=$1 AND table_name='inventory'
-      `,
-      [schema]
-    );
-    const cols = new Set(c.rows.map(r => r.column_name));
-
-    const hasSplitStock =
-      cols.has("stock_nm") && cols.has("stock_lp") && cols.has("stock_mp") && cols.has("stock_hp");
-    const hasSingleStock = cols.has("stock");
-
-    // 3) Query inventory in a way that matches your schema
-    let r;
-    if (hasSplitStock) {
-      r = await pool.query(`
-        SELECT sku, name, price_cents, image, stock_nm, stock_lp, stock_mp, stock_hp
-        FROM ${schema}.inventory
-        ORDER BY name
-      `);
-    } else if (hasSingleStock) {
-      r = await pool.query(`
-        SELECT sku, name, price_cents, image, stock
-        FROM ${schema}.inventory
-        ORDER BY name
-      `);
-    } else {
-      return res.status(500).json({
-        ok: false,
-        error: `Inventory table missing stock columns (need stock OR stock_nm/stock_lp/stock_mp/stock_hp).`,
-      });
-    }
-
-    // 4) Build catalog in the format your buy.js expects
-    const catalog = {};
-    for (const row of r.rows) {
-      if (hasSplitStock) {
-        catalog[row.sku] = {
-          name: row.name,
-          price_cents: row.price_cents,
-          image: row.image,
-          stock: {
-            "Near Mint": Number(row.stock_nm || 0),
-            "Lightly Played": Number(row.stock_lp || 0),
-            "Moderately Played": Number(row.stock_mp || 0),
-            "Heavily Played": Number(row.stock_hp || 0),
-          },
-        };
-      } else {
-        // single stock column -> treat as NM for now
-        const nm = Number(row.stock || 0);
-        catalog[row.sku] = {
-          name: row.name,
-          price_cents: row.price_cents,
-          image: row.image,
-          stock: {
-            "Near Mint": nm,
-            "Lightly Played": 0,
-            "Moderately Played": 0,
-            "Heavily Played": 0,
-          },
-        };
-      }
-    }
-
-    return res.json({ ok: true, catalog });
-  } catch (e) {
-    console.error("catalog error:", e); // IMPORTANT: this will show the real cause in Render logs
-    return res.status(500).json({ ok: false, error: "Catalog load failed" });
   }
 });
 
