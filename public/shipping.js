@@ -9,23 +9,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   const btn = document.getElementById("continueToCheckoutBtn");
 
   const emailEl = document.getElementById("shipEmail");
-  const emailLabelEl = document.getElementById("shipEmailLabel");
-  const loggedInBox = document.getElementById("loggedInAsBox");
+  const topLeft = document.querySelector(".cart-top-left");
 
   function showMsg(t, ok = true) {
     if (!msgEl) return;
     msgEl.textContent = t || "";
     msgEl.style.color = ok ? "#1b7f3a" : "#b00020";
   }
-  function safeParse(raw, fallback) {
-    try { return JSON.parse(raw); } catch { return fallback; }
-  }
-  function loadCart() {
-    return safeParse(localStorage.getItem(CART_KEY) || "[]", []);
-  }
-  function money(cents) {
-    return `$${(Number(cents || 0) / 100).toFixed(2)}`;
-  }
+  function safeParse(raw, fallback) { try { return JSON.parse(raw); } catch { return fallback; } }
+  function loadCart() { return safeParse(localStorage.getItem(CART_KEY) || "[]", []); }
+  function money(cents) { return `$${(Number(cents || 0) / 100).toFixed(2)}`; }
 
   // same rules as buy.js
   const CONDITION_MULT = {
@@ -51,9 +44,48 @@ document.addEventListener("DOMContentLoaded", async () => {
     return data.catalog;
   }
 
-  // ---- logged in email UX ----
+  // local shipping methods (used for display + passing chosen method to server)
+  const FREE_THRESHOLD_CENTS = 9900;
+  const SHIPPING_METHODS = [
+    { id: "free",     label: "Free Shipping (3–5 business days)", cents: 0 },
+    { id: "standard", label: "Standard (3–5 business days)",      cents: 499 },
+    { id: "priority", label: "Priority (2–3 business days)",      cents: 999 },
+    { id: "express",  label: "Express (1–2 business days)",       cents: 1999 },
+  ];
+
+  function renderMethods(subtotalCents, selectedId) {
+    const canFree = subtotalCents >= FREE_THRESHOLD_CENTS;
+    const list = SHIPPING_METHODS.filter(m => m.id !== "free" || canFree);
+
+    // pick default
+    const defaultId = selectedId && list.some(m => m.id === selectedId)
+      ? selectedId
+      : (canFree ? "free" : "standard");
+
+    methodsEl.innerHTML = list.map(m => `
+      <label style="display:flex;align-items:center;gap:10px;margin:10px 0;font-weight:800;">
+        <input type="radio" name="shipMethod" value="${m.id}" ${m.id===defaultId?"checked":""}/>
+        <span>${m.label}</span>
+        <span style="margin-left:auto;">${money(m.cents)}</span>
+      </label>
+    `).join("");
+  }
+
+  function getSelectedMethodId(subtotalCents) {
+    const r = document.querySelector('input[name="shipMethod"]:checked');
+    if (r) return String(r.value);
+    return subtotalCents >= FREE_THRESHOLD_CENTS ? "free" : "standard";
+  }
+
+  function findMethod(id) {
+    return SHIPPING_METHODS.find(m => m.id === id) || SHIPPING_METHODS[1];
+  }
+
+  // --- Logged in UX (hide email input & show box) ---
   let loggedInEmail = "";
-  async function applyLoggedInUX() {
+  async function applyLoggedInAsUX() {
+    if (!emailEl) return;
+
     try {
       const meRes = await fetch("/api/me", { cache: "no-store" });
       const me = await meRes.json().catch(() => ({}));
@@ -64,95 +96,51 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (!loggedInEmail) {
       // not logged in
-      if (emailEl) emailEl.style.display = "";
-      if (emailLabelEl) emailLabelEl.style.display = "";
-      if (loggedInBox) loggedInBox.style.display = "none";
+      emailEl.style.display = "";
+      emailEl.readOnly = false;
       return;
     }
 
-    // logged in -> hide input, show box
-    if (emailEl) {
-      emailEl.value = loggedInEmail;
-      emailEl.style.display = "none";
-    }
-    if (emailLabelEl) emailLabelEl.style.display = "none";
+    // logged in
+    emailEl.value = loggedInEmail;
+    emailEl.readOnly = true;
+    emailEl.style.display = "none";
 
-    if (loggedInBox) {
-      loggedInBox.style.display = "";
-      loggedInBox.style.cssText = `
-        margin-top: 10px;
+    // Insert "Logged in as" box if not already present
+    if (topLeft && !document.getElementById("loggedInAsBox")) {
+      const box = document.createElement("div");
+      box.id = "loggedInAsBox";
+      box.style.cssText = `
+        margin: 10px 0 0;
         padding: 12px 14px;
         border-radius: 12px;
         background: rgba(255,255,255,.92);
         border: 1px solid rgba(0,0,0,.12);
         max-width: 560px;
       `;
-      loggedInBox.innerHTML = `
-        <div style="font-size:12px; opacity:.75; font-weight:800; margin-bottom:4px;">Logged in as</div>
-        <div style="font-size:15px; font-weight:800;">${loggedInEmail}</div>
-        <div style="font-size:12px; opacity:.75; margin-top:6px; font-weight:700;">
+      box.innerHTML = `
+        <div style="font-size:12px; opacity:.75; font-weight:900; margin-bottom:4px;">Logged in as</div>
+        <div style="font-size:15px; font-weight:900;">${loggedInEmail}</div>
+        <div style="font-size:12px; opacity:.75; margin-top:6px; font-weight:800;">
           (We’ll email your receipt here)
         </div>
       `;
+      // Put it right below the totals
+      topLeft.appendChild(box);
     }
   }
 
-  // ---- shipping method rendering ----
-  const FREE_THRESHOLD_CENTS = 9900;
-
-  function buildShippingMethods(subtotalCents) {
-    const methods = [
-      { id: "standard", label: "Standard (3–5 business days)", cents: 499 },
-      { id: "priority", label: "Priority (2–3 business days)", cents: 899 },
-      { id: "express", label: "Express (1–2 business days)", cents: 1499 },
-    ];
-
-    if (subtotalCents >= FREE_THRESHOLD_CENTS) {
-      methods.unshift({ id: "free", label: "Free Shipping (3–5 business days)", cents: 0 });
-    }
-
-    return methods;
-  }
-
-  function getSelectedMethodId() {
-    const r = document.querySelector('input[name="shipMethod"]:checked');
-    return r ? String(r.value) : "standard";
-  }
-
-  function renderMethods(methods, selectedId) {
-    if (!methodsEl) return;
-    methodsEl.innerHTML = methods.map(m => `
-      <label style="display:flex; align-items:center; gap:10px; margin: 10px 0; font-weight:800;">
-        <input type="radio" name="shipMethod" value="${m.id}" ${m.id === selectedId ? "checked" : ""}/>
-        <span>${m.label}</span>
-        <span style="margin-left:auto;">${money(m.cents)}</span>
-      </label>
-    `).join("");
-  }
-
-  // ---- init subtotal ----
-  showMsg("");
-  await applyLoggedInUX();
-
+  // --- compute subtotal ---
   const cart = loadCart();
   if (!cart.length) {
     showMsg("Your cart is empty.", false);
     if (btn) btn.disabled = true;
-    if (subtotalEl) subtotalEl.textContent = "0.00";
-    if (shipCostEl) shipCostEl.textContent = "0.00";
-    if (totalEl) totalEl.textContent = "0.00";
     return;
   }
 
   let catalog = {};
-  try {
-    catalog = await fetchCatalog();
-  } catch (e) {
-    console.error(e);
-    showMsg("Could not load catalog.", false);
-    if (btn) btn.disabled = true;
-    return;
-  }
+  try { catalog = await fetchCatalog(); }
+  catch (e) { console.error(e); showMsg("Could not load catalog.", false); return; }
 
   let subtotalCents = 0;
   for (const it of cart) {
@@ -166,14 +154,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     subtotalCents += unitCentsFor(base, cond) * qty;
   }
 
-  const methods = buildShippingMethods(subtotalCents);
-  const defaultSelected = methods[0]?.id || "standard";
-  renderMethods(methods, defaultSelected);
+  // init UI
+  await applyLoggedInAsUX();
+  renderMethods(subtotalCents, ""); // default selection based on subtotal
 
   function recalc() {
-    const id = getSelectedMethodId();
-    const m = methods.find(x => x.id === id) || methods[0];
-    const shipCents = Number(m?.cents || 0);
+    const methodId = getSelectedMethodId(subtotalCents);
+    const method = findMethod(methodId);
+    const shipCents = (methodId === "free" && subtotalCents < FREE_THRESHOLD_CENTS) ? findMethod("standard").cents : method.cents;
 
     if (subtotalEl) subtotalEl.textContent = (subtotalCents / 100).toFixed(2);
     if (shipCostEl) shipCostEl.textContent = (shipCents / 100).toFixed(2);
@@ -185,19 +173,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   recalc();
 
-  // ---- button click (THIS is what was missing/broken) ----
   async function continueToCheckout() {
     showMsg("");
 
     const email = String(loggedInEmail || emailEl?.value || "").trim();
     if (!email || !email.includes("@")) {
-      showMsg("Enter a valid email for the receipt.", false);
+      showMsg("Enter a valid email for receipt.", false);
       return;
     }
 
-    const shippingMethodId = getSelectedMethodId();
+    const shippingMethodId = getSelectedMethodId(subtotalCents);
 
-    if (!btn) return;
     btn.disabled = true;
     const prev = btn.textContent;
     btn.textContent = "Starting checkout…";
@@ -213,7 +199,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!res.ok || !data?.ok || !data?.url) {
         throw new Error(data?.error || `Checkout failed (HTTP ${res.status})`);
       }
-
       window.location.assign(data.url);
     } catch (err) {
       console.error(err);
