@@ -379,13 +379,14 @@ async function startCheckout() {
 if (checkoutBtn) {
   checkoutBtn.addEventListener("click", () => {
     const cart = loadCart();
-    if (!cart.length) {
+    if (!Array.isArray(cart) || cart.length === 0) {
       showMsg("Your cart is empty.", false);
       return;
     }
     window.location.href = "/shipping.html";
   });
 }
+
 
 
   // ---------- clicks ----------
