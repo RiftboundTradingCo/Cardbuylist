@@ -6,6 +6,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const searchEl = document.getElementById("buySearch");
   const clearSearchBtn = document.getElementById("buySearchClear");
   const gridEl = document.getElementById("buyGrid");
+  const rarityFilterEl = document.getElementById("rarityFilter");
+  const setFilterEl    = document.getElementById("setFilter");
+
 
   // mini cart (optional)
   const miniCountEl = document.getElementById("miniCartCount");
@@ -268,16 +271,30 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (secureBtn) secureBtn.addEventListener("click", secureCheckout);
 
   // ---------- render cards ----------
-  function renderGrid(catalog, query) {
+  function renderGrid(catalog, query, rarityVal = "", setVal = "") {
     if (!gridEl) return;
     const q = String(query || "").trim().toLowerCase();
 
     const skus = Object.keys(catalog || {});
     const filtered = skus.filter(sku => {
-      const p = catalog[sku];
-      const name = String(p?.name || sku).toLowerCase();
-      return !q || name.includes(q) || String(sku).toLowerCase().includes(q);
-    });
+  const product = catalog[sku];
+  if (!product) return false;
+
+  // search match
+  const name = String(product?.name || sku).toLowerCase();
+  const searchOk = !q || name.includes(q) || String(sku).toLowerCase().includes(q);
+
+  // rarity match
+  const r = String(product?.rarity || "").trim();
+  const rarityOk = !rarityVal || r === rarityVal;
+
+  // set match
+  const s = String(product?.set_code || "").trim();
+  const setOk = !setVal || s === setVal;
+
+  return searchOk && rarityOk && setOk;
+});
+
 
     gridEl.innerHTML = "";
 
@@ -370,6 +387,43 @@ const metaBits = [
     });
   }
 
+function populateFilters(catalog) {
+  const products = Object.values(catalog || {});
+
+  // gather unique rarities + sets
+  const rarities = new Set();
+  const sets = new Set();
+
+  for (const p of products) {
+    if (p?.rarity) rarities.add(String(p.rarity).trim());
+    if (p?.set_code) sets.add(String(p.set_code).trim());
+  }
+
+  // fill rarity dropdown (keep "All rarities" as value="")
+  if (rarityFilterEl) {
+    const cur = rarityFilterEl.value || "";
+    const list = [...rarities].filter(Boolean).sort((a,b) => a.localeCompare(b));
+
+    rarityFilterEl.innerHTML =
+      `<option value="">All rarities</option>` +
+      list.map(r => `<option value="${r}">${r}</option>`).join("");
+
+    rarityFilterEl.value = list.includes(cur) ? cur : "";
+  }
+
+  // fill set dropdown (keep "All sets" as value="")
+  if (setFilterEl) {
+    const cur = setFilterEl.value || "";
+    const list = [...sets].filter(Boolean).sort((a,b) => a.localeCompare(b));
+
+    setFilterEl.innerHTML =
+      `<option value="">All sets</option>` +
+      list.map(s => `<option value="${s}">${s}</option>`).join("");
+
+    setFilterEl.value = list.includes(cur) ? cur : "";
+  }
+}
+
   // ---------- init ----------
   let catalog = {};
   try {
@@ -379,6 +433,24 @@ const metaBits = [
     if (gridEl) gridEl.innerHTML = `<div class="cart-card">Could not load catalog.</div>`;
     return;
   }
+
+populateFilters(catalog);
+
+// initial render includes current filter selections
+renderGrid(catalog, searchEl?.value || "", rarityFilterEl?.value || "", setFilterEl?.value || "");
+renderMiniCart(catalog);
+
+// when filters change, re-render
+if (rarityFilterEl) {
+  rarityFilterEl.addEventListener("change", () => {
+    renderGrid(catalog, searchEl?.value || "", rarityFilterEl.value || "", setFilterEl?.value || "");
+  });
+}
+if (setFilterEl) {
+  setFilterEl.addEventListener("change", () => {
+    renderGrid(catalog, searchEl?.value || "", rarityFilterEl?.value || "", setFilterEl.value || "");
+  });
+}
 
   renderGrid(catalog, "");
   renderMiniCart(catalog);
@@ -395,6 +467,18 @@ const metaBits = [
       renderGrid(catalog, "");
     });
   }
+
+if (searchEl) {
+  searchEl.addEventListener("input", () => {
+    renderGrid(catalog, searchEl.value, rarityFilterEl?.value || "", setFilterEl?.value || "");
+  });
+}
+if (clearSearchBtn) {
+  clearSearchBtn.addEventListener("click", () => {
+    if (searchEl) searchEl.value = "";
+    renderGrid(catalog, "", rarityFilterEl?.value || "", setFilterEl?.value || "");
+  });
+}
 
   // ---------- clicks (delegation) ----------
   document.addEventListener("click", (e) => {
