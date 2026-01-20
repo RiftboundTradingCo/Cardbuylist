@@ -234,6 +234,115 @@ app.put("/api/admin/inventory/:sku", requireAdmin, async (req, res) => {
   }
 });
 
+const multer = require("multer");
+const { parse } = require("csv-parse/sync");
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+
+// TODO: replace with your real admin check
+function requireAdmin(req, res, next) {
+  // example: if (req.session?.user?.is_admin) return next();
+  return res.status(403).json({ ok: false, error: "Admin only" });
+}
+
+function normCondToDb(cond) {
+  const s = String(cond || "").toLowerCase();
+  if (s.includes("near") || s === "nm") return "NM";
+  if (s.includes("light") || s === "lp") return "LP";
+  if (s.includes("moderate") || s === "mp") return "MP";
+  if (s.includes("heavy") || s === "hp") return "HP";
+  return "NM";
+}
+
+function normBool(v) {
+  const s = String(v || "").trim().toLowerCase();
+  return s === "yes" || s === "true" || s === "1" || s === "y";
+}
+
+function normInt(v, fallback = 0) {
+  const n = Number(String(v ?? "").replace(/[^\d.-]/g, ""));
+  return Number.isFinite(n) ? Math.trunc(n) : fallback;
+}
+
+app.post("/api/admin/import-catalog-csv", requireAdmin, upload.single("file"), async (req, res) => {
+  const file = req.file;
+  if (!file) return res.status(400).json({ ok: false, error: "Missing file" });
+
+  let rows;
+  try {
+    rows = parse(file.buffer.toString("utf8"), {
+      columns: true,
+      skip_empty_lines: true,
+      trim: true,
+    });
+  } catch (e) {
+    return res.status(400).json({ ok: false, error: "Bad CSV format" });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    let upserts = 0;
+
+    for (const r of rows) {
+      const sku = String(r.SKU || r.sku || "").trim();
+      if (!sku) continue;
+
+      const name = String(r.name || r.Name || sku).trim();
+      const image = String(r.image || r.Image || "").trim() || null;
+
+      const set_code = String(r.set || r.set_code || r.Set || "").trim() || null;
+      const card_number = String(r.number || r.card_number || r.Number || "").trim() || null;
+      const rarity = String(r.rarity || r.Rarity || "").trim() || null;
+
+      const condition = normCondToDb(r.condition || r.Condition);
+      const foil = normBool(r.foil || r.Foil);
+
+      const stock = normInt(r.stock || r.Stock, 0);
+      const price_cents = normInt(r.price_cent || r.price_cents || r.PriceCents || r.price || 0, 0);
+
+      // 1) product row (metadata)
+      await client.query(
+        `
+        INSERT INTO app.inventory_products (sku, name, image, set_code, card_number, rarity)
+        VALUES ($1,$2,$3,$4,$5,$6)
+        ON CONFLICT (sku) DO UPDATE
+        SET name=EXCLUDED.name,
+            image=EXCLUDED.image,
+            set_code=EXCLUDED.set_code,
+            card_number=EXCLUDED.card_number,
+            rarity=EXCLUDED.rarity
+        `,
+        [sku, name, image, set_code, card_number, rarity]
+      );
+
+      // 2) variant row (stock/price)
+      await client.query(
+        `
+        INSERT INTO app.inventory_variants (sku, condition, foil, price_cents, stock)
+        VALUES ($1,$2,$3,$4,$5)
+        ON CONFLICT (sku, condition, foil) DO UPDATE
+        SET price_cents=EXCLUDED.price_cents,
+            stock=EXCLUDED.stock
+        `,
+        [sku, condition, foil, price_cents, stock]
+      );
+
+      upserts++;
+    }
+
+    await client.query("COMMIT");
+    return res.json({ ok: true, imported: upserts });
+  } catch (e) {
+    await client.query("ROLLBACK");
+    console.error("CSV import failed:", e);
+    return res.status(500).json({ ok: false, error: "Import failed" });
+  } finally {
+    client.release();
+  }
+});
+
 /* =========================
    STRIPE WEBHOOK (RAW BODY)
    NOTE: must be BEFORE express.json()
@@ -857,95 +966,36 @@ for (const ln of lines) {
 
 app.get("/api/catalog", async (req, res) => {
   try {
-    const t = await pool.query(`
-      SELECT table_schema
-      FROM information_schema.tables
-      WHERE table_name = 'inventory'
-        AND table_schema IN ('app','public')
-      ORDER BY CASE WHEN table_schema='app' THEN 0 ELSE 1 END
-      LIMIT 1
+    const r = await pool.query(`
+      SELECT
+        p.sku, p.name, p.image, p.set_code, p.card_number, p.rarity,
+        v.condition, v.foil, v.price_cents, v.stock
+      FROM app.inventory_products p
+      LEFT JOIN app.inventory_variants v ON v.sku = p.sku
+      ORDER BY p.name, v.condition, v.foil
     `);
-
-    const schema = t.rows?.[0]?.table_schema;
-    if (!schema) {
-      return res.status(500).json({ ok: false, error: "Inventory table not found (app/public)." });
-    }
-
-    const c = await pool.query(
-      `SELECT column_name
-         FROM information_schema.columns
-        WHERE table_schema=$1 AND table_name='inventory'`,
-      [schema]
-    );
-    const cols = new Set(c.rows.map(r => r.column_name));
-
-    const hasSplitStock =
-      cols.has("stock_nm") && cols.has("stock_lp") && cols.has("stock_mp") && cols.has("stock_hp");
-    const hasSingleStock = cols.has("stock");
-
-    const hasMeta =
-      cols.has("set_code") && cols.has("card_number") && cols.has("rarity") && cols.has("foil");
-
-    let r;
-    if (hasSplitStock) {
-      r = await pool.query(`
-        SELECT sku, name, price_cents, image, stock_nm, stock_lp, stock_mp, stock_hp
-        ${hasMeta ? ", set_code, card_number, rarity, foil" : ""}
-        FROM "${schema}".inventory
-        ORDER BY name
-      `);
-    } else if (hasSingleStock) {
-      r = await pool.query(`
-        SELECT sku, name, price_cents, image, stock
-        ${hasMeta ? ", set_code, card_number, rarity, foil" : ""}
-        FROM "${schema}".inventory
-        ORDER BY name
-      `);
-    } else {
-      return res.status(500).json({
-        ok: false,
-        error: "Inventory missing stock columns.",
-      });
-    }
 
     const catalog = {};
     for (const row of r.rows) {
-      const meta = hasMeta ? {
-        set_code: row.set_code || null,
-        card_number: row.card_number || null,
-        rarity: row.rarity || null,
-        foil: !!row.foil,
-      } : { set_code: null, card_number: null, rarity: null, foil: false };
+      if (!catalog[row.sku]) {
+        catalog[row.sku] = {
+          sku: row.sku,
+          name: row.name,
+          image: row.image || null,
+          set_code: row.set_code || null,
+          card_number: row.card_number || null,
+          rarity: row.rarity || null,
+          variants: [],
+        };
+      }
 
-      if (hasSplitStock) {
-        catalog[row.sku] = {
-          sku: row.sku,
-          name: row.name,
-          price_cents: row.price_cents,
-          image: row.image,
-          stock: {
-            "Near Mint": Number(row.stock_nm || 0),
-            "Lightly Played": Number(row.stock_lp || 0),
-            "Moderately Played": Number(row.stock_mp || 0),
-            "Heavily Played": Number(row.stock_hp || 0),
-          },
-          ...meta,
-        };
-      } else {
-        const nm = Number(row.stock || 0);
-        catalog[row.sku] = {
-          sku: row.sku,
-          name: row.name,
-          price_cents: row.price_cents,
-          image: row.image,
-          stock: {
-            "Near Mint": nm,
-            "Lightly Played": 0,
-            "Moderately Played": 0,
-            "Heavily Played": 0,
-          },
-          ...meta,
-        };
+      if (row.condition) {
+        catalog[row.sku].variants.push({
+          condition: row.condition,      // NM/LP/MP/HP
+          foil: !!row.foil,
+          price_cents: Number(row.price_cents || 0),
+          stock: Number(row.stock || 0),
+        });
       }
     }
 
@@ -955,6 +1005,7 @@ app.get("/api/catalog", async (req, res) => {
     return res.status(500).json({ ok: false, error: "Catalog load failed" });
   }
 });
+
 
 
 app.get("/api/selllist", async (req, res) => {
