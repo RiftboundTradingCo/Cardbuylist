@@ -7,8 +7,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const clearSearchBtn = document.getElementById("buySearchClear");
   const gridEl = document.getElementById("buyGrid");
   const rarityFilterEl = document.getElementById("rarityFilter");
-  const setFilterEl    = document.getElementById("setFilter");
-
+  const setFilterEl = document.getElementById("setFilter");
 
   // mini cart (optional)
   const miniCountEl = document.getElementById("miniCartCount");
@@ -46,8 +45,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ---------- storage ----------
   function loadBuyCart() {
-    try { return JSON.parse(localStorage.getItem(BUY_CART_KEY) || "[]"); }
-    catch { return []; }
+    try {
+      return JSON.parse(localStorage.getItem(BUY_CART_KEY) || "[]");
+    } catch {
+      return [];
+    }
   }
 
   function saveBuyCart(cart) {
@@ -79,47 +81,61 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function safeParse(raw, fallback) {
-    try { return JSON.parse(raw); } catch { return fallback; }
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return fallback;
+    }
   }
 
-  // ---------- variant helpers (NEW) ----------
+  // ---------- variant helpers (FIXED) ----------
   function getVariants(product) {
     return Array.isArray(product?.variants) ? product.variants : [];
   }
 
-  function findVariantPreferNonFoil(product, tab) {
-  const dbCond = tabToDbCond(tab);
-  const vars = getVariants(product);
+  /**
+   * Find variant for a given condition.
+   * - tries exact foilPref match first
+   * - if only one variant exists for the condition, returns it (foil-only cards!)
+   * - otherwise prefers non-foil
+   */
+  function findVariant(product, tab, foilPref = false) {
+    const dbCond = tabToDbCond(tab);
+    const vars = getVariants(product).filter(v => String(v?.condition) === dbCond);
+    if (!vars.length) return null;
 
-  // prefer non-foil first
-  let v = vars.find(x => String(x?.condition) === dbCond && Boolean(x?.foil) === false);
-  if (v) return v;
+    const exact = vars.find(v => Boolean(v?.foil) === Boolean(foilPref));
+    if (exact) return exact;
 
-  // fallback to foil
-  v = vars.find(x => String(x?.condition) === dbCond && Boolean(x?.foil) === true);
-  return v || null;
-}
+    if (vars.length === 1) return vars[0];
 
-function unitCentsFor(product, tab) {
-  const v = findVariantPreferNonFoil(product, tab);
-  const p = Number(v?.price_cents);
-  if (Number.isFinite(p) && p >= 0) return p;
-  return Number(product?.price_cents || 0) || 0;
-}
-
-function stockFor(product, tab) {
-  const v = findVariantPreferNonFoil(product, tab);
-  const s = Number(v?.stock);
-  if (Number.isFinite(s)) return s;
-
-  // legacy fallback
-  const long = TAB_TO_COND[String(tab || "NM").toUpperCase()] || "Near Mint";
-  if (product?.stock && typeof product.stock === "object") {
-    return Number(product.stock[long] ?? 0) || 0;
+    return vars.find(v => !v.foil) || vars[0];
   }
-  return Number(product?.stock ?? 0) || 0;
-}
 
+  // unit price for selected condition:
+  // - prefer variant.price_cents
+  // - else fall back to legacy product.price_cents
+  function unitCentsFor(product, tab) {
+    const v = findVariant(product, tab, false);
+    const p = Number(v?.price_cents);
+    if (Number.isFinite(p) && p >= 0) return p;
+    return Number(product?.price_cents || 0) || 0;
+  }
+
+  // stock for selected condition:
+  // - prefer variant.stock
+  // - else fall back to legacy product.stock["Near Mint"...]
+  function stockFor(product, tab) {
+    const v = findVariant(product, tab, false);
+    const s = Number(v?.stock);
+    if (Number.isFinite(s)) return s;
+
+    const long = TAB_TO_COND[String(tab || "NM").toUpperCase()] || "Near Mint";
+    if (product?.stock && typeof product.stock === "object") {
+      return Number(product.stock[long] ?? 0) || 0;
+    }
+    return Number(product?.stock ?? 0) || 0;
+  }
 
   function remainingStock(product, sku, tab) {
     const stock = stockFor(product, tab);
@@ -209,10 +225,7 @@ function stockFor(product, tab) {
     }
 
     if (miniCountEl) miniCountEl.textContent = String(count);
-
-    // IMPORTANT: miniCartSubtotal already has a "$" in HTML
     if (miniSubtotalEl) miniSubtotalEl.textContent = (subtotalCents / 100).toFixed(2);
-
     if (miniItemsEl) miniItemsEl.innerHTML = lines.map(l => `<div>${l}</div>`).join("");
   }
 
@@ -220,14 +233,12 @@ function stockFor(product, tab) {
   async function secureCheckout() {
     if (!secureBtn) return;
 
-    // 1) pull cart from localStorage
     const cart = safeParse(localStorage.getItem(BUY_CART_KEY) || "[]", []);
     if (!Array.isArray(cart) || cart.length === 0) {
       alert("Your cart is empty.");
       return;
     }
 
-    // 2) try to get logged-in email
     let email = "";
     try {
       const meRes = await fetch("/api/me", { cache: "no-store" });
@@ -235,13 +246,11 @@ function stockFor(product, tab) {
       email = me?.ok && me?.user?.email ? String(me.user.email).trim() : "";
     } catch {}
 
-    // If not logged in, send them to buy cart page to enter email / login
     if (!email) {
       window.location.href = "/buy-cart.html";
       return;
     }
 
-    // 3) create checkout session
     secureBtn.disabled = true;
     const prev = secureBtn.textContent;
     secureBtn.textContent = "Starting checkout…";
@@ -270,6 +279,36 @@ function stockFor(product, tab) {
 
   if (secureBtn) secureBtn.addEventListener("click", secureCheckout);
 
+  // ---------- filters ----------
+  function populateFilters(catalog) {
+    const products = Object.values(catalog || {});
+    const rarities = new Set();
+    const sets = new Set();
+
+    for (const p of products) {
+      if (p?.rarity) rarities.add(String(p.rarity).trim());
+      if (p?.set_code) sets.add(String(p.set_code).trim());
+    }
+
+    if (rarityFilterEl) {
+      const cur = rarityFilterEl.value || "";
+      const list = [...rarities].filter(Boolean).sort((a, b) => a.localeCompare(b));
+      rarityFilterEl.innerHTML =
+        `<option value="">All rarities</option>` +
+        list.map(r => `<option value="${r}">${r}</option>`).join("");
+      rarityFilterEl.value = list.includes(cur) ? cur : "";
+    }
+
+    if (setFilterEl) {
+      const cur = setFilterEl.value || "";
+      const list = [...sets].filter(Boolean).sort((a, b) => a.localeCompare(b));
+      setFilterEl.innerHTML =
+        `<option value="">All sets</option>` +
+        list.map(s => `<option value="${s}">${s}</option>`).join("");
+      setFilterEl.value = list.includes(cur) ? cur : "";
+    }
+  }
+
   // ---------- render cards ----------
   function renderGrid(catalog, query, rarityVal = "", setVal = "") {
     if (!gridEl) return;
@@ -277,24 +316,20 @@ function stockFor(product, tab) {
 
     const skus = Object.keys(catalog || {});
     const filtered = skus.filter(sku => {
-  const product = catalog[sku];
-  if (!product) return false;
+      const product = catalog[sku];
+      if (!product) return false;
 
-  // search match
-  const name = String(product?.name || sku).toLowerCase();
-  const searchOk = !q || name.includes(q) || String(sku).toLowerCase().includes(q);
+      const name = String(product?.name || sku).toLowerCase();
+      const searchOk = !q || name.includes(q) || String(sku).toLowerCase().includes(q);
 
-  // rarity match
-  const r = String(product?.rarity || "").trim();
-  const rarityOk = !rarityVal || r === rarityVal;
+      const r = String(product?.rarity || "").trim();
+      const rarityOk = !rarityVal || r === rarityVal;
 
-  // set match
-  const s = String(product?.set_code || "").trim();
-  const setOk = !setVal || s === setVal;
+      const s = String(product?.set_code || "").trim();
+      const setOk = !setVal || s === setVal;
 
-  return searchOk && rarityOk && setOk;
-});
-
+      return searchOk && rarityOk && setOk;
+    });
 
     gridEl.innerHTML = "";
 
@@ -305,11 +340,23 @@ function stockFor(product, tab) {
       const name = String(product.name || sku);
       const imgSrc = normalizeImagePath(product.image);
 
-      // default active tab prefers the first one that has stock
+      // choose active tab by stock
       let activeTab = "NM";
       for (const t of TAB_ORDER) {
         if (stockFor(product, t) > 0) { activeTab = t; break; }
       }
+
+      // foil logic (FIXED: derived from variants)
+      const variants = getVariants(product);
+      const hasFoil = variants.some(v => Boolean(v?.foil));
+      const hasNonFoil = variants.some(v => !Boolean(v?.foil));
+      const onlyFoil = hasFoil && !hasNonFoil;
+
+      const activeVariant = findVariant(product, activeTab, false);
+      const activeIsFoil = Boolean(activeVariant?.foil);
+
+      // show foil badge if foil-only or active variant is foil
+      const showFoil = onlyFoil || activeIsFoil;
 
       const unitCents = unitCentsFor(product, activeTab);
       const stockActive = stockFor(product, activeTab);
@@ -317,37 +364,35 @@ function stockFor(product, tab) {
 
       const card = document.createElement("div");
 
-// ✅ FIX: use `product` (the object you actually have)
-const setCode = String(product?.set_code || "");
-const rarity  = String(product?.rarity || "");
-const number  = String(product?.number || product?.card_number || "");
-const isFoil  = !!product?.foil;
+      const setCode = String(product?.set_code || "");
+      const rarity = String(product?.rarity || "");
+      const number = String(product?.number || product?.card_number || "");
 
-card.className = "store-card";
-card.dataset.sku = sku;
-card.dataset.activeTab = activeTab;
-card.dataset.rarity = rarity;
-card.dataset.set = setCode;
+      card.className = "store-card";
+      card.dataset.sku = sku;
+      card.dataset.activeTab = activeTab;
+      card.dataset.rarity = rarity;
+      card.dataset.set = setCode;
+      card.dataset.foil = showFoil ? "1" : "0";
 
-// optional: make rarity safe for CSS class names
-const rarityClass = rarity.toLowerCase().replace(/[^a-z0-9_-]/g, "");
+      const rarityClass = rarity.toLowerCase().replace(/[^a-z0-9_-]/g, "");
 
-const metaBits = [
-  setCode ? `<span class="meta-pill">${setCode}</span>` : "",
-  number ? `<span class="meta-pill">#${number}</span>` : "",
-  rarity ? `<span class="meta-pill rarity-${rarityClass}">${rarity}</span>` : "",
-  isFoil ? `<span class="meta-pill">Foil</span>` : "",
-].filter(Boolean).join(" ");
-
+      const metaBits = [
+        setCode ? `<span class="meta-pill">${setCode}</span>` : "",
+        number ? `<span class="meta-pill">#${number}</span>` : "",
+        rarity ? `<span class="meta-pill rarity-${rarityClass}">${rarity}</span>` : "",
+        showFoil ? `<span class="meta-pill">Foil</span>` : "",
+      ].filter(Boolean).join(" ");
 
       card.innerHTML = `
         <div class="product-card">
           ${imgSrc ? `
-  <div class="card-img-wrap ${product.foil ? "foil" : ""}">
-    <img class="card-zoom-img" src="${imgSrc}" alt="${name}" />
-    ${product.foil ? `<div class="foil-badge" title="Foil">✨ FOIL</div>` : ""}
-  </div>
-` : ""}
+            <div class="card-img-wrap ${showFoil ? "foil" : ""}">
+              <img class="card-zoom-img" src="${imgSrc}" alt="${name}" />
+              ${showFoil ? `<div class="foil-badge" title="Foil">✨ FOIL</div>` : ""}
+            </div>
+          ` : ""}
+
           <h3 class="product-title">${name}</h3>
 
           <div class="cond-tabs" role="tablist" aria-label="Condition">
@@ -385,49 +430,22 @@ const metaBits = [
       const qtyInput = card.querySelector(".qty-input");
 
       if (addBtn) addBtn.disabled = remActive <= 0;
-      if (plusBtn) plusBtn.disabled = remActive <= 1; // qty selector starts at 1
+      if (plusBtn) plusBtn.disabled = remActive <= 1;
       if (qtyInput) qtyInput.value = "1";
 
       gridEl.appendChild(card);
     });
   }
 
-function populateFilters(catalog) {
-  const products = Object.values(catalog || {});
-
-  // gather unique rarities + sets
-  const rarities = new Set();
-  const sets = new Set();
-
-  for (const p of products) {
-    if (p?.rarity) rarities.add(String(p.rarity).trim());
-    if (p?.set_code) sets.add(String(p.set_code).trim());
+  function rerender() {
+    renderGrid(
+      catalog,
+      searchEl?.value || "",
+      rarityFilterEl?.value || "",
+      setFilterEl?.value || ""
+    );
+    renderMiniCart(catalog);
   }
-
-  // fill rarity dropdown (keep "All rarities" as value="")
-  if (rarityFilterEl) {
-    const cur = rarityFilterEl.value || "";
-    const list = [...rarities].filter(Boolean).sort((a,b) => a.localeCompare(b));
-
-    rarityFilterEl.innerHTML =
-      `<option value="">All rarities</option>` +
-      list.map(r => `<option value="${r}">${r}</option>`).join("");
-
-    rarityFilterEl.value = list.includes(cur) ? cur : "";
-  }
-
-  // fill set dropdown (keep "All sets" as value="")
-  if (setFilterEl) {
-    const cur = setFilterEl.value || "";
-    const list = [...sets].filter(Boolean).sort((a,b) => a.localeCompare(b));
-
-    setFilterEl.innerHTML =
-      `<option value="">All sets</option>` +
-      list.map(s => `<option value="${s}">${s}</option>`).join("");
-
-    setFilterEl.value = list.includes(cur) ? cur : "";
-  }
-}
 
   // ---------- init ----------
   let catalog = {};
@@ -439,55 +457,26 @@ function populateFilters(catalog) {
     return;
   }
 
-populateFilters(catalog);
-
-// initial render includes current filter selections
-renderGrid(catalog, searchEl?.value || "", rarityFilterEl?.value || "", setFilterEl?.value || "");
-renderMiniCart(catalog);
-
-// when filters change, re-render
-if (rarityFilterEl) {
-  rarityFilterEl.addEventListener("change", () => {
-    renderGrid(catalog, searchEl?.value || "", rarityFilterEl.value || "", setFilterEl?.value || "");
-  });
-}
-if (setFilterEl) {
-  setFilterEl.addEventListener("change", () => {
-    renderGrid(catalog, searchEl?.value || "", rarityFilterEl?.value || "", setFilterEl.value || "");
-  });
-}
-
-  renderGrid(catalog, "");
-  renderMiniCart(catalog);
+  populateFilters(catalog);
+  rerender();
 
   // ---------- search ----------
   if (searchEl) {
-    searchEl.addEventListener("input", () => {
-      renderGrid(catalog, searchEl.value);
-    });
+    searchEl.addEventListener("input", rerender);
   }
   if (clearSearchBtn) {
     clearSearchBtn.addEventListener("click", () => {
       if (searchEl) searchEl.value = "";
-      renderGrid(catalog, "");
+      rerender();
     });
   }
 
-if (searchEl) {
-  searchEl.addEventListener("input", () => {
-    renderGrid(catalog, searchEl.value, rarityFilterEl?.value || "", setFilterEl?.value || "");
-  });
-}
-if (clearSearchBtn) {
-  clearSearchBtn.addEventListener("click", () => {
-    if (searchEl) searchEl.value = "";
-    renderGrid(catalog, "", rarityFilterEl?.value || "", setFilterEl?.value || "");
-  });
-}
+  // ---------- filter events ----------
+  if (rarityFilterEl) rarityFilterEl.addEventListener("change", rerender);
+  if (setFilterEl) setFilterEl.addEventListener("change", rerender);
 
   // ---------- clicks (delegation) ----------
   document.addEventListener("click", (e) => {
-    // image zoom
     const zoomImg = e.target.closest(".card-zoom-img");
     if (zoomImg) {
       openModal(zoomImg.src);
@@ -512,7 +501,6 @@ if (clearSearchBtn) {
       const tab = String(tabBtn.dataset.tab || "NM").toUpperCase();
       card.dataset.activeTab = tab;
 
-      // update tab UI
       card.querySelectorAll(".cond-tab").forEach(b => {
         b.classList.toggle("active", String(b.dataset.tab || "") === tab);
       });
@@ -525,6 +513,21 @@ if (clearSearchBtn) {
 
       const priceText = card.querySelector(".priceText");
       if (priceText) priceText.textContent = money(unitCentsFor(product, tab));
+
+      // update foil badge on tab switch (if variant differs)
+      const variants = getVariants(product);
+      const hasFoil = variants.some(v => Boolean(v?.foil));
+      const hasNonFoil = variants.some(v => !Boolean(v?.foil));
+      const onlyFoil = hasFoil && !hasNonFoil;
+
+      const activeVariant = findVariant(product, tab, false);
+      const activeIsFoil = Boolean(activeVariant?.foil);
+      const showFoil = onlyFoil || activeIsFoil;
+
+      const wrap = card.querySelector(".card-img-wrap");
+      const badge = card.querySelector(".foil-badge");
+      if (wrap) wrap.classList.toggle("foil", !!showFoil);
+      if (badge) badge.style.display = showFoil ? "" : "none";
 
       const addBtn = card.querySelector(".addBtn");
       const plusBtn = card.querySelector(".qty-plus");
@@ -571,7 +574,6 @@ if (clearSearchBtn) {
       const desiredQty = Math.max(1, Number(qtyInput?.value || 1));
       const r = addToCartHardLimited(sku, product, tab, desiredQty);
 
-      // Always re-clamp after adding
       const rem2 = remainingStock(product, sku, tab);
       if (addBtn) addBtn.disabled = rem2 <= 0;
       if (plusBtn) plusBtn.disabled = rem2 <= 1;
@@ -584,6 +586,5 @@ if (clearSearchBtn) {
     }
   });
 
-  // keep mini cart updated if other pages modify cart
   window.addEventListener("cart:changed", () => renderMiniCart(catalog));
 });
