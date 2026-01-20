@@ -87,23 +87,39 @@ document.addEventListener("DOMContentLoaded", async () => {
     return Array.isArray(product?.variants) ? product.variants : [];
   }
 
-  function findVariant(product, tab, foil = false) {
-    const dbCond = tabToDbCond(tab);
-    const vars = getVariants(product);
-    return vars.find(v => String(v?.condition) === dbCond && Boolean(v?.foil) === Boolean(foil)) || null;
-  }
+  function findVariantPreferNonFoil(product, tab) {
+  const dbCond = tabToDbCond(tab);
+  const vars = getVariants(product);
 
-  // price for selected condition:
-  // - prefer DB variant.price_cents if present
-  // - else fall back to legacy base price_cents
-  function unitCentsFor(product, tab) {
-    const v = findVariant(product, tab, false);
-    const p = Number(v?.price_cents);
-    if (Number.isFinite(p) && p >= 0) return p;
+  // prefer non-foil first
+  let v = vars.find(x => String(x?.condition) === dbCond && Boolean(x?.foil) === false);
+  if (v) return v;
 
-    // legacy fallback
-    return Number(product?.price_cents || 0) || 0;
+  // fallback to foil
+  v = vars.find(x => String(x?.condition) === dbCond && Boolean(x?.foil) === true);
+  return v || null;
+}
+
+function unitCentsFor(product, tab) {
+  const v = findVariantPreferNonFoil(product, tab);
+  const p = Number(v?.price_cents);
+  if (Number.isFinite(p) && p >= 0) return p;
+  return Number(product?.price_cents || 0) || 0;
+}
+
+function stockFor(product, tab) {
+  const v = findVariantPreferNonFoil(product, tab);
+  const s = Number(v?.stock);
+  if (Number.isFinite(s)) return s;
+
+  // legacy fallback
+  const long = TAB_TO_COND[String(tab || "NM").toUpperCase()] || "Near Mint";
+  if (product?.stock && typeof product.stock === "object") {
+    return Number(product.stock[long] ?? 0) || 0;
   }
+  return Number(product?.stock ?? 0) || 0;
+}
+
 
   // stock for selected condition:
   // - prefer DB variant.stock if present
