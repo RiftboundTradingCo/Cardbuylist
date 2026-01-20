@@ -342,7 +342,12 @@ const metaBits = [
 
       card.innerHTML = `
         <div class="product-card">
-          ${imgSrc ? `<img class="card-zoom-img" src="${imgSrc}" alt="${name}" />` : ""}
+          ${imgSrc ? `
+  <div class="card-img-wrap ${product.foil ? "foil" : ""}">
+    <img class="card-zoom-img" src="${imgSrc}" alt="${name}" />
+    ${product.foil ? `<div class="foil-badge" title="Foil">✨ FOIL</div>` : ""}
+  </div>
+` : ""}
           <h3 class="product-title">${name}</h3>
 
           <div class="cond-tabs" role="tablist" aria-label="Condition">

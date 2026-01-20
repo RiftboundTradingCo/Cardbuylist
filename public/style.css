@@ -1554,3 +1554,50 @@ body {
 .rarity-Rare{ }
 .rarity-Epic{ }
 .rarity-Showcase{ }
+
+.card-img-wrap{
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.foil-badge{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+
+  padding: 6px 10px;
+  border-radius: 999px;
+
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: .5px;
+
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(0,0,0,.15);
+
+  box-shadow: 0 6px 14px rgba(0,0,0,.18);
+  backdrop-filter: blur(4px);
+  user-select: none;
+  pointer-events: none;
+}
+
+.card-img-wrap.foil::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius: 18px; /* adjust if your image has rounding */
+  pointer-events:none;
+
+  background:
+    linear-gradient(120deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,.35) 20%,
+      rgba(255,255,255,0) 40%,
+      rgba(255,255,255,.18) 60%,
+      rgba(255,255,255,0) 80%
+    );
+  mix-blend-mode: screen;
+  opacity: .55;
+}
