@@ -121,22 +121,6 @@ function stockFor(product, tab) {
 }
 
 
-  // stock for selected condition:
-  // - prefer DB variant.stock if present
-  // - else fall back to legacy product.stock["Near Mint"...]
-  function stockFor(product, tab) {
-    const v = findVariant(product, tab, false);
-    const s = Number(v?.stock);
-    if (Number.isFinite(s)) return s;
-
-    // legacy fallback (your old shape)
-    const long = TAB_TO_COND[String(tab || "NM").toUpperCase()] || "Near Mint";
-    if (product?.stock && typeof product.stock === "object") {
-      return Number(product.stock[long] ?? 0) || 0;
-    }
-    return Number(product?.stock ?? 0) || 0;
-  }
-
   function remainingStock(product, sku, tab) {
     const stock = stockFor(product, tab);
     const longCond = TAB_TO_COND[String(tab || "NM").toUpperCase()] || "Near Mint";
