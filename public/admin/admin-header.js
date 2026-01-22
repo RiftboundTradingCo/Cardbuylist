@@ -12,11 +12,11 @@
   // 2) Inject shared header
   if (headerEl) {
     const h = await fetch("/admin/_admin-header.html", { cache: "no-store" });
-    headerEl.innerHTML = await h.text();
+    if (h.ok) headerEl.innerHTML = await h.text();
   }
 
-  // 3) Highlight current link (matches data-path)
-  const here = location.pathname.replace(/\/+$/, "") || "/admin";
+  // 3) Highlight current link
+  const here = (location.pathname.replace(/\/+$/, "") || "/admin");
   document.querySelectorAll(".navlink[data-path]").forEach((a) => {
     const p = (a.getAttribute("data-path") || "").replace(/\/+$/, "");
     if (p === here) a.classList.add("active");
@@ -34,13 +34,13 @@
     });
   }
 
-  // 5) Optional: show who is logged in (uses /api/me)
+  // 5) Show who is logged in
   try {
     const meRes = await fetch("/api/me", { cache: "no-store" });
     const me = await meRes.json().catch(() => ({}));
     const whoEl = document.getElementById("adminWho");
     if (whoEl && me?.ok && me?.user?.email) {
-      whoEl.style.display = "block";
+      whoEl.style.display = "inline";
       whoEl.textContent = `Signed in as ${me.user.email}`;
     }
   } catch {}

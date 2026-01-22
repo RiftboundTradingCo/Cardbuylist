@@ -1,22 +1,19 @@
 <header class="topbar">
-  <a class="brand" href="/admin">
+  <a class="brand" href="/buy.html">
     <img class="site-logo" src="/images/riftbound-logo.png" alt="Riftbound Trading Co" />
     <div class="brand-name">Riftbound Trading Co</div>
   </a>
 
   <nav class="navlinks">
-    <a class="navlink" data-path="/admin" href="/admin">Orders</a>
-    <a class="navlink" data-path="/admin/admin-inventory" href="/admin/admin-inventory">Inventory</a>
-    <a class="navlink" data-path="/admin/admin-import" href="/admin/admin-import">Import CSV</a>
+    <a class="navlink" data-path="/admin" href="/admin">Admin Home</a>
     <a class="navlink" data-path="/admin/selllist-upload" href="/admin/selllist-upload">Selllist Upload</a>
+    <a class="navlink" data-path="/admin/inventory" href="/admin/inventory">Inventory</a>
+    <a class="navlink" data-path="/admin/import" href="/admin/import">Import</a>
 
-    <span class="nav-spacer"></span>
+    <a class="navlink" data-path="/buy.html" href="/buy.html">Store</a>
+    <a class="navlink" data-path="/account.html" href="/account.html">Account</a>
 
-    <a class="navlink" href="/buy.html">Store</a>
-    <a class="navlink" href="/account.html">Account</a>
-
-    <button id="adminLogoutBtn" class="navbtn" type="button">Logout</button>
+    <button id="adminLogoutBtn" class="navlink" type="button">Logout</button>
+    <span id="adminWho" style="display:none; margin-left:10px; opacity:.8;"></span>
   </nav>
-
-  <div id="adminWho" class="admin-who" style="display:none;"></div>
 </header>

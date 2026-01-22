@@ -1,376 +1,354 @@
-SKU,Name,Image,NM,LP,MP,max_nm,max_lp,max_mp
-Acc_ses,Acceptable Losses,/images/Acceptable Losses - Origins.jpg,0.1,0.08,0.05,10,5,0
-Ada_ron,Adaptatron,/images/Adaptatron - Origins.jpg,0.1,0.08,0.05,10,5,0
-Ahr_ing,Ahri - Alluring,/images/Ahri - Alluring - Origins.jpg,0.25,0.2,0.125,10,5,0
-Ahr_rt),Ahri - Alluring (Alternate Art),/images/Ahri - Alluring (Alternate Art) - Origins.jpg,4.75,3.8,2.375,10,5,0
-Ahr_ive,Ahri - Inquisitive,/images/Ahri - Inquisitive - Origins.jpg,10.4,8.32,5.2,10,5,0
-Ahr_irt),Ahri - Inquisitive (Alternate Art),/images/Ahri - Inquisitive (Alternate Art) - Origins.jpg,15.43,12.344,7.715,10,5,0
-Ahr_Fox,Ahri - Nine-Tailed Fox,/images/Ahri - Nine-Tailed Fox - Origins.jpg,0.25,0.2,0.125,10,5,0
-Ahr_ed),Ahri - Nine-Tailed Fox (Overnumbered),/images/Ahri - Nine-Tailed Fox (Overnumbered) - Origins.jpg,168.75,135,84.375,10,5,0
-Ahr_re),Ahri - Nine-Tailed Fox (Signature),/images/Ahri - Nine-Tailed Fox (Signature) - Origins.jpg,1200,960,600,10,5,0
-Alb_ros,Albus Ferros,/images/Albus Ferros - Origins.jpg,0.1,0.08,0.05,10,5,0
-Alt_ity,Altar to Unity,/images/Altar to Unity - Origins.jpg,0.1,0.08,0.05,10,5,0
-Ani_mal,Anivia - Primal,/images/Anivia - Primal - Origins.jpg,0.25,0.2,0.125,10,5,0
-Ann_er),Annie - Dark Child (Starter),/images/Annie - Dark Child (Starter) - Origins.jpg,18.03,14.424,9.015,10,5,0
-Ann_ery,Annie - Fiery,/images/Annie - Fiery - Origins.jpg,0.9,0.72,0.45,10,5,0
-Ann_orn,Annie - Stubborn,/images/Annie - Stubborn - Origins.jpg,3.15,2.52,1.575,10,5,0
-Are_Bar,Arena Bar,/images/Arena Bar - Origins.jpg,0.1,0.08,0.05,10,5,0
-Asp_imb,Aspirant's Climb,/images/Aspirant's Climb - Origins.jpg,0.1,0.08,0.05,10,5,0
-Ava_ver,Ava Achiever,/images/Ava Achiever - Origins.jpg,0.1,0.08,0.05,10,5,0
-Bac_ack,Back to Back,/images/Back to Back - Origins.jpg,0.1,0.08,0.05,10,5,0
-Bac_Bar,Back-Alley Bar,/images/Back-Alley Bar - Origins.jpg,0.1,0.08,0.05,10,5,0
-Bai_ook,Baited Hook,/images/Baited Hook - Origins.jpg,27.3,21.84,13.65,10,5,0
-Ban_ree,Bandle Tree,/images/Bandle Tree - Origins.jpg,0.1,0.08,0.05,10,5,0
-Bil_lly,Bilgewater Bully,/images/Bilgewater Bully - Origins.jpg,0.1,0.08,0.05,10,5,0
-Bla_wer,Blast of Power,/images/Blast of Power - Origins.jpg,1.12,0.896,0.56,10,5,0
-Bla_Fae,Blastcone Fae,/images/Blastcone Fae - Origins.jpg,0.25,0.2,0.125,10,5,0
-Bla_her,Blazing Scorcher,/images/Blazing Scorcher - Origins.jpg,0.1,0.08,0.05,10,5,0
-Bli_ury,Blind Fury,/images/Blind Fury - Origins.jpg,0.1,0.08,0.05,10,5,0
-Bli_ive,Blitzcrank - Impassive,/images/Blitzcrank - Impassive - Origins.jpg,0.25,0.2,0.125,10,5,0
-Blo_ock,Block,/images/Block - Origins.jpg,0.1,0.08,0.05,10,5,0
-Bod_une,Body Rune,/images/Body Rune - Origins.jpg,0.1,0.08,0.05,10,5,0
-Bod_rt),Body Rune (Alternate Art),/images/Body Rune (Alternate Art) - Origins.jpg,6.01,4.808,3.005,10,5,0
-Bra_eer,Brazen Buccaneer,/images/Brazen Buccaneer - Origins.jpg,0.1,0.08,0.05,10,5,0
-Bry_ong,Brynhir Thundersong,/images/Brynhir Thundersong - Origins.jpg,0.25,0.2,0.125,10,5,0
-Buf_uff,Buff,/images/Buff - Origins.jpg,0.1,0.08,0.05,10,5,0
-Bul_ime,Bullet Time,/images/Bullet Time - Origins.jpg,17.71,14.168,8.855,10,5,0
-Cai_ing,Caitlyn - Patrolling,/images/Caitlyn - Patrolling - Origins.jpg,0.25,0.2,0.125,10,5,0
-Cal_ory,Call to Glory,/images/Call to Glory - Origins.jpg,0.1,0.08,0.05,10,5,0
-Cal_une,Calm Rune,/images/Calm Rune - Origins.jpg,0.25,0.2,0.125,10,5,0
-Cal_rt),Calm Rune (Alternate Art),/images/Calm Rune (Alternate Art) - Origins.jpg,15.43,12.344,7.715,10,5,0
-Can_age,Cannon Barrage,/images/Cannon Barrage - Origins.jpg,0.1,0.08,0.05,10,5,0
-Cap_ron,Captain Farron,/images/Captain Farron - Origins.jpg,0.1,0.08,0.05,10,5,0
-Car_ine,Carnivorous Snapvine,/images/Carnivorous Snapvine - Origins.jpg,0.25,0.2,0.125,10,5,0
-Cat_ons,Catalyst of Aeons,/images/Catalyst of Aeons - Origins.jpg,0.25,0.2,0.125,10,5,0
-Cem_ant,Cemetery Attendant,/images/Cemetery Attendant - Origins.jpg,0.1,0.08,0.05,10,5,0
-Cha_nge,Challenge,/images/Challenge - Origins.jpg,0.1,0.08,0.05,10,5,0
-Cha_une,Chaos Rune,/images/Chaos Rune - Origins.jpg,0.1,0.08,0.05,10,5,0
-Cha_rt),Chaos Rune (Alternate Art),/images/Chaos Rune (Alternate Art) - Origins.jpg,17.71,14.168,8.855,10,5,0
-Cha_arm,Charm,/images/Charm - Origins.jpg,0.1,0.08,0.05,10,5,0
-Che_cer,Chemtech Enforcer,/images/Chemtech Enforcer - Origins.jpg,0.1,0.08,0.05,10,5,0
-Cit_eld,Cithria of Cloudfield,/images/Cithria of Cloudfield - Origins.jpg,0.1,0.08,0.05,10,5,0
-Cle_ave,Cleave,/images/Cleave - Origins.jpg,0.1,0.08,0.05,10,5,0
-Clo_per,Clockwork Keeper,/images/Clockwork Keeper - Origins.jpg,0.1,0.08,0.05,10,5,0
-Com_ros,Commander Ledros,/images/Commander Ledros - Origins.jpg,0.25,0.2,0.125,10,5,0
-Con_ont,Confront,/images/Confront - Origins.jpg,0.1,0.08,0.05,10,5,0
-Con_ast,Consult the Past,/images/Consult the Past - Origins.jpg,0.1,0.08,0.05,10,5,0
-Con_ion,Convergent Mutation,/images/Convergent Mutation - Origins.jpg,0.1,0.08,0.05,10,5,0
-Cra_air,Crackshot Corsair,/images/Crackshot Corsair - Origins.jpg,0.1,0.08,0.05,10,5,0
-Cru_ron,Cruel Patron,/images/Cruel Patron - Origins.jpg,0.1,0.08,0.05,10,5,0
-Cul_eak,Cull the Weak,/images/Cull the Weak - Origins.jpg,0.1,0.08,0.05,10,5,0
-Dan_Duo,Dangerous Duo,/images/Dangerous Duo - Origins.jpg,0.1,0.08,0.05,10,5,0
-Dar_oro,Daring Poro,/images/Daring Poro - Origins.jpg,0.1,0.08,0.05,10,5,0
-Dar_ner,Darius - Executioner,/images/Darius - Executioner - Origins.jpg,2.47,1.976,1.235,10,5,0
-Dar_ert),Darius - Executioner (Alternate Art),/images/Darius - Executioner (Alternate Art) - Origins.jpg,4.75,3.8,2.375,10,5,0
-Dar_xus,Darius - Hand of Noxus,/images/Darius - Hand of Noxus - Origins.jpg,0.1,0.08,0.05,10,5,0
-Dar_ed),Darius - Hand of Noxus (Overnumbered),/images/Darius - Hand of Noxus (Overnumbered) - Origins.jpg,45.675,36.54,22.8375,10,5,0
-Dar_re),Darius - Hand of Noxus (Signature),/images/Darius - Hand of Noxus (Signature) - Origins.jpg,393.75,315,196.875,10,5,0
-Dar_ian,Darius - Trifarian,/images/Darius - Trifarian - Origins.jpg,6.825,5.46,3.4125,10,5,0
-Dar_rt),Darius - Trifarian (Alternate Art),/images/Darius - Trifarian (Alternate Art) - Origins.jpg,16.25,13,8.125,10,5,0
-Daz_ora,Dazzling Aurora,/images/Dazzling Aurora - Origins.jpg,61.95,49.56,30.975,10,5,0
-Dea_tor,Deadbloom Predator,/images/Deadbloom Predator - Origins.jpg,96,76.8,48,10,5,0
-Dec_ike,Decisive Strike,/images/Decisive Strike - Origins.jpg,0.25,0.2,0.125,10,5,0
-Def_efy,Defy,/images/Defy - Origins.jpg,0.25,0.2,0.125,10,5,0
-Dis_ine,Discipline,/images/Discipline - Origins.jpg,0.1,0.08,0.05,10,5,0
-Dis_ate,Disintegrate,/images/Disintegrate - Origins.jpg,0.1,0.08,0.05,10,5,0
-Div_ent,Divine Judgment,/images/Divine Judgment - Origins.jpg,10.075,8.06,5.0375,10,5,0
-Dr._ert,Dr. Mundo - Expert,/images/Dr. Mundo - Expert - Origins.jpg,1.91,1.528,0.955,10,5,0
-Dra_age,Dragon's Rage,/images/Dragon's Rage - Origins.jpg,3.375,2.7,1.6875,10,5,0
-Dra_oat,Draven - Showboat,/images/Draven - Showboat - Origins.jpg,1.23,0.984,0.615,10,5,0
-Dun_ake,Dune Drake,/images/Dune Drake - Origins.jpg,0.1,0.08,0.05,10,5,0
-Eag_ice,Eager Apprentice,/images/Eager Apprentice - Origins.jpg,0.1,0.08,0.05,10,5,0
-Ecl_ald,Eclipse Herald,/images/Eclipse Herald - Origins.jpg,0.1,0.08,0.05,10,5,0
-Ekk_ent,Ekko - Recurrent,/images/Ekko - Recurrent - Origins.jpg,0.25,0.2,0.125,10,5,0
-Emb_onk,Ember Monk,/images/Ember Monk - Origins.jpg,0.1,0.08,0.05,10,5,0
-En _rde,En Garde,/images/En Garde - Origins.jpg,0.1,0.08,0.05,10,5,0
-Ene_uit,Energy Conduit,/images/Energy Conduit - Origins.jpg,0.1,0.08,0.05,10,5,0
-Fac_ker,Facebreaker,/images/Facebreaker - Origins.jpg,0.1,0.08,0.05,10,5,0
-Fad_ies,Fading Memories,/images/Fading Memories - Origins.jpg,0.1,0.08,0.05,10,5,0
-Fai_tor,Faithful Manufactor,/images/Faithful Manufactor - Origins.jpg,0.1,0.08,0.05,10,5,0
-Fal_met,Falling Comet,/images/Falling Comet - Origins.jpg,0.1,0.08,0.05,10,5,0
-Fal_tar,Falling Star,/images/Falling Star - Origins.jpg,3.93,3.144,1.965,10,5,0
-Fig_ght,Fight or Flight,/images/Fight or Flight - Origins.jpg,0.1,0.08,0.05,10,5,0
-Fin_ark,Final Spark,/images/Final Spark - Origins.jpg,1.68,1.344,0.84,10,5,0
-Fin_ter,Find Your Center,/images/Find Your Center - Origins.jpg,0.1,0.08,0.05,10,5,0
-Fio_ous,Fiora - Victorious,/images/Fiora - Victorious - Origins.jpg,2.13,1.704,1.065,10,5,0
-Fir_orm,Firestorm,/images/Firestorm - Origins.jpg,0.25,0.2,0.125,10,5,0
-Fir_ate,First Mate,/images/First Mate - Origins.jpg,0.1,0.08,0.05,10,5,0
-Fla_ers,Flame Chompers,/images/Flame Chompers - Origins.jpg,0.1,0.08,0.05,10,5,0
-Fla_ash,Flash,/images/Flash - Origins.jpg,32.33,25.864,16.165,10,5,0
-Flu_des,Flurry of Blades,/images/Flurry of Blades - Origins.jpg,0.1,0.08,0.05,10,5,0
-For_ure,Forge of the Future,/images/Forge of the Future - Origins.jpg,0.1,0.08,0.05,10,5,0
-For_ion,Fortified Position,/images/Fortified Position - Origins.jpg,0.1,0.08,0.05,10,5,0
-Fox_ire,Fox-Fire,/images/Fox-Fire - Origins.jpg,10.23,8.184,5.115,10,5,0
-Fur_une,Fury Rune,/images/Fury Rune - Origins.jpg,0.1,0.08,0.05,10,5,0
-Fur_rt),Fury Rune (Alternate Art),/images/Fury Rune (Alternate Art) - Origins.jpg,16.9,13.52,8.45,10,5,0
-Gar_ber,Garbage Grabber,/images/Garbage Grabber - Origins.jpg,0.1,0.08,0.05,10,5,0
-Gar_der,Garen - Commander,/images/Garen - Commander - Origins.jpg,1.23,0.984,0.615,10,5,0
-Gar_er),Garen - Might of Demacia (Starter),/images/Garen - Might of Demacia (Starter) - Origins.jpg,0.9,0.72,0.45,10,5,0
-Gar_ged,Garen - Rugged,/images/Garen - Rugged - Origins.jpg,0.25,0.2,0.125,10,5,0
-Gem_eer,Gemcraft Seer,/images/Gemcraft Seer - Origins.jpg,0.1,0.08,0.05,10,5,0
-Gen_uel,Gentlemen's Duel,/images/Gentlemen's Duel - Origins.jpg,0.25,0.2,0.125,10,5,0
-Get_ed!,Get Excited!,/images/Get Excited! - Origins.jpg,0.1,0.08,0.05,10,5,0
-Gra_gem,Grand Strategem,/images/Grand Strategem - Origins.jpg,0.25,0.2,0.125,10,5,0
-Gro_low,Grove of the God-Willow,/images/Grove of the God-Willow - Origins.jpg,0.1,0.08,0.05,10,5,0
-Gue_are,Guerilla Warfare,/images/Guerilla Warfare - Origins.jpg,9.425,7.54,4.7125,10,5,0
-Gus_ust,Gust,/images/Gust - Origins.jpg,0.1,0.08,0.05,10,5,0
-Hal_omb,Hallowed Tomb,/images/Hallowed Tomb - Origins.jpg,0.1,0.08,0.05,10,5,0
-Har_gon,Harnessed Dragon,/images/Harnessed Dragon - Origins.jpg,0.25,0.2,0.125,10,5,0
-Hei_tor,Heimerdinger - Inventor,/images/Heimerdinger - Inventor - Origins.jpg,0.1,0.08,0.05,10,5,0
-Her_les,Herald of Scales,/images/Herald of Scales - Origins.jpg,0.1,0.08,0.05,10,5,0
-Hex_Ray,Hextech Ray,/images/Hextech Ray - Origins.jpg,0.1,0.08,0.05,10,5,0
-Hid_ade,Hidden Blade,/images/Hidden Blade - Origins.jpg,0.1,0.08,0.05,10,5,0
-Hig_der,Highlander,/images/Highlander - Origins.jpg,0.25,0.2,0.125,10,5,0
-Ica_ain,Icathian Rain,/images/Icathian Rain - Origins.jpg,25.18,20.144,12.59,10,5,0
-Imm_nix,Immortal Phoenix,/images/Immortal Phoenix - Origins.jpg,5,4,2.5,10,5,0
-Imp_ree,Imperial Decree,/images/Imperial Decree - Origins.jpg,0.25,0.2,0.125,10,5,0
-Inc_ate,Incinerate,/images/Incinerate - Origins.jpg,0.25,0.2,0.125,10,5,0
-Inv_nes,Invert Timelines,/images/Invert Timelines - Origins.jpg,26,20.8,13,10,5,0
-Iro_sta,Iron Ballista,/images/Iron Ballista - Origins.jpg,0.1,0.08,0.05,10,5,0
-Jew_sus,Jeweled Colossus,/images/Jeweled Colossus - Origins.jpg,0.1,0.08,0.05,10,5,0
-Jin_ist,Jinx - Demolitionist,/images/Jinx - Demolitionist - Origins.jpg,0.1,0.08,0.05,10,5,0
-Jin_drt),Jinx - Demolitionist (Alternate Art),/images/Jinx - Demolitionist (Alternate Art) - Origins.jpg,4.875,3.9,2.4375,10,5,0
-Jin_non,Jinx - Loose Cannon,/images/Jinx - Loose Cannon - Origins.jpg,0.1,0.08,0.05,10,5,0
-Jin_ed),Jinx - Loose Cannon (Overnumbered),/images/Jinx - Loose Cannon (Overnumbered) - Origins.jpg,78.75,63,39.375,10,5,0
-Jin_re),Jinx - Loose Cannon (Signature),/images/Jinx - Loose Cannon (Signature) - Origins.jpg,521.25,417,260.625,10,5,0
-Jin_bel,Jinx - Rebel,/images/Jinx - Rebel - Origins.jpg,2.58,2.064,1.29,10,5,0
-Jin_rt),Jinx - Rebel (Alternate Art),/images/Jinx - Rebel (Alternate Art) - Origins.jpg,3.03,2.424,1.515,10,5,0
-Kad_nal,Kadregrin the Infernal,/images/Kadregrin the Infernal - Origins.jpg,8.125,6.5,4.0625,10,5,0
-Kai_oid,Kai'Sa - Daughter of the Void,/images/Kai'Sa - Daughter of the Void - Origins.jpg,0.1,0.08,0.05,10,5,0
-Kai_ed),Kai'Sa - Daughter of the Void (Overnumbered),/images/Kai'Sa - Daughter of the Void (Overnumbered) - Origins.jpg,150,120,75,10,5,0
-Kai_re),Kai'Sa - Daughter of the Void (Signature),/images/Kai'Sa - Daughter of the Void (Signature) - Origins.jpg,1522.5,1218,761.25,10,5,0
-Kai_ary,Kai'Sa - Evolutionary,/images/Kai'Sa - Evolutionary - Origins.jpg,0.25,0.2,0.125,10,5,0
-Kai_ert),Kai'Sa - Evolutionary (Alternate Art),/images/Kai'Sa - Evolutionary (Alternate Art) - Origins.jpg,2.02,1.616,1.01,10,5,0
-Kai_vor,Kai'Sa - Survivor,/images/Kai'Sa - Survivor - Origins.jpg,81,64.8,40.5,10,5,0
-Kai_rt),Kai'Sa - Survivor (Alternate Art),/images/Kai'Sa - Survivor (Alternate Art) - Origins.jpg,86.25,69,43.125,10,5,0
-Kar_ler,Karma - Channeler,/images/Karma - Channeler - Origins.jpg,0.25,0.2,0.125,10,5,0
-Kar_nal,Karthus - Eternal,/images/Karthus - Eternal - Origins.jpg,0.25,0.2,0.125,10,5,0
-Kay_hed,Kayn - Unleashed,/images/Kayn - Unleashed - Origins.jpg,0.25,0.2,0.125,10,5,0
-Kin_ict,King's Edict,/images/King's Edict - Origins.jpg,0.1,0.08,0.05,10,5,0
-Kin_onk,Kinkou Monk,/images/Kinkou Monk - Origins.jpg,0.1,0.08,0.05,10,5,0
-Kog_tic,Kog'Maw - Caustic,/images/Kog'Maw - Caustic - Origins.jpg,0.1,0.08,0.05,10,5,0
-Kra_ter,Kraken Hunter,/images/Kraken Hunter - Origins.jpg,0.1,0.08,0.05,10,5,0
-Las_ath,Last Breath,/images/Last Breath - Origins.jpg,3.825,3.06,1.9125,10,5,0
-Las_and,Last Stand,/images/Last Stand - Origins.jpg,0.1,0.08,0.05,10,5,0
-Lec_dle,Lecturing Yordle,/images/Lecturing Yordle - Origins.jpg,0.1,0.08,0.05,10,5,0
-Lee_tic,Lee Sin - Ascetic,/images/Lee Sin - Ascetic - Origins.jpg,1.35,1.08,0.675,10,5,0
-Lee_art),Lee Sin - Ascetic (Alternate Art),/images/Lee Sin - Ascetic (Alternate Art) - Origins.jpg,2.7,2.16,1.35,10,5,0
-Lee_onk,Lee Sin - Blind Monk,/images/Lee Sin - Blind Monk - Origins.jpg,0.1,0.08,0.05,10,5,0
-Lee_ed),Lee Sin - Blind Monk (Overnumbered),/images/Lee Sin - Blind Monk (Overnumbered) - Origins.jpg,57.75,46.2,28.875,10,5,0
-Lee_re),Lee Sin - Blind Monk (Signature),/images/Lee Sin - Blind Monk (Signature) - Origins.jpg,600,480,300,10,5,0
-Lee_red,Lee Sin - Centered,/images/Lee Sin - Centered - Origins.jpg,0.1,0.08,0.05,10,5,0
-Lee_rt),Lee Sin - Centered (Alternate Art),/images/Lee Sin - Centered (Alternate Art) - Origins.jpg,3.6,2.88,1.8,10,5,0
-Leg_ard,Legion Rearguard,/images/Legion Rearguard - Origins.jpg,0.1,0.08,0.05,10,5,0
-Leo_ned,Leona - Determined,/images/Leona - Determined - Origins.jpg,1.12,0.896,0.56,10,5,0
-Leo_drt),Leona - Determined (Alternate Art),/images/Leona - Determined (Alternate Art) - Origins.jpg,8.775,7.02,4.3875,10,5,0
-Leo_awn,Leona - Radiant Dawn,/images/Leona - Radiant Dawn - Origins.jpg,0.1,0.08,0.05,10,5,0
-Leo_ed),Leona - Radiant Dawn (Overnumbered),/images/Leona - Radiant Dawn (Overnumbered) - Origins.jpg,81,64.8,40.5,10,5,0
-Leo_re),Leona - Radiant Dawn (Signature),/images/Leona - Radiant Dawn (Signature) - Origins.jpg,480,384,240,10,5,0
-Leo_lot,Leona - Zealot,/images/Leona - Zealot - Origins.jpg,2.47,1.976,1.235,10,5,0
-Leo_rt),Leona - Zealot (Alternate Art),/images/Leona - Zealot (Alternate Art) - Origins.jpg,7.63,6.104,3.815,10,5,0
-Lux_ard,Lux - Crownguard,/images/Lux - Crownguard - Origins.jpg,3.375,2.7,1.6875,10,5,0
-Lux_ted,Lux - Illuminated,/images/Lux - Illuminated - Origins.jpg,0.9,0.72,0.45,10,5,0
-Lux_er),Lux - Lady of Luminosity (Starter),/images/Lux - Lady of Luminosity (Starter) - Origins.jpg,3.71,2.968,1.855,10,5,0
-Mac_gel,Machine Evangel,/images/Machine Evangel - Origins.jpg,1.91,1.528,0.955,10,5,0
-Mad_der,Maddened Marauder,/images/Maddened Marauder - Origins.jpg,0.1,0.08,0.05,10,5,0
-Mag_den,Mageseeker Warden,/images/Mageseeker Warden - Origins.jpg,0.1,0.08,0.05,10,5,0
-Mag_urm,Magma Wurm,/images/Magma Wurm - Origins.jpg,0.1,0.08,0.05,10,5,0
-Mal_tic,Malzahar - Fanatic,/images/Malzahar - Fanatic - Origins.jpg,0.1,0.08,0.05,10,5,0
-Mas_ght,Mask of Foresight,/images/Mask of Foresight - Origins.jpg,0.1,0.08,0.05,10,5,0
-Mas_ned,Master Yi - Honed,/images/Master Yi - Honed - Origins.jpg,2.47,1.976,1.235,10,5,0
-Mas_ive,Master Yi - Meditative,/images/Master Yi - Meditative - Origins.jpg,1.12,0.896,0.56,10,5,0
-Mas_er),Master Yi - Wuju Bladesman (Starter),/images/Master Yi - Wuju Bladesman (Starter) - Origins.jpg,13.48,10.784,6.74,10,5,0
-Med_ion,Meditation,/images/Meditation - Origins.jpg,0.1,0.08,0.05,10,5,0
-Meg_ech,Mega-Mech,/images/Mega-Mech - Origins.jpg,0.1,0.08,0.05,10,5,0
-Min_une,Mind Rune,/images/Mind Rune - Origins.jpg,0.25,0.2,0.125,10,5,0
-Min_rt),Mind Rune (Alternate Art),/images/Mind Rune (Alternate Art) - Origins.jpg,20.475,16.38,10.2375,10,5,0
-Min_ter,Mindsplitter,/images/Mindsplitter - Origins.jpg,6.98,5.584,3.49,10,5,0
-Mis_ter,Miss Fortune - Bounty Hunter,/images/Miss Fortune - Bounty Hunter - Origins.jpg,0.1,0.08,0.05,10,5,0
-Mis_ed),Miss Fortune - Bounty Hunter (Overnumbered),/images/Miss Fortune - Bounty Hunter (Overnumbered) - Origins.jpg,97.5,78,48.75,10,5,0
-Mis_re),Miss Fortune - Bounty Hunter (Signature),/images/Miss Fortune - Bounty Hunter (Signature) - Origins.jpg,611.25,489,305.625,10,5,0
-Mis_eer,Miss Fortune - Buccaneer,/images/Miss Fortune - Buccaneer - Origins.jpg,0.25,0.2,0.125,10,5,0
-Mis_brt),Miss Fortune - Buccaneer (Alternate Art),/images/Miss Fortune - Buccaneer (Alternate Art) - Origins.jpg,2.47,1.976,1.235,10,5,0
-Mis_ain,Miss Fortune - Captain,/images/Miss Fortune - Captain - Origins.jpg,7.8,6.24,3.9,10,5,0
-Mis_rt),Miss Fortune - Captain (Alternate Art),/images/Miss Fortune - Captain (Alternate Art) - Origins.jpg,14.46,11.568,7.23,10,5,0
-Mis_all,Mistfall,/images/Mistfall - Origins.jpg,0.1,0.08,0.05,10,5,0
-Mob_ize,Mobilize,/images/Mobilize - Origins.jpg,0.1,0.08,0.05,10,5,0
-Mon_ana,Monastery of Hirana,/images/Monastery of Hirana - Origins.jpg,0.1,0.08,0.05,10,5,0
-Mor_urn,Morbid Return,/images/Morbid Return - Origins.jpg,0.1,0.08,0.05,10,5,0
-Mou_ake,Mountain Drake,/images/Mountain Drake - Origins.jpg,0.1,0.08,0.05,10,5,0
-Mus_uch,Mushroom Pouch,/images/Mushroom Pouch - Origins.jpg,0.1,0.08,0.05,10,5,0
-Mys_oro,Mystic Poro,/images/Mystic Poro - Origins.jpg,0.1,0.08,0.05,10,5,0
-Mys_sal,Mystic Reversal,/images/Mystic Reversal - Origins.jpg,9.26,7.408,4.63,10,5,0
-Nav_Pit,Navori Fighting Pit,/images/Navori Fighting Pit - Origins.jpg,0.1,0.08,0.05,10,5,0
-Noc_ing,Nocturne - Horrifying,/images/Nocturne - Horrifying - Origins.jpg,2.7,2.16,1.35,10,5,0
-Nox_mer,Noxian Drummer,/images/Noxian Drummer - Origins.jpg,0.1,0.08,0.05,10,5,0
-Nox_ine,Noxian Guillotine,/images/Noxian Guillotine - Origins.jpg,1.35,1.08,0.675,10,5,0
-Nox_ful,Noxus Hopeful,/images/Noxus Hopeful - Origins.jpg,0.1,0.08,0.05,10,5,0
-Nox_eur,Noxus Saboteur,/images/Noxus Saboteur - Origins.jpg,0.1,0.08,0.05,10,5,0
-Obe_wer,Obelisk of Power,/images/Obelisk of Power - Origins.jpg,0.1,0.08,0.05,10,5,0
-Orb_ret,Orb of Regret,/images/Orb of Regret - Origins.jpg,0.1,0.08,0.05,10,5,0
-Ord_une,Order Rune,/images/Order Rune - Origins.jpg,0.1,0.08,0.05,10,5,0
-Ord_rt),Order Rune (Alternate Art),/images/Order Rune (Alternate Art) - Origins.jpg,13,10.4,6.5,10,5,0
-Ove_ion,Overt Operation,/images/Overt Operation - Origins.jpg,0.1,0.08,0.05,10,5,0
-Pac_ers,Pack of Wonders,/images/Pack of Wonders - Origins.jpg,0.1,0.08,0.05,10,5,0
-Pak_Cub,Pakaa Cub,/images/Pakaa Cub - Origins.jpg,0.1,0.08,0.05,10,5,0
-Par_ors,Party Favors,/images/Party Favors - Origins.jpg,0.1,0.08,0.05,10,5,0
-Pea_ian,Peak Guardian,/images/Peak Guardian - Origins.jpg,0.1,0.08,0.05,10,5,0
-Pet_cer,Petty Officer,/images/Petty Officer - Origins.jpg,0.1,0.08,0.05,10,5,0
-Pir_ven,Pirate's Haven,/images/Pirate's Haven - Origins.jpg,0.1,0.08,0.05,10,5,0
-Pit_rew,Pit Crew,/images/Pit Crew - Origins.jpg,0.1,0.08,0.05,10,5,0
-Pit_kie,Pit Rookie,/images/Pit Rookie - Origins.jpg,0.1,0.08,0.05,10,5,0
-Pla_tom,Playful Phantom,/images/Playful Phantom - Origins.jpg,0.1,0.08,0.05,10,5,0
-Por_der,Poro Herder,/images/Poro Herder - Origins.jpg,0.1,0.08,0.05,10,5,0
-Por_cue,Portal Rescue,/images/Portal Rescue - Origins.jpg,0.1,0.08,0.05,10,5,0
-Pos_ion,Possession,/images/Possession - Origins.jpg,5,4,2.5,10,5,0
-Pou_oro,Pouty Poro,/images/Pouty Poro - Origins.jpg,0.1,0.08,0.05,10,5,0
-Pri_gth,Primal Strength,/images/Primal Strength - Origins.jpg,1.35,1.08,0.675,10,5,0
-Pro_Day,Progress Day,/images/Progress Day - Origins.jpg,0.1,0.08,0.05,10,5,0
-Pro_ure,Promising Future,/images/Promising Future - Origins.jpg,0.1,0.08,0.05,10,5,0
-Qiy_ous,Qiyana - Victorious,/images/Qiyana - Victorious - Origins.jpg,3.375,2.7,1.6875,10,5,0
-Rag_and,Raging Firebrand,/images/Raging Firebrand - Origins.jpg,0.1,0.08,0.05,10,5,0
-Rag_oul,Raging Soul,/images/Raging Soul - Origins.jpg,0.1,0.08,0.05,10,5,0
-Rav_ent,Ravenbloom Student,/images/Ravenbloom Student - Origins.jpg,0.1,0.08,0.05,10,5,0
-Rav_ome,Ravenborn Tome,/images/Ravenborn Tome - Origins.jpg,0.1,0.08,0.05,10,5,0
-Rea_Row,Reaver's Row,/images/Reaver's Row - Origins.jpg,0.1,0.08,0.05,10,5,0
-Reb_uke,Rebuke,/images/Rebuke - Origins.jpg,0.1,0.08,0.05,10,5,0
-Rec_ena,Reckoner's Arena,/images/Reckoner's Arena - Origins.jpg,0.1,0.08,0.05,10,5,0
-Rec_ard,Recruit the Vanguard,/images/Recruit the Vanguard - Origins.jpg,2.47,1.976,1.235,10,5,0
-Rei_rce,Reinforce,/images/Reinforce - Origins.jpg,0.1,0.08,0.05,10,5,0
-Ret_eat,Retreat,/images/Retreat - Origins.jpg,1.57,1.256,0.785,10,5,0
-Rha_rer,Rhasa the Sunderer,/images/Rhasa the Sunderer - Origins.jpg,0.9,0.72,0.45,10,5,0
-Rid_ind,Ride The Wind,/images/Ride The Wind - Origins.jpg,0.25,0.2,0.125,10,5,0
-Rip_Rex,Riptide Rex,/images/Riptide Rex - Origins.jpg,0.1,0.08,0.05,10,5,0
-Run_son,Rune Prison,/images/Rune Prison - Origins.jpg,0.1,0.08,0.05,10,5,0
-Sab_age,Sabotage,/images/Sabotage - Origins.jpg,3.03,2.424,1.515,10,5,0
-Sai_out,Sai Scout,/images/Sai Scout - Origins.jpg,0.1,0.08,0.05,10,5,0
-Sal_age,Salvage,/images/Salvage - Origins.jpg,0.25,0.2,0.125,10,5,0
-Scr_eap,Scrapheap,/images/Scrapheap - Origins.jpg,0.1,0.08,0.05,10,5,0
-Scr_ion,Scrapyard Champion,/images/Scrapyard Champion - Origins.jpg,0.1,0.08,0.05,10,5,0
-Sea_ord,Seal of Discord,/images/Seal of Discord - Origins.jpg,12.35,9.88,6.175,10,5,0
-Sea_cus,Seal of Focus,/images/Seal of Focus - Origins.jpg,13,10.4,6.5,10,5,0
-Sea_ght,Seal of Insight,/images/Seal of Insight - Origins.jpg,14.13,11.304,7.065,10,5,0
-Sea_age,Seal of Rage,/images/Seal of Rage - Origins.jpg,17.875,14.3,8.9375,10,5,0
-Sea_gth,Seal of Strength,/images/Seal of Strength - Origins.jpg,9.1,7.28,4.55,10,5,0
-Sea_ity,Seal of Unity,/images/Seal of Unity - Origins.jpg,28.275,22.62,14.1375,10,5,0
-Set_ler,Sett - Brawler,/images/Sett - Brawler - Origins.jpg,13.48,10.784,6.74,10,5,0
-Set_brt),Sett - Brawler (Alternate Art),/images/Sett - Brawler (Alternate Art) - Origins.jpg,17.225,13.78,8.6125,10,5,0
-Set_pin,Sett - Kingpin,/images/Sett - Kingpin - Origins.jpg,1.01,0.808,0.505,10,5,0
-Set_rt),Sett - Kingpin (Alternate Art),/images/Sett - Kingpin (Alternate Art) - Origins.jpg,3.6,2.88,1.8,10,5,0
-Set_oss,Sett - The Boss,/images/Sett - The Boss - Origins.jpg,0.1,0.08,0.05,10,5,0
-Set_ed),Sett - The Boss (Overnumbered),/images/Sett - The Boss (Overnumbered) - Origins.jpg,84,67.2,42,10,5,0
-Set_re),Sett - The Boss (Signature),/images/Sett - The Boss (Signature) - Origins.jpg,536.25,429,268.125,10,5,0
-Sha_own,Shakedown,/images/Shakedown - Origins.jpg,0.1,0.08,0.05,10,5,0
-She_kou,Shen - Kinkou,/images/Shen - Kinkou - Origins.jpg,1.8,1.44,0.9,10,5,0
-Shi_ker,Shipyard Skulker,/images/Shipyard Skulker - Origins.jpg,0.1,0.08,0.05,10,5,0
-Sho_per,Showstopper,/images/Showstopper - Origins.jpg,37.625,30.1,18.8125,10,5,0
-Sig_orm,Sigil of the Storm,/images/Sigil of the Storm - Origins.jpg,0.1,0.08,0.05,10,5,0
-Sin_ity,Singularity,/images/Singularity - Origins.jpg,0.25,0.2,0.125,10,5,0
-Sip_wer,Siphon Power,/images/Siphon Power - Origins.jpg,8.61,6.888,4.305,10,5,0
-Sky_ter,Sky Splitter,/images/Sky Splitter - Origins.jpg,0.1,0.08,0.05,10,5,0
-Smo_een,Smoke Screen,/images/Smoke Screen - Origins.jpg,0.1,0.08,0.05,10,5,0
-Sne_and,Sneaky Deckhand,/images/Sneaky Deckhand - Origins.jpg,0.1,0.08,0.05,10,5,0
-Soa_out,Soaring Scout,/images/Soaring Scout - Origins.jpg,0.1,0.08,0.05,10,5,0
-Sol_ief,Solari Chief,/images/Solari Chief - Origins.jpg,0.1,0.08,0.05,10,5,0
-Sol_rer,Solari Shieldbearer,/images/Solari Shieldbearer - Origins.jpg,0.1,0.08,0.05,10,5,0
-Sol_ine,Solari Shrine,/images/Solari Shrine - Origins.jpg,0.1,0.08,0.05,10,5,0
-Son_ous,Sona - Harmonious,/images/Sona - Harmonious - Origins.jpg,1.23,0.984,0.615,10,5,0
-Sou_ger,Soulgorger,/images/Soulgorger - Origins.jpg,0.25,0.2,0.125,10,5,0
-Spe_ron,Spectral Matron,/images/Spectral Matron - Origins.jpg,0.1,0.08,0.05,10,5,0
-Spi_uge,Spirit's Refuge,/images/Spirit's Refuge - Origins.jpg,0.1,0.08,0.05,10,5,0
-Spo_War,Spoils of War,/images/Spoils of War - Origins.jpg,0.1,0.08,0.05,10,5,0
-Spr_uff,Sprite (274) // Buff,/images/Sprite (274) // Buff - Origins.jpg,0.1,0.08,0.05,10,5,0
-Spr_all,Sprite Call,/images/Sprite Call - Origins.jpg,0.1,0.08,0.05,10,5,0
-Spr_her,Sprite Mother,/images/Sprite Mother - Origins.jpg,1.68,1.344,0.84,10,5,0
-Sta_eck,Stacked Deck,/images/Stacked Deck - Origins.jpg,4.875,3.9,2.4375,10,5,0
-Sta_oro,Stalwart Poro,/images/Stalwart Poro - Origins.jpg,0.1,0.08,0.05,10,5,0
-Sta_ted,Stand United,/images/Stand United - Origins.jpg,0.1,0.08,0.05,10,5,0
-Sta_eak,Startipped Peak,/images/Startipped Peak - Origins.jpg,0.1,0.08,0.05,10,5,0
-Sta_ed),Startipped Peak (Oversized),/images/Startipped Peak (Oversized) - Origins.jpg,7.31,5.848,3.655,10,5,0
-Ste_uer,Stealthy Pursuer,/images/Stealthy Pursuer - Origins.jpg,0.1,0.08,0.05,10,5,0
-Sto_ger,Stormbringer,/images/Stormbringer - Origins.jpg,3.15,2.52,1.575,10,5,0
-Sto_ine,Stormclaw Ursine,/images/Stormclaw Ursine - Origins.jpg,0.1,0.08,0.05,10,5,0
-Stu_efy,Stupefy,/images/Stupefy - Origins.jpg,0.1,0.08,0.05,10,5,0
-Sun_isc,Sun Disc,/images/Sun Disc - Origins.jpg,0.1,0.08,0.05,10,5,0
-Sun_ian,Sunlit Guardian,/images/Sunlit Guardian - Origins.jpg,0.1,0.08,0.05,10,5,0
-Sup_et!,Super Mega Death Rocket!,/images/Super Mega Death Rocket! - Origins.jpg,11.53,9.224,5.765,10,5,0
-Sym_ari,Symbol of the Solari,/images/Symbol of the Solari - Origins.jpg,0.1,0.08,0.05,10,5,0
-Tar_eak,Targon's Peak,/images/Targon's Peak - Origins.jpg,0.1,0.08,0.05,10,5,0
-Tar_tor,Taric - Protector,/images/Taric - Protector - Origins.jpg,0.1,0.08,0.05,10,5,0
-Tas_olk,Tasty Faefolk,/images/Tasty Faefolk - Origins.jpg,4.875,3.9,2.4375,10,5,0
-Tee_sout,Teemo - Scout,/images/Teemo - Scout - Origins.jpg,0.25,0.2,0.125,10,5,0
-Tee_srt),Teemo - Scout (Alternate Art),/images/Teemo - Scout (Alternate Art) - Origins.jpg,8.775,7.02,4.3875,10,5,0
-Tee_ist,Teemo - Strategist,/images/Teemo - Strategist - Origins.jpg,2.81,2.248,1.405,10,5,0
-Tee_rt),Teemo - Strategist (Alternate Art),/images/Teemo - Strategist (Alternate Art) - Origins.jpg,4.75,3.8,2.375,10,5,0
-Tee_out,Teemo - Swift Scout,/images/Teemo - Swift Scout - Origins.jpg,0.1,0.08,0.05,10,5,0
-Tee_ed),Teemo - Swift Scout (Overnumbered),/images/Teemo - Swift Scout (Overnumbered) - Origins.jpg,84,67.2,42,10,5,0
-Tee_re),Teemo - Swift Scout (Signature),/images/Teemo - Swift Scout (Signature) - Origins.jpg,476.25,381,238.125,10,5,0
-The_est,The Arena's Greatest,/images/The Arena's Greatest - Origins.jpg,0.1,0.08,0.05,10,5,0
-The_tum,The Candlelit Sanctum,/images/The Candlelit Sanctum - Origins.jpg,0.1,0.08,0.05,10,5,0
-The_ree,The Dreaming Tree,/images/The Dreaming Tree - Origins.jpg,0.25,0.2,0.125,10,5,0
-The_aza,The Grand Plaza,/images/The Grand Plaza - Origins.jpg,0.1,0.08,0.05,10,5,0
-The_ing,The Harrowing,/images/The Harrowing - Origins.jpg,0.25,0.2,0.125,10,5,0
-The_ren,The Syren,/images/The Syren - Origins.jpg,0.1,0.08,0.05,10,5,0
-The_eam,Thermo Beam,/images/Thermo Beam - Origins.jpg,0.1,0.08,0.05,10,5,0
-Tho_her,Thousand-Tailed Watcher,/images/Thousand-Tailed Watcher - Origins.jpg,27.625,22.1,13.8125,10,5,0
-Tib_ers,Tibbers,/images/Tibbers - Origins.jpg,0.25,0.2,0.125,10,5,0
-Tid_ner,Tideturner,/images/Tideturner - Origins.jpg,0.25,0.2,0.125,10,5,0
-Tim_arp,Time Warp,/images/Time Warp - Origins.jpg,56.35,45.08,28.175,10,5,0
-Tra_ant,Traveling Merchant,/images/Traveling Merchant - Origins.jpg,0.1,0.08,0.05,10,5,0
-Tre_ove,Treasure Trove,/images/Treasure Trove - Origins.jpg,0.1,0.08,0.05,10,5,0
-Tri_ker,Trifarian Gloryseeker,/images/Trifarian Gloryseeker - Origins.jpg,0.1,0.08,0.05,10,5,0
-Tri_amp,Trifarian War Camp,/images/Trifarian War Camp - Origins.jpg,0.1,0.08,0.05,10,5,0
-Try_ian,Tryndamere - Barbarian,/images/Tryndamere - Barbarian - Origins.jpg,0.1,0.08,0.05,10,5,0
-Twi_ler,Twisted Fate - Gambler,/images/Twisted Fate - Gambler - Origins.jpg,0.1,0.08,0.05,10,5,0
-Udy_man,Udyr - Wildman,/images/Udyr - Wildman - Origins.jpg,0.1,0.08,0.05,10,5,0
-Unc_wer,Unchecked Power,/images/Unchecked Power - Origins.jpg,9.91,7.928,4.955,10,5,0
-Und_ent,Undercover Agent,/images/Undercover Agent - Origins.jpg,0.1,0.08,0.05,10,5,0
-Unl_ory,Unlicensed Armory,/images/Unlicensed Armory - Origins.jpg,0.1,0.08,0.05,10,5,0
-Uny_rit,Unyielding Spirit,/images/Unyielding Spirit - Origins.jpg,0.25,0.2,0.125,10,5,0
-Van_aant,Vanguard Attendant,/images/Vanguard Attendant - Origins.jpg,0.1,0.08,0.05,10,5,0
-Van_ain,Vanguard Captain,/images/Vanguard Captain - Origins.jpg,0.1,0.08,0.05,10,5,0
-Van_elm,Vanguard Helm,/images/Vanguard Helm - Origins.jpg,0.1,0.08,0.05,10,5,0
-Van_ant,Vanguard Sergeant,/images/Vanguard Sergeant - Origins.jpg,0.1,0.08,0.05,10,5,0
-Vay_ter,Vayne - Hunter,/images/Vayne - Hunter - Origins.jpg,1.01,0.808,0.505,10,5,0
-Ven_nce,Vengeance,/images/Vengeance - Origins.jpg,0.1,0.08,0.05,10,5,0
-Vi _ive,Vi - Destructive,/images/Vi - Destructive - Origins.jpg,1.91,1.528,0.955,10,5,0
-Vik_ane,Viktor - Herald of the Arcane,/images/Viktor - Herald of the Arcane - Origins.jpg,0.1,0.08,0.05,10,5,0
-Vik_ed),Viktor - Herald of the Arcane (Overnumbered),/images/Viktor - Herald of the Arcane (Overnumbered) - Origins.jpg,78.75,63,39.375,10,5,0
-Vik_re),Viktor - Herald of the Arcane (Signature),/images/Viktor - Herald of the Arcane (Signature) - Origins.jpg,433.5,346.8,216.75,10,5,0
-Vik_tor,Viktor - Innovator,/images/Viktor - Innovator - Origins.jpg,0.1,0.08,0.05,10,5,0
-Vik_irt),Viktor - Innovator (Alternate Art),/images/Viktor - Innovator (Alternate Art) - Origins.jpg,2.36,1.888,1.18,10,5,0
-Vik_der,Viktor - Leader,/images/Viktor - Leader - Origins.jpg,6.825,5.46,3.4125,10,5,0
-Vik_rt),Viktor - Leader (Alternate Art),/images/Viktor - Leader (Alternate Art) - Origins.jpg,7.475,5.98,3.7375,10,5,0
-Vil_air,Vilemaw's Lair,/images/Vilemaw's Lair - Origins.jpg,0.1,0.08,0.05,10,5,0
-Voi_ate,Void Gate,/images/Void Gate - Origins.jpg,0.1,0.08,0.05,10,5,0
-Voi_ker,Void Seeker,/images/Void Seeker - Origins.jpg,0.1,0.08,0.05,10,5,0
-Vol_ous,Volibear - Furious,/images/Volibear - Furious - Origins.jpg,3.03,2.424,1.515,10,5,0
-Vol_frt),Volibear - Furious (Alternate Art),/images/Volibear - Furious (Alternate Art) - Origins.jpg,4.75,3.8,2.375,10,5,0
-Vol_ing,Volibear - Imposing,/images/Volibear - Imposing - Origins.jpg,0.25,0.2,0.125,10,5,0
-Vol_rt),Volibear - Imposing (Alternate Art),/images/Volibear - Imposing (Alternate Art) - Origins.jpg,3.71,2.968,1.855,10,5,0
-Vol_orm,Volibear - Relentless Storm,/images/Volibear - Relentless Storm - Origins.jpg,0.1,0.08,0.05,10,5,0
-Vol_ed),Volibear - Relentless Storm (Overnumbered),/images/Volibear - Relentless Storm (Overnumbered) - Origins.jpg,57.05,45.64,28.525,10,5,0
-Vol_re),Volibear - Relentless Storm (Signature),/images/Volibear - Relentless Storm (Signature) - Origins.jpg,432,345.6,216,10,5,0
-Wal_lop,Wallop,/images/Wallop - Origins.jpg,0.1,0.08,0.05,10,5,0
-War_ter,Warwick - Hunter,/images/Warwick - Hunter - Origins.jpg,0.25,0.2,0.125,10,5,0
-Wat_try,Watchful Sentry,/images/Watchful Sentry - Origins.jpg,0.1,0.08,0.05,10,5,0
-Whi_ind,Whirlwind,/images/Whirlwind - Origins.jpg,0.1,0.08,0.05,10,5,0
-Whi_tor,Whiteflame Protector,/images/Whiteflame Protector - Origins.jpg,47.25,37.8,23.625,10,5,0
-Wie_ter,Wielder of Water,/images/Wielder of Water - Origins.jpg,0.1,0.08,0.05,10,5,0
-Wil_man,Wildclaw Shaman,/images/Wildclaw Shaman - Origins.jpg,0.1,0.08,0.05,10,5,0
-Win_all,Wind Wall,/images/Wind Wall - Origins.jpg,0.25,0.2,0.125,10,5,0
-Win_ock,Windswept Hillock,/images/Windswept Hillock - Origins.jpg,0.1,0.08,0.05,10,5,0
-Wiz_der,Wizened Elder,/images/Wizened Elder - Origins.jpg,0.1,0.08,0.05,10,5,0
-Wra_oes,Wraith of Echoes,/images/Wraith of Echoes - Origins.jpg,0.1,0.08,0.05,10,5,0
-Yas_ful,Yasuo - Remorseful,/images/Yasuo - Remorseful - Origins.jpg,0.25,0.2,0.125,10,5,0
-Yas_rrt),Yasuo - Remorseful (Alternate Art),/images/Yasuo - Remorseful (Alternate Art) - Origins.jpg,3.93,3.144,1.965,10,5,0
-Yas_ven,Yasuo - Unforgiven,/images/Yasuo - Unforgiven - Origins.jpg,0.1,0.08,0.05,10,5,0
-Yas_ed),Yasuo - Unforgiven (Overnumbered),/images/Yasuo - Unforgiven (Overnumbered) - Origins.jpg,58.1,46.48,29.05,10,5,0
-Yas_re),Yasuo - Unforgiven (Signature),/images/Yasuo - Unforgiven (Signature) - Origins.jpg,510,408,255,10,5,0
-Yas_der,Yasuo - Windrider,/images/Yasuo - Windrider - Origins.jpg,2.925,2.34,1.4625,10,5,0
-Yas_rt),Yasuo - Windrider (Alternate Art),/images/Yasuo - Windrider (Alternate Art) - Origins.jpg,7.15,5.72,3.575,10,5,0
-Zau_ens,Zaun Warrens,/images/Zaun Warrens - Origins.jpg,0.1,0.08,0.05,10,5,0
-Zau_cer,Zaunite Bouncer,/images/Zaunite Bouncer - Origins.jpg,0.1,0.08,0.05,10,5,0
-Zen_ade,Zenith Blade,/images/Zenith Blade - Origins.jpg,18.525,14.82,9.2625,10,5,0
-Zep_age,Zephyr Sage,/images/Zephyr Sage - Origins.jpg,0.1,0.08,0.05,10,5,0
-Zho_ass,Zhonya's Hourglass,/images/Zhonya's Hourglass - Origins.jpg,10.88,8.704,5.44,10,5,0
+set,name,number,rarity,foil,price_nm,price_lp,price_mp,max_nm,max_lp,max_mp,Image,SKU
+Origins,Acceptable Losses,179/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Acceptable Losses - Origins.jpg,Ac_es_179_Ori
+Origins,Adaptatron,056/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Adaptatron - Origins.jpg,Ad_on_056_Ori
+Origins,Ahri - Alluring,066/298,Rare,Yes,0.25,0.2,0.125,10,5,0,images/Ahri - Alluring - Origins.jpg,Ah_ng_066_Ori
+Origins,Ahri - Alluring (Alternate Art),066a/298,Showcase,Yes,4.75,3.8,2.375,10,5,0,images/Ahri - Alluring (Alternate Art) - Origins.jpg,Ah_t)_066_Ori
+Origins,Ahri - Inquisitive,119/298,Epic,Yes,10.4,8.32,5.2,10,5,0,images/Ahri - Inquisitive - Origins.jpg,Ah_ve_119_Ori
+Origins,Ahri - Inquisitive (Alternate Art),119a/298,Showcase,Yes,15.43,12.344,7.715,10,5,0,images/Ahri - Inquisitive (Alternate Art) - Origins.jpg,Ah_t)_119_Ori
+Origins,Ahri - Nine-Tailed Fox,255/298,Rare,Yes,0.25,0.2,0.125,10,5,0,images/Ahri - Nine-Tailed Fox - Origins.jpg,Ah_ox_255_Ori
+Origins,Ahri - Nine-Tailed Fox (Overnumbered),303/298,Showcase,Yes,168.75,135,84.375,10,5,0,images/Ahri - Nine-Tailed Fox (Overnumbered) - Origins.jpg,Ah_d)_303_Ori
+Origins,Ahri - Nine-Tailed Fox (Signature),303*/298,Showcase,Yes,1200,960,600,10,5,0,images/Ahri - Nine-Tailed Fox (Signature) - Origins.jpg,Ah_e)_303_Ori
+Origins,Albus Ferros,230/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Albus Ferros - Origins.jpg,Al_os_230_Ori
+Origins,Altar to Unity,275/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Altar to Unity - Origins.jpg,Al_ty_275_Ori
+Origins,Anivia - Primal,148/298,Rare,Yes,0.25,0.2,0.125,10,5,0,images/Anivia - Primal - Origins.jpg,An_al_148_Ori
+Origins,Arena Bar,124/298,Common,No,18.03,14.424,9.015,10,5,0,images/Arena Bar - Origins.jpg,Ar_ar_124_Ori
+Origins,Aspirant's Climb,276/298,Uncommon,No,0.9,0.72,0.45,10,5,0,images/Aspirant's Climb - Origins.jpg,As_mb_276_Ori
+Origins,Ava Achiever,107/298,Rare,Yes,3.15,2.52,1.575,10,5,0,images/Ava Achiever - Origins.jpg,Av_er_107_Ori
+Origins,Back to Back,206/298,Common,No,0.1,0.08,0.05,10,5,0,images/Back to Back - Origins.jpg,Ba_ck_206_Ori
+Origins,Back-Alley Bar,277/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Back-Alley Bar - Origins.jpg,Ba_ar_277_Ori
+Origins,Baited Hook,242/298,Epic,Yes,0.1,0.08,0.05,10,5,0,images/Baited Hook - Origins.jpg,Ba_ok_242_Ori
+Origins,Bandle Tree,278/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Bandle Tree - Origins.jpg,Ba_ee_278_Ori
+Origins,Bilgewater Bully,125/298,Common,No,0.1,0.08,0.05,10,5,0,images/Bilgewater Bully - Origins.jpg,Bi_ly_125_Ori
+Origins,Blastcone Fae,097/298,Uncommon,No,27.3,21.84,13.65,10,5,0,images/Blastcone Fae - Origins.jpg,Bl_ae_097_Ori
+Origins,Blazing Scorcher,001/298,Common,No,0.1,0.08,0.05,10,5,0,images/Blazing Scorcher - Origins.jpg,Bl_er_001_Ori
+Origins,Blind Fury,025/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Blind Fury - Origins.jpg,Bl_ry_025_Ori
+Origins,Blitzcrank - Impassive,067/298,Rare,Yes,1.12,0.896,0.56,10,5,0,images/Blitzcrank - Impassive - Origins.jpg,Bl_ve_067_Ori
+Origins,Block,057/298,Uncommon,No,0.25,0.2,0.125,10,5,0,images/Block - Origins.jpg,Bl_ck_057_Ori
+Origins,Body Rune,126/298,Common,No,0.1,0.08,0.05,10,5,0,images/Body Rune - Origins.jpg,Bo_ne_126_Ori
+Origins,Body Rune (Alternate Art),126a/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Body Rune (Alternate Art) - Origins.jpg,Bo_t)_126_Ori
+Origins,Brazen Buccaneer,002/298,Common,No,0.25,0.2,0.125,10,5,0,images/Brazen Buccaneer - Origins.jpg,Br_er_002_Ori
+Origins,Brynhir Thundersong,026/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Brynhir Thundersong - Origins.jpg,Br_ng_026_Ori
+Origins,Buff,,Common,No,0.1,0.08,0.05,10,5,0,images/Buff - Origins.jpg,Bu_ff__Ori
+Origins,Bullet Time,268/298,Epic,Yes,6.01,4.808,3.005,10,5,0,images/Bullet Time - Origins.jpg,Bu_me_268_Ori
+Origins,Caitlyn - Patrolling,068/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Caitlyn - Patrolling - Origins.jpg,Ca_ng_068_Ori
+Origins,Call to Glory,207/298,Common,No,0.25,0.2,0.125,10,5,0,images/Call to Glory - Origins.jpg,Ca_ry_207_Ori
+Origins,Calm Rune,042/298,Common,No,0.1,0.08,0.05,10,5,0,images/Calm Rune - Origins.jpg,Ca_ne_042_Ori
+Origins,Calm Rune (Alternate Art),042a/298,Showcase,Yes,17.71,14.168,8.855,10,5,0,images/Calm Rune (Alternate Art) - Origins.jpg,Ca_t)_042_Ori
+Origins,Cannon Barrage,127/298,Common,No,0.25,0.2,0.125,10,5,0,images/Cannon Barrage - Origins.jpg,Ca_ge_127_Ori
+Origins,Captain Farron,015/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Captain Farron - Origins.jpg,Ca_on_015_Ori
+Origins,Carnivorous Snapvine,149/298,Rare,Yes,0.25,0.2,0.125,10,5,0,images/Carnivorous Snapvine - Origins.jpg,Ca_ne_149_Ori
+Origins,Catalyst of Aeons,138/298,Uncommon,No,15.43,12.344,7.715,10,5,0,images/Catalyst of Aeons - Origins.jpg,Ca_ns_138_Ori
+Origins,Cemetery Attendant,165/298,Common,No,0.1,0.08,0.05,10,5,0,images/Cemetery Attendant - Origins.jpg,Ce_nt_165_Ori
+Origins,Challenge,128/298,Common,No,0.1,0.08,0.05,10,5,0,images/Challenge - Origins.jpg,Ch_ge_128_Ori
+Origins,Chaos Rune,166/298,Common,No,0.25,0.2,0.125,10,5,0,images/Chaos Rune - Origins.jpg,Ch_ne_166_Ori
+Origins,Chaos Rune (Alternate Art),166a/298,Showcase,Yes,0.25,0.2,0.125,10,5,0,images/Chaos Rune (Alternate Art) - Origins.jpg,Ch_t)_166_Ori
+Origins,Charm,043/298,Common,No,0.1,0.08,0.05,10,5,0,images/Charm - Origins.jpg,Ch_rm_043_Ori
+Origins,Chemtech Enforcer,003/298,Common,No,0.1,0.08,0.05,10,5,0,images/Chemtech Enforcer - Origins.jpg,Ch_er_003_Ori
+Origins,Cithria of Cloudfield,139/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Cithria of Cloudfield - Origins.jpg,Ci_ld_139_Ori
+Origins,Cleave,004/298,Common,No,17.71,14.168,8.855,10,5,0,images/Cleave - Origins.jpg,Cl_ve_004_Ori
+Origins,Clockwork Keeper,044/298,Common,No,0.1,0.08,0.05,10,5,0,images/Clockwork Keeper - Origins.jpg,Cl_er_044_Ori
+Origins,Commander Ledros,231/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Commander Ledros - Origins.jpg,Co_os_231_Ori
+Origins,Confront,129/298,Common,No,0.1,0.08,0.05,10,5,0,images/Confront - Origins.jpg,Co_nt_129_Ori
+Origins,Consult the Past,083/298,Common,No,0.1,0.08,0.05,10,5,0,images/Consult the Past - Origins.jpg,Co_st_083_Ori
+Origins,Convergent Mutation,108/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Convergent Mutation - Origins.jpg,Co_on_108_Ori
+Origins,Crackshot Corsair,130/298,Common,No,0.25,0.2,0.125,10,5,0,images/Crackshot Corsair - Origins.jpg,Cr_ir_130_Ori
+Origins,Cruel Patron,208/298,Common,No,0.1,0.08,0.05,10,5,0,images/Cruel Patron - Origins.jpg,Cr_on_208_Ori
+Origins,Cull the Weak,209/298,Common,No,0.1,0.08,0.05,10,5,0,images/Cull the Weak - Origins.jpg,Cu_ak_209_Ori
+Origins,Dangerous Duo,016/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Dangerous Duo - Origins.jpg,Da_uo_016_Ori
+Origins,Daring Poro,210/298,Common,No,0.1,0.08,0.05,10,5,0,images/Daring Poro - Origins.jpg,Da_ro_210_Ori
+Origins,Darius - Executioner,243/298,Epic,Yes,0.1,0.08,0.05,10,5,0,images/Darius - Executioner - Origins.jpg,Da_er_243_Ori
+Origins,Darius - Executioner (Alternate Art),243a/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Darius - Executioner (Alternate Art) - Origins.jpg,Da_t)_243_Ori
+Origins,Darius - Hand of Noxus,253/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Darius - Hand of Noxus - Origins.jpg,Da_us_253_Ori
+Origins,Darius - Hand of Noxus (Overnumbered),302/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Darius - Hand of Noxus (Overnumbered) - Origins.jpg,Da_d)_302_Ori
+Origins,Darius - Hand of Noxus (Signature),302*/298,Showcase,Yes,2.47,1.976,1.235,10,5,0,images/Darius - Hand of Noxus (Signature) - Origins.jpg,Da_e)_302_Ori
+Origins,Darius - Trifarian,027/298,Rare,Yes,4.75,3.8,2.375,10,5,0,images/Darius - Trifarian - Origins.jpg,Da_an_027_Ori
+Origins,Darius - Trifarian (Alternate Art),027a/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Darius - Trifarian (Alternate Art) - Origins.jpg,Da_t)_027_Ori
+Origins,Dazzling Aurora,160/298,Epic,Yes,45.675,36.54,22.8375,10,5,0,images/Dazzling Aurora - Origins.jpg,Da_ra_160_Ori
+Origins,Deadbloom Predator,161/298,Epic,Yes,393.75,315,196.875,10,5,0,images/Deadbloom Predator - Origins.jpg,De_or_161_Ori
+Origins,Defy,045/298,Common,No,6.825,5.46,3.4125,10,5,0,images/Defy - Origins.jpg,De_fy_045_Ori
+Origins,Discipline,058/298,Uncommon,No,16.25,13,8.125,10,5,0,images/Discipline - Origins.jpg,Di_ne_058_Ori
+Origins,Disintegrate,005/298,Common,No,61.95,49.56,30.975,10,5,0,images/Disintegrate - Origins.jpg,Di_te_005_Ori
+Origins,Divine Judgment,244/298,Epic,Yes,96,76.8,48,10,5,0,images/Divine Judgment - Origins.jpg,Di_nt_244_Ori
+Origins,Dr. Mundo - Expert,109/298,Rare,Yes,0.25,0.2,0.125,10,5,0,images/Dr. Mundo - Expert - Origins.jpg,Dr_rt_109_Ori
+Origins,Dragon's Rage,258/298,Epic,Yes,0.25,0.2,0.125,10,5,0,images/Dragon's Rage - Origins.jpg,Dr_ge_258_Ori
+Origins,Draven - Showboat,028/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Draven - Showboat - Origins.jpg,Dr_at_028_Ori
+Origins,Dune Drake,131/298,Common,No,0.1,0.08,0.05,10,5,0,images/Dune Drake - Origins.jpg,Du_ke_131_Ori
+Origins,Eager Apprentice,084/298,Common,No,10.075,8.06,5.0375,10,5,0,images/Eager Apprentice - Origins.jpg,Ea_ce_084_Ori
+Origins,Eclipse Herald,059/298,Uncommon,No,1.91,1.528,0.955,10,5,0,images/Eclipse Herald - Origins.jpg,Ec_ld_059_Ori
+Origins,Ekko - Recurrent,110/298,Rare,Yes,3.375,2.7,1.6875,10,5,0,images/Ekko - Recurrent - Origins.jpg,Ek_nt_110_Ori
+Origins,Ember Monk,167/298,Common,No,1.23,0.984,0.615,10,5,0,images/Ember Monk - Origins.jpg,Em_nk_167_Ori
+Origins,En Garde,046/298,Common,No,0.1,0.08,0.05,10,5,0,images/En Garde - Origins.jpg,En_de_046_Ori
+Origins,Energy Conduit,098/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Energy Conduit - Origins.jpg,En_it_098_Ori
+Origins,Facebreaker,220/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Facebreaker - Origins.jpg,Fa_er_220_Ori
+Origins,Fading Memories,180/298,Uncommon,No,0.25,0.2,0.125,10,5,0,images/Fading Memories - Origins.jpg,Fa_es_180_Ori
+Origins,Faithful Manufactor,211/298,Common,No,0.1,0.08,0.05,10,5,0,images/Faithful Manufactor - Origins.jpg,Fa_or_211_Ori
+Origins,Falling Comet,085/298,Common,No,0.1,0.08,0.05,10,5,0,images/Falling Comet - Origins.jpg,Fa_et_085_Ori
+Origins,Falling Star,029/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Falling Star - Origins.jpg,Fa_ar_029_Ori
+Origins,Fight or Flight,168/298,Common,No,0.1,0.08,0.05,10,5,0,images/Fight or Flight - Origins.jpg,Fi_ht_168_Ori
+Origins,Find Your Center,047/298,Common,No,0.1,0.08,0.05,10,5,0,images/Find Your Center - Origins.jpg,Fi_er_047_Ori
+Origins,Fiora - Victorious,232/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Fiora - Victorious - Origins.jpg,Fi_us_232_Ori
+Origins,First Mate,132/298,Common,No,0.1,0.08,0.05,10,5,0,images/First Mate - Origins.jpg,Fi_te_132_Ori
+Origins,Flame Chompers,006/298,Common,No,3.93,3.144,1.965,10,5,0,images/Flame Chompers - Origins.jpg,Fl_rs_006_Ori
+Origins,Flurry of Blades,133/298,Common,No,0.1,0.08,0.05,10,5,0,images/Flurry of Blades - Origins.jpg,Fl_es_133_Ori
+Origins,Forge of the Future,212/298,Common,No,1.68,1.344,0.84,10,5,0,images/Forge of the Future - Origins.jpg,Fo_re_212_Ori
+Origins,Fortified Position,279/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Fortified Position - Origins.jpg,Fo_on_279_Ori
+Origins,Fox-Fire,256/298,Epic,Yes,2.13,1.704,1.065,10,5,0,images/Fox-Fire - Origins.jpg,Fo_re_256_Ori
+Origins,Fury Rune,007/298,Common,No,0.25,0.2,0.125,10,5,0,images/Fury Rune - Origins.jpg,Fu_ne_007_Ori
+Origins,Fury Rune (Alternate Art),007a/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Fury Rune (Alternate Art) - Origins.jpg,Fu_t)_007_Ori
+Origins,Garbage Grabber,099/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Garbage Grabber - Origins.jpg,Ga_er_099_Ori
+Origins,Gemcraft Seer,100/298,Uncommon,No,32.33,25.864,16.165,10,5,0,images/Gemcraft Seer - Origins.jpg,Ge_er_100_Ori
+Origins,Get Excited!,008/298,Common,No,0.1,0.08,0.05,10,5,0,images/Get Excited! - Origins.jpg,Ge_d!_008_Ori
+Origins,Grand Strategem,233/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Grand Strategem - Origins.jpg,Gr_em_233_Ori
+Origins,Grove of the God-Willow,280/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Grove of the God-Willow - Origins.jpg,Gr_ow_280_Ori
+Origins,Guerilla Warfare,264/298,Epic,Yes,10.23,8.184,5.115,10,5,0,images/Guerilla Warfare - Origins.jpg,Gu_re_264_Ori
+Origins,Gust,169/298,Common,No,0.1,0.08,0.05,10,5,0,images/Gust - Origins.jpg,Gu_st_169_Ori
+Origins,Hallowed Tomb,281/298,Uncommon,No,16.9,13.52,8.45,10,5,0,images/Hallowed Tomb - Origins.jpg,Ha_mb_281_Ori
+Origins,Harnessed Dragon,234/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Harnessed Dragon - Origins.jpg,Ha_on_234_Ori
+Origins,Heimerdinger - Inventor,111/298,Rare,Yes,1.23,0.984,0.615,10,5,0,images/Heimerdinger - Inventor - Origins.jpg,He_or_111_Ori
+Origins,Herald of Scales,140/298,Uncommon,No,0.9,0.72,0.45,10,5,0,images/Herald of Scales - Origins.jpg,He_es_140_Ori
+Origins,Hextech Ray,009/298,Common,No,0.25,0.2,0.125,10,5,0,images/Hextech Ray - Origins.jpg,He_ay_009_Ori
+Origins,Hidden Blade,213/298,Common,No,0.1,0.08,0.05,10,5,0,images/Hidden Blade - Origins.jpg,Hi_de_213_Ori
+Origins,Icathian Rain,248/298,Epic,Yes,0.25,0.2,0.125,10,5,0,images/Icathian Rain - Origins.jpg,Ic_in_248_Ori
+Origins,Immortal Phoenix,037/298,Epic,Yes,0.1,0.08,0.05,10,5,0,images/Immortal Phoenix - Origins.jpg,Im_ix_037_Ori
+Origins,Imperial Decree,221/298,Uncommon,No,0.25,0.2,0.125,10,5,0,images/Imperial Decree - Origins.jpg,Im_ee_221_Ori
+Origins,Invert Timelines,201/298,Epic,Yes,0.1,0.08,0.05,10,5,0,images/Invert Timelines - Origins.jpg,In_es_201_Ori
+Origins,Iron Ballista,017/298,Uncommon,No,9.425,7.54,4.7125,10,5,0,images/Iron Ballista - Origins.jpg,Ir_ta_017_Ori
+Origins,Jeweled Colossus,086/298,Common,No,0.1,0.08,0.05,10,5,0,images/Jeweled Colossus - Origins.jpg,Je_us_086_Ori
+Origins,Jinx - Demolitionist,030/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Jinx - Demolitionist - Origins.jpg,Ji_st_030_Ori
+Origins,Jinx - Demolitionist (Alternate Art),030a/298,Showcase,Yes,0.25,0.2,0.125,10,5,0,images/Jinx - Demolitionist (Alternate Art) - Origins.jpg,Ji_t)_030_Ori
+Origins,Jinx - Loose Cannon,251/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Jinx - Loose Cannon - Origins.jpg,Ji_on_251_Ori
+Origins,Jinx - Loose Cannon (Overnumbered),301/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Jinx - Loose Cannon (Overnumbered) - Origins.jpg,Ji_d)_301_Ori
+Origins,Jinx - Loose Cannon (Signature),301*/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Jinx - Loose Cannon (Signature) - Origins.jpg,Ji_e)_301_Ori
+Origins,Jinx - Rebel,202/298,Epic,Yes,0.1,0.08,0.05,10,5,0,images/Jinx - Rebel - Origins.jpg,Ji_el_202_Ori
+Origins,Jinx - Rebel (Alternate Art),202a/298,Showcase,Yes,0.25,0.2,0.125,10,5,0,images/Jinx - Rebel (Alternate Art) - Origins.jpg,Ji_t)_202_Ori
+Origins,Kadregrin the Infernal,038/298,Epic,Yes,25.18,20.144,12.59,10,5,0,images/Kadregrin the Infernal - Origins.jpg,Ka_al_038_Ori
+Origins,Kai'Sa - Daughter of the Void,247/298,Rare,Yes,5,4,2.5,10,5,0,images/Kai'Sa - Daughter of the Void - Origins.jpg,Ka_id_247_Ori
+Origins,Kai'Sa - Daughter of the Void (Overnumbered),299/298,Showcase,Yes,0.25,0.2,0.125,10,5,0,images/Kai'Sa - Daughter of the Void (Overnumbered) - Origins.jpg,Ka_d)_299_Ori
+Origins,Kai'Sa - Daughter of the Void (Signature),299*/298,Showcase,Yes,0.25,0.2,0.125,10,5,0,images/Kai'Sa - Daughter of the Void (Signature) - Origins.jpg,Ka_e)_299_Ori
+Origins,Kai'Sa - Evolutionary,112/298,Rare,Yes,26,20.8,13,10,5,0,images/Kai'Sa - Evolutionary - Origins.jpg,Ka_ry_112_Ori
+Origins,Kai'Sa - Evolutionary (Alternate Art),112a/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Kai'Sa - Evolutionary (Alternate Art) - Origins.jpg,Ka_t)_112_Ori
+Origins,Kai'Sa - Survivor,039/298,Epic,Yes,0.1,0.08,0.05,10,5,0,images/Kai'Sa - Survivor - Origins.jpg,Ka_or_039_Ori
+Origins,Kai'Sa - Survivor (Alternate Art),039a/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Kai'Sa - Survivor (Alternate Art) - Origins.jpg,Ka_t)_039_Ori
+Origins,Karma - Channeler,235/298,Rare,Yes,4.875,3.9,2.4375,10,5,0,images/Karma - Channeler - Origins.jpg,Ka_er_235_Ori
+Origins,Karthus - Eternal,236/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Karthus - Eternal - Origins.jpg,Ka_al_236_Ori
+Origins,Kayn - Unleashed,189/298,Rare,Yes,78.75,63,39.375,10,5,0,images/Kayn - Unleashed - Origins.jpg,Ka_ed_189_Ori
+Origins,King's Edict,237/298,Rare,Yes,521.25,417,260.625,10,5,0,images/King's Edict - Origins.jpg,Ki_ct_237_Ori
+Origins,Kinkou Monk,141/298,Uncommon,No,2.58,2.064,1.29,10,5,0,images/Kinkou Monk - Origins.jpg,Ki_nk_141_Ori
+Origins,Kog'Maw - Caustic,190/298,Rare,Yes,3.03,2.424,1.515,10,5,0,images/Kog'Maw - Caustic - Origins.jpg,Ko_ic_190_Ori
+Origins,Kraken Hunter,150/298,Rare,Yes,8.125,6.5,4.0625,10,5,0,images/Kraken Hunter - Origins.jpg,Kr_er_150_Ori
+Origins,Last Breath,260/298,Epic,Yes,0.1,0.08,0.05,10,5,0,images/Last Breath - Origins.jpg,La_th_260_Ori
+Origins,Last Stand,069/298,Rare,Yes,150,120,75,10,5,0,images/Last Stand - Origins.jpg,La_nd_069_Ori
+Origins,Lecturing Yordle,087/298,Common,No,1522.5,1218,761.25,10,5,0,images/Lecturing Yordle - Origins.jpg,Le_le_087_Ori
+Origins,Lee Sin - Ascetic,078/298,Epic,Yes,0.25,0.2,0.125,10,5,0,images/Lee Sin - Ascetic - Origins.jpg,Le_ic_078_Ori
+Origins,Lee Sin - Ascetic (Alternate Art),078a/298,Showcase,Yes,2.02,1.616,1.01,10,5,0,images/Lee Sin - Ascetic (Alternate Art) - Origins.jpg,Le_t)_078_Ori
+Origins,Lee Sin - Blind Monk,257/298,Rare,Yes,81,64.8,40.5,10,5,0,images/Lee Sin - Blind Monk - Origins.jpg,Le_nk_257_Ori
+Origins,Lee Sin - Blind Monk (Overnumbered),304/298,Showcase,Yes,86.25,69,43.125,10,5,0,images/Lee Sin - Blind Monk (Overnumbered) - Origins.jpg,Le_d)_304_Ori
+Origins,Lee Sin - Blind Monk (Signature),304*/298,Showcase,Yes,0.25,0.2,0.125,10,5,0,images/Lee Sin - Blind Monk (Signature) - Origins.jpg,Le_e)_304_Ori
+Origins,Lee Sin - Centered,151/298,Rare,Yes,0.25,0.2,0.125,10,5,0,images/Lee Sin - Centered - Origins.jpg,Le_ed_151_Ori
+Origins,Lee Sin - Centered (Alternate Art),151a/298,Showcase,Yes,0.25,0.2,0.125,10,5,0,images/Lee Sin - Centered (Alternate Art) - Origins.jpg,Le_t)_151_Ori
+Origins,Legion Rearguard,010/298,Common,No,0.1,0.08,0.05,10,5,0,images/Legion Rearguard - Origins.jpg,Le_rd_010_Ori
+Origins,Leona - Determined,238/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Leona - Determined - Origins.jpg,Le_ed_238_Ori
+Origins,Leona - Determined (Alternate Art),238a/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Leona - Determined (Alternate Art) - Origins.jpg,Le_t)_238_Ori
+Origins,Leona - Radiant Dawn,261/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Leona - Radiant Dawn - Origins.jpg,Le_wn_261_Ori
+Origins,Leona - Radiant Dawn (Overnumbered),306/298,Showcase,Yes,3.825,3.06,1.9125,10,5,0,images/Leona - Radiant Dawn (Overnumbered) - Origins.jpg,Le_d)_306_Ori
+Origins,Leona - Radiant Dawn (Signature),306*/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Leona - Radiant Dawn (Signature) - Origins.jpg,Le_e)_306_Ori
+Origins,Leona - Zealot,079/298,Epic,Yes,0.1,0.08,0.05,10,5,0,images/Leona - Zealot - Origins.jpg,Le_ot_079_Ori
+Origins,Leona - Zealot (Alternate Art),079a/298,Showcase,Yes,1.35,1.08,0.675,10,5,0,images/Leona - Zealot (Alternate Art) - Origins.jpg,Le_t)_079_Ori
+Origins,Machine Evangel,239/298,Rare,Yes,2.7,2.16,1.35,10,5,0,images/Machine Evangel - Origins.jpg,Ma_el_239_Ori
+Origins,Maddened Marauder,191/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Maddened Marauder - Origins.jpg,Ma_er_191_Ori
+Origins,Mageseeker Warden,070/298,Rare,Yes,57.75,46.2,28.875,10,5,0,images/Mageseeker Warden - Origins.jpg,Ma_en_070_Ori
+Origins,Magma Wurm,011/298,Common,No,600,480,300,10,5,0,images/Magma Wurm - Origins.jpg,Ma_rm_011_Ori
+Origins,Malzahar - Fanatic,113/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Malzahar - Fanatic - Origins.jpg,Ma_ic_113_Ori
+Origins,Mask of Foresight,060/298,Uncommon,No,3.6,2.88,1.8,10,5,0,images/Mask of Foresight - Origins.jpg,Ma_ht_060_Ori
+Origins,Meditation,048/298,Common,No,0.1,0.08,0.05,10,5,0,images/Meditation - Origins.jpg,Me_on_048_Ori
+Origins,Mega-Mech,088/298,Common,No,1.12,0.896,0.56,10,5,0,images/Mega-Mech - Origins.jpg,Me_ch_088_Ori
+Origins,Mind Rune,089/298,Common,No,8.775,7.02,4.3875,10,5,0,images/Mind Rune - Origins.jpg,Mi_ne_089_Ori
+Origins,Mind Rune (Alternate Art),089a/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Mind Rune (Alternate Art) - Origins.jpg,Mi_t)_089_Ori
+Origins,Mindsplitter,192/298,Rare,Yes,81,64.8,40.5,10,5,0,images/Mindsplitter - Origins.jpg,Mi_er_192_Ori
+Origins,Miss Fortune - Bounty Hunter,267/298,Rare,Yes,480,384,240,10,5,0,images/Miss Fortune - Bounty Hunter - Origins.jpg,Mi_er_267_Ori
+Origins,Miss Fortune - Bounty Hunter (Overnumbered),309/298,Showcase,Yes,2.47,1.976,1.235,10,5,0,images/Miss Fortune - Bounty Hunter (Overnumbered) - Origins.jpg,Mi_d)_309_Ori
+Origins,Miss Fortune - Bounty Hunter (Signature),309*/298,Showcase,Yes,7.63,6.104,3.815,10,5,0,images/Miss Fortune - Bounty Hunter (Signature) - Origins.jpg,Mi_e)_309_Ori
+Origins,Miss Fortune - Buccaneer,193/298,Rare,Yes,3.375,2.7,1.6875,10,5,0,images/Miss Fortune - Buccaneer - Origins.jpg,Mi_er_193_Ori
+Origins,Miss Fortune - Buccaneer (Alternate Art),193a/298,Showcase,Yes,0.9,0.72,0.45,10,5,0,images/Miss Fortune - Buccaneer (Alternate Art) - Origins.jpg,Mi_t)_193_Ori
+Origins,Miss Fortune - Captain,162/298,Epic,Yes,3.71,2.968,1.855,10,5,0,images/Miss Fortune - Captain - Origins.jpg,Mi_in_162_Ori
+Origins,Miss Fortune - Captain (Alternate Art),162a/298,Showcase,Yes,1.91,1.528,0.955,10,5,0,images/Miss Fortune - Captain (Alternate Art) - Origins.jpg,Mi_t)_162_Ori
+Origins,Mistfall,152/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Mistfall - Origins.jpg,Mi_ll_152_Ori
+Origins,Mobilize,134/298,Common,No,0.1,0.08,0.05,10,5,0,images/Mobilize - Origins.jpg,Mo_ze_134_Ori
+Origins,Monastery of Hirana,282/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Monastery of Hirana - Origins.jpg,Mo_na_282_Ori
+Origins,Morbid Return,170/298,Common,No,0.1,0.08,0.05,10,5,0,images/Morbid Return - Origins.jpg,Mo_rn_170_Ori
+Origins,Mountain Drake,142/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Mountain Drake - Origins.jpg,Mo_ke_142_Ori
+Origins,Mushroom Pouch,101/298,Uncommon,No,2.47,1.976,1.235,10,5,0,images/Mushroom Pouch - Origins.jpg,Mu_ch_101_Ori
+Origins,Mystic Poro,171/298,Common,No,1.12,0.896,0.56,10,5,0,images/Mystic Poro - Origins.jpg,My_ro_171_Ori
+Origins,Mystic Reversal,080/298,Epic,Yes,13.48,10.784,6.74,10,5,0,images/Mystic Reversal - Origins.jpg,My_al_080_Ori
+Origins,Navori Fighting Pit,283/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Navori Fighting Pit - Origins.jpg,Na_it_283_Ori
+Origins,Nocturne - Horrifying,194/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Nocturne - Horrifying - Origins.jpg,No_ng_194_Ori
+Origins,Noxian Drummer,222/298,Uncommon,No,0.25,0.2,0.125,10,5,0,images/Noxian Drummer - Origins.jpg,No_er_222_Ori
+Origins,Noxian Guillotine,254/298,Epic,Yes,20.475,16.38,10.2375,10,5,0,images/Noxian Guillotine - Origins.jpg,No_ne_254_Ori
+Origins,Noxus Hopeful,012/298,Common,No,6.98,5.584,3.49,10,5,0,images/Noxus Hopeful - Origins.jpg,No_ul_012_Ori
+Origins,Noxus Saboteur,018/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Noxus Saboteur - Origins.jpg,No_ur_018_Ori
+Origins,Obelisk of Power,284/298,Uncommon,No,97.5,78,48.75,10,5,0,images/Obelisk of Power - Origins.jpg,Ob_er_284_Ori
+Origins,Orb of Regret,090/298,Common,No,611.25,489,305.625,10,5,0,images/Orb of Regret - Origins.jpg,Or_et_090_Ori
+Origins,Order Rune,214/298,Common,No,0.25,0.2,0.125,10,5,0,images/Order Rune - Origins.jpg,Or_ne_214_Ori
+Origins,Order Rune (Alternate Art),214a/298,Showcase,Yes,2.47,1.976,1.235,10,5,0,images/Order Rune (Alternate Art) - Origins.jpg,Or_t)_214_Ori
+Origins,Overt Operation,153/298,Rare,Yes,7.8,6.24,3.9,10,5,0,images/Overt Operation - Origins.jpg,Ov_on_153_Ori
+Origins,Pack of Wonders,181/298,Uncommon,No,14.46,11.568,7.23,10,5,0,images/Pack of Wonders - Origins.jpg,Pa_rs_181_Ori
+Origins,Pakaa Cub,135/298,Common,No,0.1,0.08,0.05,10,5,0,images/Pakaa Cub - Origins.jpg,Pa_ub_135_Ori
+Origins,Party Favors,071/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Party Favors - Origins.jpg,Pa_rs_071_Ori
+Origins,Peak Guardian,223/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Peak Guardian - Origins.jpg,Pe_an_223_Ori
+Origins,Petty Officer,215/298,Common,No,0.1,0.08,0.05,10,5,0,images/Petty Officer - Origins.jpg,Pe_er_215_Ori
+Origins,Pirate's Haven,143/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Pirate's Haven - Origins.jpg,Pi_en_143_Ori
+Origins,Pit Crew,091/298,Common,No,0.1,0.08,0.05,10,5,0,images/Pit Crew - Origins.jpg,Pi_ew_091_Ori
+Origins,Pit Rookie,136/298,Common,No,0.1,0.08,0.05,10,5,0,images/Pit Rookie - Origins.jpg,Pi_ie_136_Ori
+Origins,Playful Phantom,049/298,Common,No,9.26,7.408,4.63,10,5,0,images/Playful Phantom - Origins.jpg,Pl_om_049_Ori
+Origins,Poro Herder,061/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Poro Herder - Origins.jpg,Po_er_061_Ori
+Origins,Portal Rescue,102/298,Uncommon,No,2.7,2.16,1.35,10,5,0,images/Portal Rescue - Origins.jpg,Po_ue_102_Ori
+Origins,Possession,203/298,Epic,Yes,0.1,0.08,0.05,10,5,0,images/Possession - Origins.jpg,Po_on_203_Ori
+Origins,Pouty Poro,013/298,Common,No,1.35,1.08,0.675,10,5,0,images/Pouty Poro - Origins.jpg,Po_ro_013_Ori
+Origins,Primal Strength,154/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Primal Strength - Origins.jpg,Pr_th_154_Ori
+Origins,Progress Day,114/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Progress Day - Origins.jpg,Pr_ay_114_Ori
+Origins,Promising Future,115/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Promising Future - Origins.jpg,Pr_re_115_Ori
+Origins,Qiyana - Victorious,155/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Qiyana - Victorious - Origins.jpg,Qi_us_155_Ori
+Origins,Raging Firebrand,031/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Raging Firebrand - Origins.jpg,Ra_nd_031_Ori
+Origins,Raging Soul,019/298,Uncommon,No,13,10.4,6.5,10,5,0,images/Raging Soul - Origins.jpg,Ra_ul_019_Ori
+Origins,Ravenbloom Student,103/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Ravenbloom Student - Origins.jpg,Ra_nt_103_Ori
+Origins,Ravenborn Tome,032/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Ravenborn Tome - Origins.jpg,Ra_me_032_Ori
+Origins,Reaver's Row,285/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Reaver's Row - Origins.jpg,Re_ow_285_Ori
+Origins,Rebuke,172/298,Common,No,0.1,0.08,0.05,10,5,0,images/Rebuke - Origins.jpg,Re_ke_172_Ori
+Origins,Reckoner's Arena,286/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Reckoner's Arena - Origins.jpg,Re_na_286_Ori
+Origins,Recruit (271) // Buff,271/298,Common,No,0.1,0.08,0.05,10,5,0,images/Recruit (271) - Buff - Origins.jpg,Re_ff_271_Ori
+Origins,Recruit (272) // Buff,272/298,Common,No,0.1,0.08,0.05,10,5,0,images/Recruit (272) - Buff - Origins.jpg,Re_ff_272_Ori
+Origins,Recruit (273) // Buff,273/298,Common,No,0.1,0.08,0.05,10,5,0,images/Recruit (273) - Buff - Origins.jpg,Re_ff_273_Ori
+Origins,Reinforce,062/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Reinforce - Origins.jpg,Re_ce_062_Ori
+Origins,Retreat,104/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Retreat - Origins.jpg,Re_at_104_Ori
+Origins,Rhasa the Sunderer,195/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Rhasa the Sunderer - Origins.jpg,Rh_er_195_Ori
+Origins,Ride The Wind,173/298,Common,No,0.1,0.08,0.05,10,5,0,images/Ride The Wind - Origins.jpg,Ri_nd_173_Ori
+Origins,Riptide Rex,092/298,Common,No,5,4,2.5,10,5,0,images/Riptide Rex - Origins.jpg,Ri_ex_092_Ori
+Origins,Rune Prison,050/298,Common,No,0.1,0.08,0.05,10,5,0,images/Rune Prison - Origins.jpg,Ru_on_050_Ori
+Origins,Sabotage,156/298,Rare,Yes,1.35,1.08,0.675,10,5,0,images/Sabotage - Origins.jpg,Sa_ge_156_Ori
+Origins,Sai Scout,174/298,Common,No,0.1,0.08,0.05,10,5,0,images/Sai Scout - Origins.jpg,Sa_ut_174_Ori
+Origins,Salvage,224/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Salvage - Origins.jpg,Sa_ge_224_Ori
+Origins,Scrapheap,182/298,Uncommon,No,3.375,2.7,1.6875,10,5,0,images/Scrapheap - Origins.jpg,Sc_ap_182_Ori
+Origins,Scrapyard Champion,020/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Scrapyard Champion - Origins.jpg,Sc_on_020_Ori
+Origins,Seal of Discord,204/298,Epic,Yes,0.1,0.08,0.05,10,5,0,images/Seal of Discord - Origins.jpg,Se_rd_204_Ori
+Origins,Seal of Focus,081/298,Epic,Yes,0.1,0.08,0.05,10,5,0,images/Seal of Focus - Origins.jpg,Se_us_081_Ori
+Origins,Seal of Insight,120/298,Epic,Yes,0.1,0.08,0.05,10,5,0,images/Seal of Insight - Origins.jpg,Se_ht_120_Ori
+Origins,Seal of Rage,040/298,Epic,Yes,0.1,0.08,0.05,10,5,0,images/Seal of Rage - Origins.jpg,Se_ge_040_Ori
+Origins,Seal of Strength,163/298,Epic,Yes,0.1,0.08,0.05,10,5,0,images/Seal of Strength - Origins.jpg,Se_th_163_Ori
+Origins,Seal of Unity,245/298,Epic,Yes,0.1,0.08,0.05,10,5,0,images/Seal of Unity - Origins.jpg,Se_ty_245_Ori
+Origins,Sett - Brawler,164/298,Epic,Yes,2.47,1.976,1.235,10,5,0,images/Sett - Brawler - Origins.jpg,Se_er_164_Ori
+Origins,Sett - Brawler (Alternate Art),164a/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Sett - Brawler (Alternate Art) - Origins.jpg,Se_t)_164_Ori
+Origins,Sett - Kingpin,240/298,Rare,Yes,1.57,1.256,0.785,10,5,0,images/Sett - Kingpin - Origins.jpg,Se_in_240_Ori
+Origins,Sett - Kingpin (Alternate Art),240a/298,Showcase,Yes,0.9,0.72,0.45,10,5,0,images/Sett - Kingpin (Alternate Art) - Origins.jpg,Se_t)_240_Ori
+Origins,Sett - The Boss,269/298,Rare,Yes,0.25,0.2,0.125,10,5,0,images/Sett - The Boss - Origins.jpg,Se_ss_269_Ori
+Origins,Sett - The Boss (Overnumbered),310/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Sett - The Boss (Overnumbered) - Origins.jpg,Se_d)_310_Ori
+Origins,Sett - The Boss (Signature),310*/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Sett - The Boss (Signature) - Origins.jpg,Se_e)_310_Ori
+Origins,Shakedown,033/298,Rare,Yes,3.03,2.424,1.515,10,5,0,images/Shakedown - Origins.jpg,Sh_wn_033_Ori
+Origins,Shen - Kinkou,241/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Shen - Kinkou - Origins.jpg,Sh_ou_241_Ori
+Origins,Shipyard Skulker,175/298,Common,No,0.25,0.2,0.125,10,5,0,images/Shipyard Skulker - Origins.jpg,Sh_er_175_Ori
+Origins,Showstopper,270/298,Epic,Yes,0.1,0.08,0.05,10,5,0,images/Showstopper - Origins.jpg,Sh_er_270_Ori
+Origins,Sigil of the Storm,287/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Sigil of the Storm - Origins.jpg,Si_rm_287_Ori
+Origins,Singularity,105/298,Uncommon,No,12.35,9.88,6.175,10,5,0,images/Singularity - Origins.jpg,Si_ty_105_Ori
+Origins,Siphon Power,266/298,Epic,Yes,13,10.4,6.5,10,5,0,images/Siphon Power - Origins.jpg,Si_er_266_Ori
+Origins,Sky Splitter,014/298,Common,No,14.13,11.304,7.065,10,5,0,images/Sky Splitter - Origins.jpg,Sk_er_014_Ori
+Origins,Smoke Screen,093/298,Common,No,17.875,14.3,8.9375,10,5,0,images/Smoke Screen - Origins.jpg,Sm_en_093_Ori
+Origins,Sneaky Deckhand,176/298,Common,No,9.1,7.28,4.55,10,5,0,images/Sneaky Deckhand - Origins.jpg,Sn_nd_176_Ori
+Origins,Soaring Scout,216/298,Common,No,28.275,22.62,14.1375,10,5,0,images/Soaring Scout - Origins.jpg,So_ut_216_Ori
+Origins,Solari Chief,225/298,Uncommon,No,13.48,10.784,6.74,10,5,0,images/Solari Chief - Origins.jpg,So_ef_225_Ori
+Origins,Solari Shieldbearer,051/298,Common,No,17.225,13.78,8.6125,10,5,0,images/Solari Shieldbearer - Origins.jpg,So_er_051_Ori
+Origins,Solari Shrine,072/298,Rare,Yes,1.01,0.808,0.505,10,5,0,images/Solari Shrine - Origins.jpg,So_ne_072_Ori
+Origins,Sona - Harmonious,073/298,Rare,Yes,3.6,2.88,1.8,10,5,0,images/Sona - Harmonious - Origins.jpg,So_us_073_Ori
+Origins,Soulgorger,196/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Soulgorger - Origins.jpg,So_er_196_Ori
+Origins,Spectral Matron,226/298,Uncommon,No,84,67.2,42,10,5,0,images/Spectral Matron - Origins.jpg,Sp_on_226_Ori
+Origins,Spirit's Refuge,063/298,Uncommon,No,536.25,429,268.125,10,5,0,images/Spirit's Refuge - Origins.jpg,Sp_ge_063_Ori
+Origins,Spoils of War,144/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Spoils of War - Origins.jpg,Sp_ar_144_Ori
+Origins,Sprite (274) // Buff,274/298,Common,No,1.8,1.44,0.9,10,5,0,images/Sprite (274) - Buff - Origins.jpg,Sp_ff_274_Ori
+Origins,Sprite Call,094/298,Common,No,0.1,0.08,0.05,10,5,0,images/Sprite Call - Origins.jpg,Sp_ll_094_Ori
+Origins,Sprite Mother,106/298,Uncommon,No,37.625,30.1,18.8125,10,5,0,images/Sprite Mother - Origins.jpg,Sp_er_106_Ori
+Origins,Stacked Deck,183/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Stacked Deck - Origins.jpg,St_ck_183_Ori
+Origins,Stalwart Poro,052/298,Common,No,0.25,0.2,0.125,10,5,0,images/Stalwart Poro - Origins.jpg,St_ro_052_Ori
+Origins,Stand United,053/298,Common,No,8.61,6.888,4.305,10,5,0,images/Stand United - Origins.jpg,St_ed_053_Ori
+Origins,Startipped Peak,288/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Startipped Peak - Origins.jpg,St_ak_288_Ori
+Origins,Stealthy Pursuer,177/298,Common,No,0.1,0.08,0.05,10,5,0,images/Stealthy Pursuer - Origins.jpg,St_er_177_Ori
+Origins,Stormbringer,250/298,Epic,Yes,0.1,0.08,0.05,10,5,0,images/Stormbringer - Origins.jpg,St_er_250_Ori
+Origins,Stormclaw Ursine,137/298,Common,No,0.1,0.08,0.05,10,5,0,images/Stormclaw Ursine - Origins.jpg,St_ne_137_Ori
+Origins,Stupefy,095/298,Common,No,0.1,0.08,0.05,10,5,0,images/Stupefy - Origins.jpg,St_fy_095_Ori
+Origins,Sun Disc,021/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Sun Disc - Origins.jpg,Su_sc_021_Ori
+Origins,Sunlit Guardian,054/298,Common,No,0.1,0.08,0.05,10,5,0,images/Sunlit Guardian - Origins.jpg,Su_an_054_Ori
+Origins,Super Mega Death Rocket!,252/298,Epic,Yes,1.23,0.984,0.615,10,5,0,images/Super Mega Death Rocket! - Origins.jpg,Su_t!_252_Ori
+Origins,Symbol of the Solari,227/298,Uncommon,No,0.25,0.2,0.125,10,5,0,images/Symbol of the Solari - Origins.jpg,Sy_ri_227_Ori
+Origins,Targon's Peak,289/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Targon's Peak - Origins.jpg,Ta_ak_289_Ori
+Origins,Taric - Protector,074/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Taric - Protector - Origins.jpg,Ta_or_074_Ori
+Origins,Tasty Faefolk,075/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Tasty Faefolk - Origins.jpg,Ta_lk_075_Ori
+Origins,Teemo - Scout,197/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Teemo - Scout - Origins.jpg,Te_ut_197_Ori
+Origins,Teemo - Scout (Alternate Art),197a/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Teemo - Scout (Alternate Art) - Origins.jpg,Te_t)_197_Ori
+Origins,Teemo - Strategist,121/298,Epic,Yes,1.68,1.344,0.84,10,5,0,images/Teemo - Strategist - Origins.jpg,Te_st_121_Ori
+Origins,Teemo - Strategist (Alternate Art),121a/298,Showcase,Yes,4.875,3.9,2.4375,10,5,0,images/Teemo - Strategist (Alternate Art) - Origins.jpg,Te_t)_121_Ori
+Origins,Teemo - Swift Scout,263/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Teemo - Swift Scout - Origins.jpg,Te_ut_263_Ori
+Origins,Teemo - Swift Scout (Overnumbered),307/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Teemo - Swift Scout (Overnumbered) - Origins.jpg,Te_d)_307_Ori
+Origins,Teemo - Swift Scout (Signature),307*/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Teemo - Swift Scout (Signature) - Origins.jpg,Te_e)_307_Ori
+Origins,The Arena's Greatest,290/298,Uncommon,No,7.31,5.848,3.655,10,5,0,images/The Arena's Greatest - Origins.jpg,Th_st_290_Ori
+Origins,The Candlelit Sanctum,291/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/The Candlelit Sanctum - Origins.jpg,Th_um_291_Ori
+Origins,The Dreaming Tree,292/298,Uncommon,No,3.15,2.52,1.575,10,5,0,images/The Dreaming Tree - Origins.jpg,Th_ee_292_Ori
+Origins,The Grand Plaza,293/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/The Grand Plaza - Origins.jpg,Th_za_293_Ori
+Origins,The Harrowing,198/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/The Harrowing - Origins.jpg,Th_ng_198_Ori
+Origins,The Syren,184/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/The Syren - Origins.jpg,Th_en_184_Ori
+Origins,Thermo Beam,022/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Thermo Beam - Origins.jpg,Th_am_022_Ori
+Origins,Thousand-Tailed Watcher,116/298,Rare,Yes,11.53,9.224,5.765,10,5,0,images/Thousand-Tailed Watcher - Origins.jpg,Th_er_116_Ori
+Origins,Tideturner,199/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Tideturner - Origins.jpg,Ti_er_199_Ori
+Origins,Time Warp,122/298,Epic,Yes,0.1,0.08,0.05,10,5,0,images/Time Warp - Origins.jpg,Ti_rp_122_Ori
+Origins,Traveling Merchant,185/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Traveling Merchant - Origins.jpg,Tr_nt_185_Ori
+Origins,Treasure Trove,186/298,Uncommon,No,4.875,3.9,2.4375,10,5,0,images/Treasure Trove - Origins.jpg,Tr_ve_186_Ori
+Origins,Trifarian Gloryseeker,217/298,Common,No,0.25,0.2,0.125,10,5,0,images/Trifarian Gloryseeker - Origins.jpg,Tr_er_217_Ori
+Origins,Trifarian War Camp,294/298,Uncommon,No,8.775,7.02,4.3875,10,5,0,images/Trifarian War Camp - Origins.jpg,Tr_mp_294_Ori
+Origins,Tryndamere - Barbarian,034/298,Rare,Yes,2.81,2.248,1.405,10,5,0,images/Tryndamere - Barbarian - Origins.jpg,Tr_an_034_Ori
+Origins,Twisted Fate - Gambler,200/298,Rare,Yes,4.75,3.8,2.375,10,5,0,images/Twisted Fate - Gambler - Origins.jpg,Tw_er_200_Ori
+Origins,Udyr - Wildman,157/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Udyr - Wildman - Origins.jpg,Ud_an_157_Ori
+Origins,Unchecked Power,123/298,Epic,Yes,84,67.2,42,10,5,0,images/Unchecked Power - Origins.jpg,Un_er_123_Ori
+Origins,Undercover Agent,178/298,Common,No,476.25,381,238.125,10,5,0,images/Undercover Agent - Origins.jpg,Un_nt_178_Ori
+Origins,Unlicensed Armory,023/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Unlicensed Armory - Origins.jpg,Un_ry_023_Ori
+Origins,Unyielding Spirit,145/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Unyielding Spirit - Origins.jpg,Un_it_145_Ori
+Origins,Vanguard Captain,218/298,Common,No,0.25,0.2,0.125,10,5,0,images/Vanguard Captain - Origins.jpg,Va_in_218_Ori
+Origins,Vanguard Helm,228/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Vanguard Helm - Origins.jpg,Va_lm_228_Ori
+Origins,Vanguard Sergeant,219/298,Common,No,0.25,0.2,0.125,10,5,0,images/Vanguard Sergeant - Origins.jpg,Va_nt_219_Ori
+Origins,Vayne - Hunter,035/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Vayne - Hunter - Origins.jpg,Va_er_035_Ori
+Origins,Vengeance,229/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Vengeance - Origins.jpg,Ve_ce_229_Ori
+Origins,Vi - Destructive,036/298,Rare,Yes,27.625,22.1,13.8125,10,5,0,images/Vi - Destructive - Origins.jpg,Vi_ve_036_Ori
+Origins,Viktor - Herald of the Arcane,265/298,Rare,Yes,0.25,0.2,0.125,10,5,0,images/Viktor - Herald of the Arcane - Origins.jpg,Vi_ne_265_Ori
+Origins,Viktor - Herald of the Arcane (Overnumbered),308/298,Showcase,Yes,0.25,0.2,0.125,10,5,0,images/Viktor - Herald of the Arcane (Overnumbered) - Origins.jpg,Vi_d)_308_Ori
+Origins,Viktor - Herald of the Arcane (Signature),308*/298,Showcase,Yes,56.35,45.08,28.175,10,5,0,images/Viktor - Herald of the Arcane (Signature) - Origins.jpg,Vi_e)_308_Ori
+Origins,Viktor - Innovator,117/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Viktor - Innovator - Origins.jpg,Vi_or_117_Ori
+Origins,Viktor - Innovator (Alternate Art),117a/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Viktor - Innovator (Alternate Art) - Origins.jpg,Vi_t)_117_Ori
+Origins,Viktor - Leader,246/298,Epic,Yes,0.1,0.08,0.05,10,5,0,images/Viktor - Leader - Origins.jpg,Vi_er_246_Ori
+Origins,Viktor - Leader (Alternate Art),246a/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Viktor - Leader (Alternate Art) - Origins.jpg,Vi_t)_246_Ori
+Origins,Vilemaw's Lair,295/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Vilemaw's Lair - Origins.jpg,Vi_ir_295_Ori
+Origins,Void Gate,296/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Void Gate - Origins.jpg,Vo_te_296_Ori
+Origins,Void Seeker,024/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Void Seeker - Origins.jpg,Vo_er_024_Ori
+Origins,Volibear - Furious,041/298,Epic,Yes,9.91,7.928,4.955,10,5,0,images/Volibear - Furious - Origins.jpg,Vo_us_041_Ori
+Origins,Volibear - Furious (Alternate Art),041a/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Volibear - Furious (Alternate Art) - Origins.jpg,Vo_t)_041_Ori
+Origins,Volibear - Imposing,158/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Volibear - Imposing - Origins.jpg,Vo_ng_158_Ori
+Origins,Volibear - Imposing (Alternate Art),158a/298,Showcase,Yes,0.25,0.2,0.125,10,5,0,images/Volibear - Imposing (Alternate Art) - Origins.jpg,Vo_t)_158_Ori
+Origins,Volibear - Relentless Storm,249/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Volibear - Relentless Storm - Origins.jpg,Vo_rm_249_Ori
+Origins,Volibear - Relentless Storm (Overnumbered),300/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Volibear - Relentless Storm (Overnumbered) - Origins.jpg,Vo_d)_300_Ori
+Origins,Volibear - Relentless Storm (Signature),300*/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Volibear - Relentless Storm (Signature) - Origins.jpg,Vo_e)_300_Ori
+Origins,Wallop,146/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Wallop - Origins.jpg,Wa_op_146_Ori
+Origins,Warwick - Hunter,159/298,Rare,Yes,1.01,0.808,0.505,10,5,0,images/Warwick - Hunter - Origins.jpg,Wa_er_159_Ori
+Origins,Watchful Sentry,096/298,Common,No,0.1,0.08,0.05,10,5,0,images/Watchful Sentry - Origins.jpg,Wa_ry_096_Ori
+Origins,Whirlwind,187/298,Uncommon,No,1.91,1.528,0.955,10,5,0,images/Whirlwind - Origins.jpg,Wh_nd_187_Ori
+Origins,Whiteflame Protector,082/298,Epic,Yes,0.1,0.08,0.05,10,5,0,images/Whiteflame Protector - Origins.jpg,Wh_or_082_Ori
+Origins,Wielder of Water,055/298,Common,No,78.75,63,39.375,10,5,0,images/Wielder of Water - Origins.jpg,Wi_er_055_Ori
+Origins,Wildclaw Shaman,147/298,Uncommon,No,433.5,346.8,216.75,10,5,0,images/Wildclaw Shaman - Origins.jpg,Wi_an_147_Ori
+Origins,Wind Wall,064/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Wind Wall - Origins.jpg,Wi_ll_064_Ori
+Origins,Windswept Hillock,297/298,Uncommon,No,2.36,1.888,1.18,10,5,0,images/Windswept Hillock - Origins.jpg,Wi_ck_297_Ori
+Origins,Wizened Elder,065/298,Uncommon,No,6.825,5.46,3.4125,10,5,0,images/Wizened Elder - Origins.jpg,Wi_er_065_Ori
+Origins,Wraith of Echoes,118/298,Rare,Yes,7.475,5.98,3.7375,10,5,0,images/Wraith of Echoes - Origins.jpg,Wr_es_118_Ori
+Origins,Yasuo - Remorseful,076/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Yasuo - Remorseful - Origins.jpg,Ya_ul_076_Ori
+Origins,Yasuo - Remorseful (Alternate Art),076a/298,Showcase,Yes,0.1,0.08,0.05,10,5,0,images/Yasuo - Remorseful (Alternate Art) - Origins.jpg,Ya_t)_076_Ori
+Origins,Yasuo - Unforgiven,259/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Yasuo - Unforgiven - Origins.jpg,Ya_en_259_Ori
+Origins,Yasuo - Unforgiven (Overnumbered),305/298,Showcase,Yes,3.03,2.424,1.515,10,5,0,images/Yasuo - Unforgiven (Overnumbered) - Origins.jpg,Ya_d)_305_Ori
+Origins,Yasuo - Unforgiven (Signature),305*/298,Showcase,Yes,4.75,3.8,2.375,10,5,0,images/Yasuo - Unforgiven (Signature) - Origins.jpg,Ya_e)_305_Ori
+Origins,Yasuo - Windrider,205/298,Epic,Yes,0.25,0.2,0.125,10,5,0,images/Yasuo - Windrider - Origins.jpg,Ya_er_205_Ori
+Origins,Yasuo - Windrider (Alternate Art),205a/298,Showcase,Yes,3.71,2.968,1.855,10,5,0,images/Yasuo - Windrider (Alternate Art) - Origins.jpg,Ya_t)_205_Ori
+Origins,Zaun Warrens,298/298,Uncommon,No,0.1,0.08,0.05,10,5,0,images/Zaun Warrens - Origins.jpg,Za_ns_298_Ori
+Origins,Zaunite Bouncer,188/298,Uncommon,No,57.05,45.64,28.525,10,5,0,images/Zaunite Bouncer - Origins.jpg,Za_er_188_Ori
+Origins,Zenith Blade,262/298,Epic,Yes,432,345.6,216,10,5,0,images/Zenith Blade - Origins.jpg,Ze_de_262_Ori
+Origins,Zhonya's Hourglass,077/298,Rare,Yes,0.1,0.08,0.05,10,5,0,images/Zhonya's Hourglass - Origins.jpg,Zh_ss_077_Ori
