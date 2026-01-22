@@ -169,7 +169,7 @@ function requireAuth(req, res, next) {
    - x-admin-token header matching ADMIN_TOKEN (fallback)
    - logged-in user with app.users.is_admin = true (recommended)
 ========================= */
-async function requireAdmin(req, res, next) {
+async function requireAdminApi(req, res, next) {
   try {
     const token = String(req.headers["x-admin-token"] || "").trim();
     if (ADMIN_TOKEN && token && token === ADMIN_TOKEN) return next();
@@ -183,7 +183,7 @@ async function requireAdmin(req, res, next) {
     req.adminUserId = userId;
     return next();
   } catch (e) {
-    console.error("requireAdmin error:", e);
+    console.error("requireAdminApi error:", e);
     return res.status(500).json({ ok: false, error: "Auth error" });
   }
 }
@@ -460,21 +460,41 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, "public")));
 
 /* =========================
-   ADMIN PAGES (protected)
+   ADMIN PAGES
 ========================= */
-app.get("/admin", requireAdmin, (req, res) => {
+
+// public admin login page (NOT protected)
+app.get("/admin/login", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin", "login.html"));
+});
+
+// protected admin pages
+app.get("/admin", requireAdminPage, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin", "index.html"));
 });
 
-app.get("/admin/selllist-upload", requireAdmin, (req, res) => {
+app.get("/admin/inventory", requireAdminPage, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin", "admin-inventory.html"));
+});
+
+app.get("/admin/import", requireAdminPage, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin", "admin-import.html"));
+});
+
+app.get("/admin/selllist-upload", requireAdminPage, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "admin", "selllist-upload.html"));
+});
+
+
+app.get("/api/admin/me", requireAdminApi, (req, res) => {
+  res.json({ ok: true, is_admin: true });
 });
 
 /* =========================
    ADMIN API: INVENTORY (example endpoints you had)
    NOTE: leaving your SQL as-is, but be sure your table matches.
 ========================= */
-app.get("/api/admin/inventory", requireAdmin, async (req, res) => {
+app.get("/api/admin/inventory", requireAdminApi, async (req, res) => {
   try {
     const r = await pool.query(`
       SELECT sku, name, price_cents, stock, image, set_code, card_number, rarity, foil
@@ -488,7 +508,7 @@ app.get("/api/admin/inventory", requireAdmin, async (req, res) => {
   }
 });
 
-app.put("/api/admin/inventory/:sku", requireAdmin, async (req, res) => {
+app.put("/api/admin/inventory/:sku", requireAdminApi, async (req, res) => {
   try {
     const sku = String(req.params.sku || "").trim();
     if (!sku) return res.status(400).json({ ok: false, error: "Missing SKU" });
@@ -543,7 +563,7 @@ app.put("/api/admin/inventory/:sku", requireAdmin, async (req, res) => {
    set,name,number,rarity,foil,price_nm,price_lp,price_mp,max_nm,max_lp,max_mp,image,sku
    prices are dollars in CSV, stored as cents in DB
 ========================= */
-app.post("/api/admin/selllist/upload", requireAdmin, upload.single("file"), async (req, res) => {
+app.post("/api/admin/selllist/upload", requireAdminApi, upload.single("file"), async (req, res) => {
   const file = req.file;
   if (!file) return res.status(400).json({ ok: false, error: "No file uploaded." });
 
@@ -1289,7 +1309,7 @@ app.get("/api/my/orders", requireAuth, async (req, res) => {
 /* =========================
    ADMIN: LIST ALL ORDERS
 ========================= */
-app.get("/api/admin/orders", requireAdmin, async (req, res) => {
+app.get("/api/admin/orders", requireAdminApi, async (req, res) => {
   try {
     const ordersRes = await pool.query(
       `SELECT id, user_id, type, status, total_cents, created_at,
@@ -1359,10 +1379,11 @@ app.get("/api/admin/orders", requireAdmin, async (req, res) => {
   }
 });
 
+
 /* =========================
    ADMIN: SEED INVENTORY FROM catalog.json
 ========================= */
-app.post("/api/admin/seed-inventory", requireAdmin, async (req, res) => {
+app.post("/api/admin/seed-inventory", requireAdminApi, async (req, res) => {
   try {
     const catalog = readJsonSafe(CATALOG_PATH) || {};
     const entries = Object.entries(catalog);
@@ -1441,7 +1462,7 @@ app.post("/api/admin/seed-inventory", requireAdmin, async (req, res) => {
   }
 });
 
-app.post("/api/admin/seed-buylist", requireAdmin, async (req, res) => {
+app.post("/api/admin/seed-buylist", requireAdminApi, async (req, res) => {
   try {
     const catalog = readJsonSafe(CATALOG_PATH) || {};
     const skus = Object.keys(catalog);
@@ -1485,7 +1506,7 @@ app.post("/api/admin/seed-buylist", requireAdmin, async (req, res) => {
   }
 });
 
-app.post("/api/admin/seed-selllist", requireAdmin, async (req, res) => {
+app.post("/api/admin/seed-selllist", requireAdminApi, async (req, res) => {
   try {
     const selllist = readJsonSafe(SELLLIST_PATH) || {};
     const skus = Object.keys(selllist);

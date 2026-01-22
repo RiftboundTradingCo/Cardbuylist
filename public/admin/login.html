@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Login</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="page">
+    <div class="card" style="max-width:420px;margin:40px auto;padding:20px;">
+      <h2>Admin Login</h2>
+      <p style="opacity:.8;margin-top:6px;">Sign in with an admin account.</p>
+
+      <label>Email</label>
+      <input id="email" type="email" autocomplete="email" />
+
+      <label style="margin-top:10px;">Password</label>
+      <input id="password" type="password" autocomplete="current-password" />
+
+      <button id="btn" style="margin-top:14px;">Sign in</button>
+
+      <div id="msg" style="margin-top:12px;color:#c33;"></div>
+    </div>
+  </div>
+
+  <script>
+    const msg = document.getElementById("msg");
+    const btn = document.getElementById("btn");
+
+    function getNext() {
+      const u = new URL(location.href);
+      return u.searchParams.get("next") || "/admin";
+    }
+
+    async function isAdminNow() {
+      const r = await fetch("/api/admin/me", { cache: "no-store" });
+      const j = await r.json().catch(() => ({}));
+      return !!(j && j.ok && j.is_admin);
+    }
+
+    btn.addEventListener("click", async () => {
+      msg.textContent = "";
+      btn.disabled = true;
+
+      try {
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+
+        const r = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const j = await r.json().catch(() => ({}));
+        if (!j.ok) throw new Error(j.error || "Login failed");
+
+        // Confirm admin permission
+        const ok = await isAdminNow();
+        if (!ok) throw new Error("You are not an admin.");
+
+        location.href = getNext();
+      } catch (e) {
+        msg.textContent = e.message || "Login failed";
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

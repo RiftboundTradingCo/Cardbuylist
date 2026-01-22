@@ -1,13 +1,22 @@
 <header class="topbar">
-  <a class="brand" href="/buy.html">
+  <a class="brand" href="/admin">
     <img class="site-logo" src="/images/riftbound-logo.png" alt="Riftbound Trading Co" />
     <div class="brand-name">Riftbound Trading Co</div>
   </a>
 
   <nav class="navlinks">
-    <a class="nav-buy" href="/admin">Admin Home</a>
-    <a class="nav-buycart" href="/admin/selllist-upload">Selllist Upload</a>
-    <a class="nav-ship" href="/buy.html">Store</a>
-    <a class="nav-contact" href="/account.html">Account</a>
+    <a class="navlink" data-path="/admin" href="/admin">Orders</a>
+    <a class="navlink" data-path="/admin/admin-inventory" href="/admin/admin-inventory">Inventory</a>
+    <a class="navlink" data-path="/admin/admin-import" href="/admin/admin-import">Import CSV</a>
+    <a class="navlink" data-path="/admin/selllist-upload" href="/admin/selllist-upload">Selllist Upload</a>
+
+    <span class="nav-spacer"></span>
+
+    <a class="navlink" href="/buy.html">Store</a>
+    <a class="navlink" href="/account.html">Account</a>
+
+    <button id="adminLogoutBtn" class="navbtn" type="button">Logout</button>
   </nav>
+
+  <div id="adminWho" class="admin-who" style="display:none;"></div>
 </header>
