@@ -7,6 +7,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const gridEl = document.getElementById(GRID_ID);
   const searchEl = document.getElementById("sellSearch");
   const clearSearchEl = document.getElementById("sellSearchClear");
+  const rarityFilterEl = document.getElementById("sellRarityFilter");
+  const setFilterEl = document.getElementById("sellSetFilter");
 
   if (!gridEl) return;
 
@@ -117,39 +119,62 @@ document.addEventListener("DOMContentLoaded", async () => {
     return data.selllist;
   }
 
+  // Filters + search helpers
+  function matchesFilters(p, q, rarityVal, setVal) {
+    const name = String(p?.name || "").toLowerCase();
+    const sku = String(p?.sku || "").toLowerCase();
+    const searchOk = !q || name.includes(q) || sku.includes(q);
+
+    const r = String(p?.rarity || "").trim();
+    const rarityOk = !rarityVal || r === rarityVal;
+
+    const s = String(p?.set_code || p?.set || "").trim();
+    const setOk = !setVal || s === setVal;
+
+    return searchOk && rarityOk && setOk;
+  }
+
+  function populateSellFilters(selllist) {
+    const items = Object.values(selllist || {});
+    const rarities = new Set();
+    const sets = new Set();
+
+    for (const p of items) {
+      if (p?.rarity) rarities.add(String(p.rarity).trim());
+      if (p?.set_code || p?.set) sets.add(String(p.set_code || p.set).trim());
+    }
+
+    if (rarityFilterEl) {
+      const cur = rarityFilterEl.value || "";
+      const list = [...rarities].filter(Boolean).sort((a,b)=>a.localeCompare(b));
+      rarityFilterEl.innerHTML =
+        `<option value="">All rarities</option>` +
+        list.map(r => `<option value="${r}">${r}</option>`).join("");
+      rarityFilterEl.value = list.includes(cur) ? cur : "";
+    }
+
+    if (setFilterEl) {
+      const cur = setFilterEl.value || "";
+      const list = [...sets].filter(Boolean).sort((a,b)=>a.localeCompare(b));
+      setFilterEl.innerHTML =
+        `<option value="">All sets</option>` +
+        list.map(s => `<option value="${s}">${s}</option>`).join("");
+      setFilterEl.value = list.includes(cur) ? cur : "";
+    }
+  }
+
+  // ---------- state ----------
   let selllist = {};
   let ALL_ITEMS = [];
-  let FILTERED_ITEMS = [];
-  let searchQuery = "";
 
-  function applySearch() {
-    const q = String(searchQuery || "").trim().toLowerCase();
-    if (!q) {
-      FILTERED_ITEMS = ALL_ITEMS.slice();
-    } else {
-      FILTERED_ITEMS = ALL_ITEMS.filter((it) => {
-        const name = String(it.name || "").toLowerCase();
-        const sku = String(it.sku || "").toLowerCase();
-        return name.includes(q) || sku.includes(q);
-      });
-    }
-    renderGrid();
+  function getActiveQuery() {
+    return String(searchEl?.value || "").trim().toLowerCase();
   }
-
-  if (searchEl) {
-    searchEl.addEventListener("input", () => {
-      searchQuery = searchEl.value || "";
-      applySearch();
-    });
+  function getActiveRarity() {
+    return String(rarityFilterEl?.value || "").trim();
   }
-
-  if (clearSearchEl) {
-    clearSearchEl.addEventListener("click", () => {
-      searchQuery = "";
-      if (searchEl) searchEl.value = "";
-      applySearch();
-      searchEl?.focus();
-    });
+  function getActiveSet() {
+    return String(setFilterEl?.value || "").trim();
   }
 
   // ---------- UI refresh per card ----------
@@ -208,13 +233,32 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ---------- render ----------
   function renderGrid() {
-    const items = FILTERED_ITEMS.length ? FILTERED_ITEMS : ALL_ITEMS;
+    const q = getActiveQuery();
+    const rarityVal = getActiveRarity();
+    const setVal = getActiveSet();
+
     gridEl.innerHTML = "";
 
-    for (const p of items) {
+    for (const item of ALL_ITEMS) {
+      if (!matchesFilters(item, q, rarityVal, setVal)) continue;
+
+      const p = item;
       const sku = String(p.sku || "").trim();
       const name = String(p.name || sku);
       const imgSrc = normalizeImagePath(p.image);
+
+      const setCode = String(p?.set_code || p?.set || "");
+      const rarity  = String(p?.rarity || "");
+      const number  = String(p?.card_number || p?.number || "");
+      const showFoil = Boolean(p?.foil);
+
+      const rarityClass = rarity.toLowerCase().replace(/[^a-z0-9_-]/g, "");
+      const metaBits = [
+        setCode ? `<span class="meta-pill">${setCode}</span>` : "",
+        number ? `<span class="meta-pill">#${number}</span>` : "",
+        rarity ? `<span class="meta-pill rarity-${rarityClass}">${rarity}</span>` : "",
+        showFoil ? `<span class="meta-pill">Foil</span>` : "",
+      ].filter(Boolean).join(" ");
 
       const card = document.createElement("div");
       card.className = "store-card";
@@ -223,7 +267,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       card.innerHTML = `
         <div class="product-card">
-          ${imgSrc ? `<img class="card-zoom-img" src="${imgSrc}" alt="${name}"/>` : ""}
+          ${imgSrc ? `
+            <div class="card-img-wrap ${showFoil ? "foil" : ""}">
+              <img class="card-zoom-img" src="${imgSrc}" alt="${name}" />
+              ${showFoil ? `<div class="foil-badge" title="Foil">✨ FOIL</div>` : ""}
+            </div>
+          ` : ""}
 
           <h3 class="product-title">${name}</h3>
 
@@ -240,6 +289,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             <div>Max capacity: <strong class="maxText">0</strong></div>
             <div>In cart: <strong class="inCartText">0</strong> • Remaining: <strong class="remText">0</strong></div>
           </div>
+
+          <div class="product-meta-pills">${metaBits}</div>
 
           <div class="qty-controls">
             <button class="qty-minus" type="button">−</button>
@@ -263,7 +314,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     // image zoom
     const zoomImg = e.target.closest(".card-zoom-img");
     if (zoomImg) {
-      // prevent navigating if wrapped in a link
       const a = zoomImg.closest("a");
       if (a) { e.preventDefault(); e.stopPropagation(); }
       openModal(zoomImg.src);
@@ -339,7 +389,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       saveCart(nextCart);
 
-      // reset qty to 1 after add (like buy page)
       if (qtyInput) qtyInput.value = "1";
       refreshCard(cardEl);
       return;
@@ -362,9 +411,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   ALL_ITEMS = Object.entries(selllist).map(([sku, item]) => ({ sku, ...item }));
   ALL_ITEMS.sort((a, b) => String(a.name || a.sku).localeCompare(String(b.name || b.sku)));
-  FILTERED_ITEMS = ALL_ITEMS.slice();
 
-  applySearch();
+  // ✅ populate filters AFTER data loads
+  populateSellFilters(selllist);
+
+  // render now, and whenever filters/search change
+  renderGrid();
+
+  if (searchEl) searchEl.addEventListener("input", renderGrid);
+  if (clearSearchEl) {
+    clearSearchEl.addEventListener("click", () => {
+      if (searchEl) searchEl.value = "";
+      renderGrid();
+      searchEl?.focus();
+    });
+  }
+  if (rarityFilterEl) rarityFilterEl.addEventListener("change", renderGrid);
+  if (setFilterEl) setFilterEl.addEventListener("change", renderGrid);
 
   if (typeof window.updateCartBadges === "function") window.updateCartBadges();
 });
