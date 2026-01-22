@@ -164,13 +164,14 @@ function requireAuth(req, res, next) {
 }
 
 /* =========================
-   ADMIN AUTH (SINGLE SOURCE OF TRUTH)
-   Accept either:
-   - x-admin-token header matching ADMIN_TOKEN (fallback)
-   - logged-in user with app.users.is_admin = true (recommended)
+   ADMIN AUTH
+   - API: returns JSON errors
+   - Pages: redirects to /admin/login
 ========================= */
+
 async function requireAdminApi(req, res, next) {
   try {
+    // optional fallback token
     const token = String(req.headers["x-admin-token"] || "").trim();
     if (ADMIN_TOKEN && token && token === ADMIN_TOKEN) return next();
 
@@ -187,6 +188,58 @@ async function requireAdminApi(req, res, next) {
     return res.status(500).json({ ok: false, error: "Auth error" });
   }
 }
+
+// For HTML pages: redirect non-admins to /admin/login instead of JSON error
+function requireAdminPage(req, res, next) {
+  const nextUrl = encodeURIComponent(req.originalUrl || "/admin");
+
+  const userId = getSessionUserId(req);
+  if (!userId) return res.redirect(`/admin/login?next=${nextUrl}`);
+
+  pool.query(`SELECT is_admin FROM app.users WHERE id=$1`, [userId])
+    .then((r) => {
+      const isAdmin = !!r.rows[0]?.is_admin;
+      if (!isAdmin) return res.redirect(`/admin/login?next=${nextUrl}`);
+      req.adminUserId = userId;
+      next();
+    })
+    .catch((err) => {
+      console.error("requireAdminPage error:", err);
+      return res.redirect(`/admin/login?next=${nextUrl}`);
+    });
+}
+
+// Admin check endpoint (used by admin header + login page)
+app.get("/api/admin/me", requireAdminApi, (req, res) => {
+  res.json({ ok: true, is_admin: true });
+});
+
+/* =========================
+   ADMIN PAGES
+========================= */
+
+// public admin login page (NOT protected)
+app.get("/admin/login", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin", "login.html"));
+});
+
+// protected admin pages
+app.get("/admin", requireAdminPage, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin", "index.html"));
+});
+
+app.get("/admin/inventory", requireAdminPage, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin", "admin-inventory.html"));
+});
+
+app.get("/admin/import", requireAdminPage, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin", "admin-import.html"));
+});
+
+app.get("/admin/selllist-upload", requireAdminPage, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin", "selllist-upload.html"));
+});
+
 
 /* =========================
    UPLOAD (CSV)
@@ -458,37 +511,6 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static(path.join(__dirname, "public")));
-
-/* =========================
-   ADMIN PAGES
-========================= */
-
-// public admin login page (NOT protected)
-app.get("/admin/login", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "admin", "login.html"));
-});
-
-// protected admin pages
-app.get("/admin", requireAdminPage, (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "admin", "index.html"));
-});
-
-app.get("/admin/inventory", requireAdminPage, (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "admin", "admin-inventory.html"));
-});
-
-app.get("/admin/import", requireAdminPage, (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "admin", "admin-import.html"));
-});
-
-app.get("/admin/selllist-upload", requireAdminPage, (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "admin", "selllist-upload.html"));
-});
-
-
-app.get("/api/admin/me", requireAdminApi, (req, res) => {
-  res.json({ ok: true, is_admin: true });
-});
 
 /* =========================
    ADMIN API: INVENTORY (example endpoints you had)
