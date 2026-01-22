@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin — Selllist Upload</title>
+  <link rel="stylesheet" href="/style.css" />
+  <script defer src="/admin/admin.js"></script>
+</head>
+
+<body>
+  <div id="adminHeader"></div>
+
+  <main class="page">
+    <h1 class="page-title">Selllist CSV Upload</h1>
+    <p class="page-subtitle">
+      Upload a CSV with headers:
+      <code>set,name,number,rarity,foil,price_nm,price_lp,price_mp,max_nm,max_lp,max_mp,image,sku</code>
+    </p>
+
+    <div class="cart-card" style="max-width:860px;">
+      <form id="uploadForm">
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <input type="file" id="file" name="file" accept=".csv,text/csv" required />
+          <button class="cart-primary" type="submit" style="width:auto;padding:0 16px;">
+            Upload
+          </button>
+        </div>
+
+        <p id="msg" class="cart-message" style="margin-top:12px;"></p>
+
+        <div style="margin-top:14px;font-weight:700;opacity:.9;">
+          Tip: Prices are dollars (example <code>1.25</code>).
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    const form = document.getElementById("uploadForm");
+    const msg = document.getElementById("msg");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.textContent = "Uploading…";
+
+      const fd = new FormData(form);
+
+      // If you want to use ADMIN_TOKEN from browser:
+      // const token = localStorage.getItem("adminToken") || "";
+
+      const res = await fetch("/api/admin/selllist/upload", {
+        method: "POST",
+        body: fd,
+        // headers: token ? { "x-admin-token": token } : {}
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        msg.textContent = data.error || "Upload failed.";
+        msg.style.color = "#b00020";
+        return;
+      }
+
+      msg.textContent = `✅ Uploaded ${data.rows} rows successfully.`;
+      msg.style.color = "#15803d";
+      form.reset();
+    });
+  </script>
+</body>
+</html>

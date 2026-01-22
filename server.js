@@ -12,6 +12,9 @@ const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
 const { Pool } = require("pg");
 
+const multer = require("multer");
+const { parse } = require("csv-parse/sync");
+
 const app = express();
 app.use(cookieParser());
 
@@ -27,6 +30,7 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
 const EMAIL_FROM = process.env.EMAIL_FROM || "";
 const OWNER_EMAIL = process.env.OWNER_EMAIL || "";
 const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`;
+
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "";
 const SESSION_SECRET = process.env.SESSION_SECRET || "dev_secret";
 
@@ -42,7 +46,9 @@ if (!process.env.DATABASE_URL) {
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes("localhost") ? false : { rejectUnauthorized: false },
+  ssl: process.env.DATABASE_URL?.includes("localhost")
+    ? false
+    : { rejectUnauthorized: false },
 });
 
 /* =========================
@@ -115,7 +121,11 @@ function isUuid(v) {
 }
 
 function setSession(res, userId) {
-  const sig = crypto.createHmac("sha256", SESSION_SECRET).update(userId).digest("hex");
+  const sig = crypto
+    .createHmac("sha256", SESSION_SECRET)
+    .update(userId)
+    .digest("hex");
+
   res.cookie("sid", `${userId}.${sig}`, {
     httpOnly: true,
     sameSite: "lax",
@@ -133,9 +143,12 @@ function getSessionUserId(req) {
   const [userId, sig] = raw.split(".");
   if (!userId || !sig) return null;
 
-  const expected = crypto.createHmac("sha256", SESSION_SECRET).update(userId).digest("hex");
-  if (sig !== expected) return null;
+  const expected = crypto
+    .createHmac("sha256", SESSION_SECRET)
+    .update(userId)
+    .digest("hex");
 
+  if (sig !== expected) return null;
   if (!isUuid(userId)) return null;
   return userId;
 }
@@ -150,197 +163,37 @@ function requireAuth(req, res, next) {
   next();
 }
 
-function requireAdmin(req, res, next) {
-  const token = String(req.headers["x-admin-token"] || "").trim();
-  if (!ADMIN_TOKEN) return res.status(500).json({ ok: false, error: "ADMIN_TOKEN not set" });
-  if (token !== ADMIN_TOKEN) return res.status(401).json({ ok: false, error: "Unauthorized" });
-  next();
-}
 /* =========================
-   ADMIN API ENDPOINTS
+   ADMIN AUTH (SINGLE SOURCE OF TRUTH)
+   Accept either:
+   - x-admin-token header matching ADMIN_TOKEN (fallback)
+   - logged-in user with app.users.is_admin = true (recommended)
 ========================= */
-
-app.get("/api/admin/inventory", requireAdmin, async (req, res) => {
+async function requireAdmin(req, res, next) {
   try {
-    const r = await pool.query(`
-      SELECT sku, name, price_cents, stock, image, set_code, card_number, rarity, foil
-      FROM app.inventory
-      ORDER BY name ASC
-    `);
-    return res.json({ ok: true, items: r.rows });
+    const token = String(req.headers["x-admin-token"] || "").trim();
+    if (ADMIN_TOKEN && token && token === ADMIN_TOKEN) return next();
+
+    const userId = getSessionUserId(req);
+    if (!userId) return res.status(401).json({ ok: false, error: "Not signed in" });
+
+    const r = await pool.query(`SELECT is_admin FROM app.users WHERE id=$1`, [userId]);
+    if (!r.rows[0]?.is_admin) return res.status(403).json({ ok: false, error: "Admin only" });
+
+    req.adminUserId = userId;
+    return next();
   } catch (e) {
-    console.error(e);
-    return res.status(500).json({ ok: false, error: "Failed to load inventory" });
+    console.error("requireAdmin error:", e);
+    return res.status(500).json({ ok: false, error: "Auth error" });
   }
-});
-
-app.put("/api/admin/inventory/:sku", requireAdmin, async (req, res) => {
-  try {
-    const sku = String(req.params.sku || "").trim();
-    if (!sku) return res.status(400).json({ ok: false, error: "Missing SKU" });
-
-    const {
-      name,
-      price_cents,
-      stock,
-      image,
-      set_code,
-      card_number,
-      rarity,
-      foil,
-    } = req.body || {};
-
-    // Normalize
-    const nName = name == null ? null : String(name).trim();
-    const nPrice = price_cents == null ? null : Number(price_cents);
-    const nStock = stock == null ? null : Number(stock);
-    const nImage = image == null ? null : String(image).trim();
-    const nSet = set_code == null ? null : String(set_code).trim();
-    const nNum = card_number == null ? null : String(card_number).trim();
-    const nRarity = rarity == null ? null : String(rarity).trim();
-    const nFoil = !!foil;
-
-    if (nPrice != null && (!Number.isFinite(nPrice) || nPrice < 0)) {
-      return res.status(400).json({ ok: false, error: "Invalid price_cents" });
-    }
-    if (nStock != null && (!Number.isFinite(nStock) || nStock < 0)) {
-      return res.status(400).json({ ok: false, error: "Invalid stock" });
-    }
-
-    const r = await pool.query(
-      `
-      UPDATE app.inventory
-      SET
-        name = COALESCE($2, name),
-        price_cents = COALESCE($3, price_cents),
-        stock = COALESCE($4, stock),
-        image = COALESCE($5, image),
-        set_code = $6,
-        card_number = $7,
-        rarity = $8,
-        foil = $9
-      WHERE sku = $1
-      RETURNING sku, name, price_cents, stock, image, set_code, card_number, rarity, foil
-      `,
-      [sku, nName, nPrice, nStock, nImage, nSet, nNum, nRarity, nFoil]
-    );
-
-    if (!r.rowCount) return res.status(404).json({ ok: false, error: "SKU not found" });
-
-    return res.json({ ok: true, item: r.rows[0] });
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({ ok: false, error: e.message || "Update failed" });
-  }
-});
-
-const multer = require("multer");
-const { parse } = require("csv-parse/sync");
-
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
-
-// TODO: replace with your real admin check
-function requireAdmin(req, res, next) {
-  // example: if (req.session?.user?.is_admin) return next();
-  return res.status(403).json({ ok: false, error: "Admin only" });
 }
 
-function normCondToDb(cond) {
-  const s = String(cond || "").toLowerCase();
-  if (s.includes("near") || s === "nm") return "NM";
-  if (s.includes("light") || s === "lp") return "LP";
-  if (s.includes("moderate") || s === "mp") return "MP";
-  if (s.includes("heavy") || s === "hp") return "HP";
-  return "NM";
-}
-
-function normBool(v) {
-  const s = String(v || "").trim().toLowerCase();
-  return s === "yes" || s === "true" || s === "1" || s === "y";
-}
-
-function normInt(v, fallback = 0) {
-  const n = Number(String(v ?? "").replace(/[^\d.-]/g, ""));
-  return Number.isFinite(n) ? Math.trunc(n) : fallback;
-}
-
-app.post("/api/admin/import-catalog-csv", requireAdmin, upload.single("file"), async (req, res) => {
-  const file = req.file;
-  if (!file) return res.status(400).json({ ok: false, error: "Missing file" });
-
-  let rows;
-  try {
-    rows = parse(file.buffer.toString("utf8"), {
-      columns: true,
-      skip_empty_lines: true,
-      trim: true,
-    });
-  } catch (e) {
-    return res.status(400).json({ ok: false, error: "Bad CSV format" });
-  }
-
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-
-    let upserts = 0;
-
-    for (const r of rows) {
-      const sku = String(r.SKU || r.sku || "").trim();
-      if (!sku) continue;
-
-      const name = String(r.name || r.Name || sku).trim();
-      const image = String(r.image || r.Image || "").trim() || null;
-
-      const set_code = String(r.set || r.set_code || r.Set || "").trim() || null;
-      const card_number = String(r.number || r.card_number || r.Number || "").trim() || null;
-      const rarity = String(r.rarity || r.Rarity || "").trim() || null;
-
-      const condition = normCondToDb(r.condition || r.Condition);
-      const foil = normBool(r.foil || r.Foil);
-
-      const stock = normInt(r.stock || r.Stock, 0);
-      const price_cents = normInt(r.price_cent || r.price_cents || r.PriceCents || r.price || 0, 0);
-
-      // 1) product row (metadata)
-      await client.query(
-        `
-        INSERT INTO app.inventory_products (sku, name, image, set_code, card_number, rarity)
-        VALUES ($1,$2,$3,$4,$5,$6)
-        ON CONFLICT (sku) DO UPDATE
-        SET name=EXCLUDED.name,
-            image=EXCLUDED.image,
-            set_code=EXCLUDED.set_code,
-            card_number=EXCLUDED.card_number,
-            rarity=EXCLUDED.rarity
-        `,
-        [sku, name, image, set_code, card_number, rarity]
-      );
-
-      // 2) variant row (stock/price)
-      await client.query(
-        `
-        INSERT INTO app.inventory_variants (sku, condition, foil, price_cents, stock)
-        VALUES ($1,$2,$3,$4,$5)
-        ON CONFLICT (sku, condition, foil) DO UPDATE
-        SET price_cents=EXCLUDED.price_cents,
-            stock=EXCLUDED.stock
-        `,
-        [sku, condition, foil, price_cents, stock]
-      );
-
-      upserts++;
-    }
-
-    await client.query("COMMIT");
-    return res.json({ ok: true, imported: upserts });
-  } catch (e) {
-    await client.query("ROLLBACK");
-    console.error("CSV import failed:", e);
-    return res.status(500).json({ ok: false, error: "Import failed" });
-  } finally {
-    client.release();
-  }
+/* =========================
+   UPLOAD (CSV)
+========================= */
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
 
 /* =========================
@@ -369,7 +222,6 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
       const orderId = String(session?.metadata?.orderId || "").trim();
       if (!orderId) return res.json({ received: true });
 
-      // 1) Load pending checkout
       const pendingRes = await pool.query(
         `SELECT order_id, user_id, email, cart_json
            FROM app.pending_checkout
@@ -378,7 +230,6 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
       );
       const pending = pendingRes.rows[0] || null;
 
-      // cart_json might be json/jsonb object/array OR a text string
       let cart = [];
       try {
         if (Array.isArray(pending?.cart_json)) cart = pending.cart_json;
@@ -401,7 +252,6 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
         "";
 
       const shipName = session.customer_details?.name || "";
-
       const shipAddr = session.shipping_details?.address || session.customer_details?.address || null;
 
       const shippingAddress = shipAddr
@@ -415,8 +265,6 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
           }
         : null;
 
-      // 2) Build lines FROM DB inventory (preferred) with fallback to catalog.json
-      // (This keeps your totals consistent with your pricing data.)
       const catalogFallback = readJsonSafe(CATALOG_PATH) || {};
 
       const lines = [];
@@ -428,7 +276,6 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
         const qty = Math.max(1, Number(it?.qty || 0));
         if (!sku || qty <= 0) continue;
 
-        // Try DB first
         const invRes = await pool.query(
           `SELECT sku, name, price_cents
              FROM app.inventory
@@ -454,22 +301,20 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
         });
       }
 
-const shippingCents = Number(session?.total_details?.amount_shipping || 0) || 0;
-totalCents += shippingCents;
+      const shippingCents = Number(session?.total_details?.amount_shipping || 0) || 0;
+      totalCents += shippingCents;
 
-// optional: add a shipping line item so your order_lines sum matches total
-if (shippingCents > 0) {
-  lines.push({
-    sku: "SHIPPING",
-    name: "Shipping",
-    condition: "N/A",
-    qty: 1,
-    unitPriceCents: shippingCents,
-    lineTotalCents: shippingCents,
-  });
-}
+      if (shippingCents > 0) {
+        lines.push({
+          sku: "SHIPPING",
+          name: "Shipping",
+          condition: "N/A",
+          qty: 1,
+          unitPriceCents: shippingCents,
+          lineTotalCents: shippingCents,
+        });
+      }
 
-      // 3) Transaction: insert order, order_lines, decrement inventory, cleanup pending
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
@@ -483,18 +328,18 @@ if (shippingCents > 0) {
             ($1,$2,'buy','paid',$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
            ON CONFLICT (id) DO NOTHING`,
           [
-            orderId, // $1
-            userId, // $2
-            totalCents, // $3
-            shipName, // $4
-            customerEmail, // $5
-            shippingAddress?.line1 || null, // $6
-            shippingAddress?.line2 || null, // $7
-            shippingAddress?.city || null, // $8
-            shippingAddress?.state || null, // $9
-            shippingAddress?.postal || null, // $10
-            shippingAddress?.country || null, // $11
-            String(session.id || ""), // $12
+            orderId,
+            userId,
+            totalCents,
+            shipName,
+            customerEmail,
+            shippingAddress?.line1 || null,
+            shippingAddress?.line2 || null,
+            shippingAddress?.city || null,
+            shippingAddress?.state || null,
+            shippingAddress?.postal || null,
+            shippingAddress?.country || null,
+            String(session.id || ""),
           ]
         );
 
@@ -517,11 +362,10 @@ if (shippingCents > 0) {
           );
         }
 
-        // Decrement inventory (oversell-safe)
         for (const l of lines) {
-           if (l.sku === "SHIPPING") continue; // ✅ skip non-inventory line
+          if (l.sku === "SHIPPING") continue;
 
-          const col = stockColumnForCondition(l.condition); // safe: from switch
+          const col = stockColumnForCondition(l.condition);
           const r = await client.query(
             `UPDATE app.inventory
                 SET ${col} = ${col} - $2,
@@ -535,7 +379,6 @@ if (shippingCents > 0) {
           }
         }
 
-        // Save shipping to user (optional)
         if (userId && shippingAddress) {
           await client.query(
             `UPDATE app.users
@@ -555,7 +398,6 @@ if (shippingCents > 0) {
         }
 
         await client.query(`DELETE FROM app.pending_checkout WHERE order_id=$1`, [orderId]);
-
         await client.query("COMMIT");
       } catch (e) {
         await client.query("ROLLBACK");
@@ -564,7 +406,6 @@ if (shippingCents > 0) {
         client.release();
       }
 
-      // Optional emails
       if (resend && EMAIL_FROM) {
         const totalNice = `$${(totalCents / 100).toFixed(2)}`;
         const emailLines = lines.map(
@@ -607,40 +448,222 @@ if (shippingCents > 0) {
    NORMAL MIDDLEWARE + STATIC
 ========================= */
 app.use(express.json());
+
+// block direct static access to /admin/*.html
+app.use((req, res, next) => {
+  if (req.path.startsWith("/admin/") && req.path.endsWith(".html")) {
+    return res.status(404).send("Not found");
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, "public")));
 
-function maxColumnForTab(tab) {
-  switch (String(tab || "").toUpperCase()) {
-    case "NM": return "max_nm";
-    case "LP": return "max_lp";
-    case "MP": return "max_mp";
-    default: return "max_nm";
-  }
-}
+/* =========================
+   ADMIN PAGES (protected)
+========================= */
+app.get("/admin", requireAdmin, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin", "index.html"));
+});
 
-async function requireAdmin(req, res, next) {
+app.get("/admin/selllist-upload", requireAdmin, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin", "selllist-upload.html"));
+});
+
+/* =========================
+   ADMIN API: INVENTORY (example endpoints you had)
+   NOTE: leaving your SQL as-is, but be sure your table matches.
+========================= */
+app.get("/api/admin/inventory", requireAdmin, async (req, res) => {
   try {
-    const userIdRaw = getSessionUserId(req);
-    if (!userIdRaw || !isUuid(userIdRaw)) {
-      return res.status(401).json({ ok: false, error: "Not signed in" });
+    const r = await pool.query(`
+      SELECT sku, name, price_cents, stock, image, set_code, card_number, rarity, foil
+      FROM app.inventory
+      ORDER BY name ASC
+    `);
+    return res.json({ ok: true, items: r.rows });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ ok: false, error: "Failed to load inventory" });
+  }
+});
+
+app.put("/api/admin/inventory/:sku", requireAdmin, async (req, res) => {
+  try {
+    const sku = String(req.params.sku || "").trim();
+    if (!sku) return res.status(400).json({ ok: false, error: "Missing SKU" });
+
+    const { name, price_cents, stock, image, set_code, card_number, rarity, foil } = req.body || {};
+
+    const nName = name == null ? null : String(name).trim();
+    const nPrice = price_cents == null ? null : Number(price_cents);
+    const nStock = stock == null ? null : Number(stock);
+    const nImage = image == null ? null : String(image).trim();
+    const nSet = set_code == null ? null : String(set_code).trim();
+    const nNum = card_number == null ? null : String(card_number).trim();
+    const nRarity = rarity == null ? null : String(rarity).trim();
+    const nFoil = !!foil;
+
+    if (nPrice != null && (!Number.isFinite(nPrice) || nPrice < 0)) {
+      return res.status(400).json({ ok: false, error: "Invalid price_cents" });
+    }
+    if (nStock != null && (!Number.isFinite(nStock) || nStock < 0)) {
+      return res.status(400).json({ ok: false, error: "Invalid stock" });
     }
 
     const r = await pool.query(
-      `SELECT is_admin FROM app.users WHERE id=$1`,
-      [userIdRaw]
+      `
+      UPDATE app.inventory
+      SET
+        name = COALESCE($2, name),
+        price_cents = COALESCE($3, price_cents),
+        stock = COALESCE($4, stock),
+        image = COALESCE($5, image),
+        set_code = $6,
+        card_number = $7,
+        rarity = $8,
+        foil = $9
+      WHERE sku = $1
+      RETURNING sku, name, price_cents, stock, image, set_code, card_number, rarity, foil
+      `,
+      [sku, nName, nPrice, nStock, nImage, nSet, nNum, nRarity, nFoil]
     );
 
-    const isAdmin = !!r.rows[0]?.is_admin;
-    if (!isAdmin) return res.status(403).json({ ok: false, error: "Admin only" });
-
-    req.adminUserId = userIdRaw;
-    next();
+    if (!r.rowCount) return res.status(404).json({ ok: false, error: "SKU not found" });
+    return res.json({ ok: true, item: r.rows[0] });
   } catch (e) {
-    console.error("requireAdmin error:", e);
-    return res.status(500).json({ ok: false, error: "Auth error" });
+    console.error(e);
+    return res.status(500).json({ ok: false, error: e.message || "Update failed" });
   }
-}
+});
 
+/* =========================
+   ADMIN API: SELL LIST CSV UPLOAD
+   headers:
+   set,name,number,rarity,foil,price_nm,price_lp,price_mp,max_nm,max_lp,max_mp,image,sku
+   prices are dollars in CSV, stored as cents in DB
+========================= */
+app.post("/api/admin/selllist/upload", requireAdmin, upload.single("file"), async (req, res) => {
+  const file = req.file;
+  if (!file) return res.status(400).json({ ok: false, error: "No file uploaded." });
+
+  let rows;
+  try {
+    const csvText = file.buffer.toString("utf8");
+    rows = parse(csvText, { columns: true, skip_empty_lines: true, trim: true });
+  } catch {
+    return res.status(400).json({ ok: false, error: "Could not parse CSV." });
+  }
+
+  const toBool = (v) => {
+    const s = String(v ?? "").trim().toLowerCase();
+    return s === "true" || s === "yes" || s === "1" || s === "y";
+  };
+  const toNum = (v) => {
+    const n = Number(String(v ?? "").trim());
+    return Number.isFinite(n) ? n : 0;
+  };
+  const toInt = (v) => {
+    const n = parseInt(String(v ?? "").trim(), 10);
+    return Number.isFinite(n) ? n : 0;
+  };
+  const cleanText = (v) => {
+    const s = String(v ?? "").trim();
+    return s.length ? s : null;
+  };
+  const normalizeImage = (v) => {
+    const s = String(v ?? "").trim();
+    if (!s) return null;
+    return s.startsWith("/") ? s : `/${s}`;
+  };
+  const dollarsToCents = (v) => Math.round(toNum(v) * 100);
+
+  const cleaned = [];
+  for (const r of rows) {
+    const sku = String(r.sku ?? r.SKU ?? r.Sku ?? "").trim();
+    if (!sku) continue;
+
+    cleaned.push({
+      sku,
+      name: cleanText(r.name ?? r.Name),
+      image: normalizeImage(r.image ?? r.Image),
+      set_code: cleanText(r.set ?? r.set_code ?? r.Set),
+      card_number: cleanText(r.number ?? r.card_number ?? r.Number),
+      rarity: cleanText(r.rarity ?? r.Rarity),
+      foil: toBool(r.foil ?? r.Foil),
+
+      price_nm: dollarsToCents(r.price_nm),
+      price_lp: dollarsToCents(r.price_lp),
+      price_mp: dollarsToCents(r.price_mp),
+
+      max_nm: toInt(r.max_nm),
+      max_lp: toInt(r.max_lp),
+      max_mp: toInt(r.max_mp),
+    });
+  }
+
+  if (cleaned.length === 0) {
+    return res.status(400).json({ ok: false, error: "No valid rows found (missing sku?)." });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const sql = `
+      INSERT INTO app.selllist (
+        sku, name, image, set_code, card_number, rarity, foil,
+        price_nm, price_lp, price_mp,
+        max_nm, max_lp, max_mp
+      )
+      VALUES (
+        $1,$2,$3,$4,$5,$6,$7,
+        $8,$9,$10,
+        $11,$12,$13
+      )
+      ON CONFLICT (sku) DO UPDATE SET
+        name        = EXCLUDED.name,
+        image       = EXCLUDED.image,
+        set_code    = EXCLUDED.set_code,
+        card_number = EXCLUDED.card_number,
+        rarity      = EXCLUDED.rarity,
+        foil        = EXCLUDED.foil,
+        price_nm    = EXCLUDED.price_nm,
+        price_lp    = EXCLUDED.price_lp,
+        price_mp    = EXCLUDED.price_mp,
+        max_nm      = EXCLUDED.max_nm,
+        max_lp      = EXCLUDED.max_lp,
+        max_mp      = EXCLUDED.max_mp
+    `;
+
+    for (const r of cleaned) {
+      await client.query(sql, [
+        r.sku,
+        r.name,
+        r.image,
+        r.set_code,
+        r.card_number,
+        r.rarity,
+        r.foil,
+        r.price_nm,
+        r.price_lp,
+        r.price_mp,
+        r.max_nm,
+        r.max_lp,
+        r.max_mp,
+      ]);
+    }
+
+    await client.query("COMMIT");
+    return res.json({ ok: true, rows: cleaned.length });
+  } catch (e) {
+    await client.query("ROLLBACK");
+    console.error("selllist upload error:", e);
+    return res.status(500).json({ ok: false, error: "Upload failed." });
+  } finally {
+    client.release();
+  }
+});
 
 /* =========================
    STRIPE CHECKOUT SESSION
@@ -651,31 +674,29 @@ app.post("/api/create-checkout-session", async (req, res) => {
 
     const email = String(req.body?.email || "").trim();
     const cart = Array.isArray(req.body?.cart) ? req.body.cart : [];
-    const shippingMethodIdRaw = String(req.body?.shippingMethodId || "standard").trim(); // free|standard|priority|express
+    const shippingMethodIdRaw = String(req.body?.shippingMethodId || "standard").trim();
 
     if (!cart.length) return res.status(400).json({ ok: false, error: "Cart is empty" });
-    if (!email || !email.includes("@")) return res.status(400).json({ ok: false, error: "Valid email required" });
+    if (!email || !email.includes("@"))
+      return res.status(400).json({ ok: false, error: "Valid email required" });
 
     const orderId = crypto.randomUUID();
     const userIdRaw = getSessionUserId(req);
     const userId = isUuid(userIdRaw) ? userIdRaw : null;
 
-    // Save pending checkout
     await pool.query(
       `INSERT INTO app.pending_checkout(order_id, user_id, email, cart_json)
        VALUES ($1,$2,$3,$4::jsonb)`,
       [orderId, userId, email || null, JSON.stringify(cart)]
     );
 
-    // ---- Build Stripe line items from DB inventory (fallback to catalog.json) ----
     const catalogFallback = readJsonSafe(CATALOG_PATH) || {};
     const line_items = [];
 
     for (const item of cart) {
       const sku = String(item?.sku || "").trim();
-      const condition = normalizeCondition(item?.condition); // uses your CONDITION_MULT helper
+      const condition = normalizeCondition(item?.condition);
       const qty = Math.max(1, Number(item?.qty || 0));
-
       if (!sku) return res.status(400).json({ ok: false, error: "Missing SKU" });
 
       const invRes = await pool.query(
@@ -687,7 +708,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
       const name = String(inv?.name || catalogFallback?.[sku]?.name || sku);
       const basePriceCents = Number(inv?.price_cents ?? catalogFallback?.[sku]?.price_cents ?? 0);
 
-      const unitCents = centsForCondition(basePriceCents, condition); // your helper
+      const unitCents = centsForCondition(basePriceCents, condition);
 
       line_items.push({
         quantity: qty,
@@ -699,7 +720,6 @@ app.post("/api/create-checkout-session", async (req, res) => {
       });
     }
 
-    // ---- Subtotal (items only) for free-shipping eligibility ----
     const subtotalCents = line_items.reduce((sum, li) => {
       const unit = Number(li?.price_data?.unit_amount || 0);
       const qty = Number(li?.quantity || 0);
@@ -708,25 +728,21 @@ app.post("/api/create-checkout-session", async (req, res) => {
 
     const FREE_THRESHOLD_CENTS = 9900;
 
-    // ---- Build Stripe shipping_options (fixed_amount) ----
     const SHIPPING_METHODS = {
-      free:     { id: "free",     label: "Free Shipping (3–5 business days)", cents: 0,    minDays: 3, maxDays: 5 },
-      standard: { id: "standard", label: "Standard (3–5 business days)",      cents: 599,  minDays: 3, maxDays: 5 },
-      priority: { id: "priority", label: "Priority (2–3 business days)",      cents: 999,  minDays: 2, maxDays: 3 },
-      express:  { id: "express",  label: "Express (1–2 business days)",       cents: 1999, minDays: 1, maxDays: 2 },
+      free: { id: "free", label: "Free Shipping (3–5 business days)", cents: 0, minDays: 3, maxDays: 5 },
+      standard: { id: "standard", label: "Standard (3–5 business days)", cents: 599, minDays: 3, maxDays: 5 },
+      priority: { id: "priority", label: "Priority (2–3 business days)", cents: 999, minDays: 2, maxDays: 3 },
+      express: { id: "express", label: "Express (1–2 business days)", cents: 1999, minDays: 1, maxDays: 2 },
     };
 
     const allowFree = subtotalCents >= FREE_THRESHOLD_CENTS;
 
-    // Validate requested selection
     let shippingMethodId = SHIPPING_METHODS[shippingMethodIdRaw] ? shippingMethodIdRaw : "standard";
     if (shippingMethodId === "free" && !allowFree) shippingMethodId = "standard";
 
-    // Choose which methods to offer
     let offered = ["standard", "priority", "express"];
-    if (allowFree) offered = ["free", "priority", "express"]; // or include standard too if you want
+    if (allowFree) offered = ["free", "priority", "express"];
 
-    // Put selected method first so Stripe preselects it
     offered = [shippingMethodId, ...offered.filter((id) => id !== shippingMethodId)];
 
     const shipping_options = offered.map((id) => {
@@ -771,12 +787,8 @@ app.post("/api/create-checkout-session", async (req, res) => {
   }
 });
 
-
-
 /* =========================
    SELL SUBMIT (DB-backed)
-   - Writes order + order_lines
-   - INCREMENTS inventory for submitted sell orders
 ========================= */
 app.post("/api/submit", async (req, res) => {
   try {
@@ -784,7 +796,8 @@ app.post("/api/submit", async (req, res) => {
     const email = String(req.body?.email || "").trim();
     const order = Array.isArray(req.body?.order) ? req.body.order : [];
 
-    if (!email || !email.includes("@")) return res.status(400).json({ ok: false, error: "Missing/invalid email" });
+    if (!email || !email.includes("@"))
+      return res.status(400).json({ ok: false, error: "Missing/invalid email" });
     if (!order.length) return res.status(400).json({ ok: false, error: "Empty sell order" });
 
     const orderId = crypto.randomUUID();
@@ -797,7 +810,7 @@ app.post("/api/submit", async (req, res) => {
     for (const l of order) {
       const sku = String(l?.sku || "").trim();
       const cardName = String(l?.name || "").trim();
-      const condition = normalizeCondition(l?.condition); // normalize to full
+      const condition = normalizeCondition(l?.condition);
       const qty = Math.max(0, Number(l?.qty || 0));
 
       const unitPriceCents = Number(l?.unitPriceCents || 0);
@@ -850,33 +863,27 @@ app.post("/api/submit", async (req, res) => {
         );
       }
 
-// Decrease "max capacity" on the buylist/selllist table
-for (const ln of lines) {
-  const tab = String(ln.condition || "").toUpperCase(); // NM/LP/MP
-  const col =
-    tab === "LP" ? "max_lp" :
-    tab === "MP" ? "max_mp" :
-    "max_nm";
-
-  const r = await client.query(
-    `UPDATE app.selllist
-        SET ${col} = GREATEST(${col} - $2, 0),
-            updated_at = NOW()
-      WHERE sku = $1`,
-    [ln.sku, ln.qty]
-  );
-
-  // Optional: if you want strict behavior (error when sku missing)
-  if (r.rowCount === 0) {
-    throw new Error(`Selllist row missing for sku ${ln.sku}`);
-  }
-}
-
-      // Increment inventory (auto-create row if missing)
       for (const ln of lines) {
-        const col = stockColumnForCondition(ln.condition); // safe
-        // Ensure NOT NULL name
-        const safeName = (typeof ln.name === "string" && ln.name.trim()) ? ln.name.trim() : ln.sku;
+        const tab = String(ln.condition || "").toUpperCase();
+        const col = tab === "LP" ? "max_lp" : tab === "MP" ? "max_mp" : "max_nm";
+
+        const r = await client.query(
+          `UPDATE app.selllist
+              SET ${col} = GREATEST(${col} - $2, 0),
+                  updated_at = NOW()
+            WHERE sku = $1`,
+          [ln.sku, ln.qty]
+        );
+
+        if (r.rowCount === 0) {
+          throw new Error(`Selllist row missing for sku ${ln.sku}`);
+        }
+      }
+
+      for (const ln of lines) {
+        const col = stockColumnForCondition(ln.condition);
+        const safeName =
+          typeof ln.name === "string" && ln.name.trim() ? ln.name.trim() : ln.sku;
 
         await client.query(
           `INSERT INTO app.inventory
@@ -904,23 +911,15 @@ for (const ln of lines) {
       client.release();
     }
 
-// ... inside app.post("/api/submit", async (req, res) => { ... })
-
-    // after COMMIT, before return res.json(...)
-    // ---------------------------------------
-    // EMAILS (SELL ORDER)
-    // ---------------------------------------
     if (resend && EMAIL_FROM) {
       const totalNice = `$${(totalCents / 100).toFixed(2)}`;
 
-      // build readable lines for the email
       const emailLines = lines.map((l) => {
         const unit = `$${(Number(l.unitPriceCents || 0) / 100).toFixed(2)}`;
         const lineT = `$${(Number(l.lineTotalCents || 0) / 100).toFixed(2)}`;
         return `${l.qty}x ${l.name} — ${l.condition} — ${unit} each = ${lineT}`;
       });
 
-      // 1) send to you (OWNER_EMAIL)
       if (OWNER_EMAIL) {
         try {
           await resend.emails.send({
@@ -938,7 +937,6 @@ for (const ln of lines) {
         }
       }
 
-      // 2) send receipt/confirmation to customer
       if (email) {
         try {
           await resend.emails.send({
@@ -964,6 +962,9 @@ for (const ln of lines) {
   }
 });
 
+/* =========================
+   CATALOG + SELLLIST APIs
+========================= */
 app.get("/api/catalog", async (req, res) => {
   try {
     const r = await pool.query(`
@@ -991,7 +992,7 @@ app.get("/api/catalog", async (req, res) => {
 
       if (row.condition) {
         catalog[row.sku].variants.push({
-          condition: row.condition,      // NM/LP/MP/HP
+          condition: row.condition,
           foil: !!row.foil,
           price_cents: Number(row.price_cents || 0),
           stock: Number(row.stock || 0),
@@ -1006,16 +1007,17 @@ app.get("/api/catalog", async (req, res) => {
   }
 });
 
-
-
 app.get("/api/selllist", async (req, res) => {
   try {
-    const r = await pool.query(
-      `
+    const r = await pool.query(`
       SELECT
         sku,
         name,
         image,
+        set_code,
+        card_number,
+        rarity,
+        foil,
         price_nm,
         price_lp,
         price_mp,
@@ -1024,14 +1026,17 @@ app.get("/api/selllist", async (req, res) => {
         max_mp
       FROM app.selllist
       ORDER BY sku
-      `
-    );
+    `);
 
     const selllist = {};
     for (const row of r.rows) {
       selllist[row.sku] = {
         name: row.name,
         image: row.image || null,
+        set_code: row.set_code || null,
+        card_number: row.card_number || null,
+        rarity: row.rarity || null,
+        foil: !!row.foil,
         prices: {
           NM: (Number(row.price_nm) || 0) / 100,
           LP: (Number(row.price_lp) || 0) / 100,
@@ -1051,8 +1056,6 @@ app.get("/api/selllist", async (req, res) => {
     return res.status(500).json({ ok: false, error: "Selllist load failed" });
   }
 });
-
-
 
 /* =========================
    AUTH (DB-backed)
@@ -1117,7 +1120,6 @@ app.post("/api/auth/signup", async (req, res) => {
     );
 
     setSession(res, id);
-
     return res.json({ ok: true, user: { id, email, name, address } });
   } catch (e) {
     console.error("signup error:", e);
@@ -1359,7 +1361,6 @@ app.get("/api/admin/orders", requireAdmin, async (req, res) => {
 
 /* =========================
    ADMIN: SEED INVENTORY FROM catalog.json
-   (THIS is where your "name cannot be null" fix lives)
 ========================= */
 app.post("/api/admin/seed-inventory", requireAdmin, async (req, res) => {
   try {
@@ -1380,24 +1381,14 @@ app.post("/api/admin/seed-inventory", requireAdmin, async (req, res) => {
 
         const obj = p && typeof p === "object" ? p : {};
 
-        const nameRaw =
-          typeof obj.name === "string" ? obj.name.trim() : "";
-
-        // keep as "" here; SQL will enforce fallback to sku if blank
+        const nameRaw = typeof obj.name === "string" ? obj.name.trim() : "";
         const name = nameRaw;
 
-        const priceCents = Number.isFinite(Number(obj.price_cents))
-          ? Number(obj.price_cents)
-          : 0;
+        const priceCents = Number.isFinite(Number(obj.price_cents)) ? Number(obj.price_cents) : 0;
 
-        const image =
-          typeof obj.image === "string" && obj.image.trim()
-            ? obj.image.trim()
-            : null;
+        const image = typeof obj.image === "string" && obj.image.trim() ? obj.image.trim() : null;
 
-        const stockObj =
-          obj.stock && typeof obj.stock === "object" ? obj.stock : {};
-
+        const stockObj = obj.stock && typeof obj.stock === "object" ? obj.stock : {};
         const stockNm = Number(stockObj["Near Mint"] ?? 0) || 0;
         const stockLp = Number(stockObj["Lightly Played"] ?? 0) || 0;
         const stockMp = Number(stockObj["Moderately Played"] ?? 0) || 0;
@@ -1440,10 +1431,7 @@ app.post("/api/admin/seed-inventory", requireAdmin, async (req, res) => {
     } catch (e) {
       await client.query("ROLLBACK");
       console.error("seed inventory failed on sku:", currentSku, e);
-      return res.status(500).json({
-        ok: false,
-        error: `Seed failed on SKU: ${currentSku}`,
-      });
+      return res.status(500).json({ ok: false, error: `Seed failed on SKU: ${currentSku}` });
     } finally {
       client.release();
     }
@@ -1452,7 +1440,6 @@ app.post("/api/admin/seed-inventory", requireAdmin, async (req, res) => {
     return res.status(500).json({ ok: false, error: "Seed failed" });
   }
 });
-
 
 app.post("/api/admin/seed-buylist", requireAdmin, async (req, res) => {
   try {
@@ -1512,7 +1499,6 @@ app.post("/api/admin/seed-selllist", requireAdmin, async (req, res) => {
         const name = String(p.name || "").trim();
         const image = p.image ? String(p.image).trim() : null;
 
-        // JS selllist uses dollars; store cents in DB
         const prices = p.prices || {};
         const max = p.max || {};
 
@@ -1567,4 +1553,3 @@ app.get("/health", (req, res) => res.send("OK"));
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
-
