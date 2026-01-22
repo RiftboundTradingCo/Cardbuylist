@@ -1632,65 +1632,100 @@ body {
 }
 
 /* Animated foil shimmer */
+/* Ensure wrapper matches image bounds */
+.card-img-wrap{
+  position: relative;
+  display: inline-block;
+  border-radius: 14px;   /* match your card rounding */
+  overflow: hidden;
+  line-height: 0;        /* removes inline-gap issues */
+}
+
+.card-img-wrap .card-zoom-img{
+  display: block;        /* critical: makes wrapper hug the image */
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+}
+
+/* Put shimmer above the image no matter what */
+.card-img-wrap.foil::before,
 .card-img-wrap.foil::after{
   content:"";
   position:absolute;
-  inset:-40%;
+  inset:-35%;
   pointer-events:none;
+  z-index: 2;
+}
 
+/* Sparkle layer (subtle pulsing) */
+.card-img-wrap.foil::before{
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 25%, rgba(255,255,255,0.22), transparent 38%),
+    radial-gradient(circle at 75% 65%, rgba(255,255,255,0.14), transparent 45%),
+    radial-gradient(circle at 55% 40%, rgba(255,255,255,0.10), transparent 50%);
+  mix-blend-mode: screen;
+  opacity: 0.45;
+  animation: foilSparkle 2.4s ease-in-out infinite;
+}
+
+/* Moving shimmer + rainbow tint */
+.card-img-wrap.foil::after{
   background:
     linear-gradient(120deg,
-      rgba(255,255,255,0.00) 35%,
-      rgba(255,255,255,0.33) 45%,
-      rgba(255,255,255,0.00) 55%
+      rgba(255,255,255,0.00) 36%,
+      rgba(255,255,255,0.40) 46%,
+      rgba(255,255,255,0.00) 56%
     ),
-    conic-gradient(from 180deg,
-      rgba(255, 0, 128, 0.14),
-      rgba(0, 255, 255, 0.14),
-      rgba(255, 255, 0, 0.14),
-      rgba(255, 0, 128, 0.14)
+    linear-gradient(90deg,
+      rgba(255, 0, 140, 0.16),
+      rgba(0, 220, 255, 0.16),
+      rgba(255, 230, 0, 0.16),
+      rgba(255, 0, 140, 0.16)
     );
 
-  mix-blend-mode: screen;
-  opacity: 0.65;
+  /* This version is more visible on bright cards */
+  mix-blend-mode: overlay;
+  opacity: 0.60;
 
-  transform: rotate(12deg) translate3d(-18%, -18%, 0);
-  animation: foilShimmer 3.2s ease-in-out infinite;
+  transform: translate3d(-25%, -25%, 0) rotate(12deg);
+  animation: foilShimmer 2.8s ease-in-out infinite;
   will-change: transform;
 }
 
-@keyframes foilShimmer {
-  0%   { transform: rotate(12deg) translate3d(-18%, -18%, 0); }
-  50%  { transform: rotate(12deg) translate3d(18%, 18%, 0); }
-  100% { transform: rotate(12deg) translate3d(-18%, -18%, 0); }
-}
-
-/* Optional sparkle layer that gently pulses */
-.card-img-wrap.foil::before{
-  content:"";
+/* Keep badge above shimmer */
+.foil-badge{
   position:absolute;
-  inset:0;
+  top: 8px;
+  left: 8px;
+  z-index: 3;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(0,0,0,0.18);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  letter-spacing: 0.02em;
+  user-select:none;
   pointer-events:none;
-
-  background:
-    radial-gradient(circle at 22% 30%, rgba(255,255,255,0.22), transparent 35%),
-    radial-gradient(circle at 70% 62%, rgba(255,255,255,0.14), transparent 40%);
-
-  mix-blend-mode: screen;
-  opacity: 0.45;
-  animation: foilSparkle 2.6s ease-in-out infinite;
 }
 
-@keyframes foilSparkle {
+@keyframes foilShimmer{
+  0%   { transform: translate3d(-25%, -25%, 0) rotate(12deg); }
+  50%  { transform: translate3d(25%,  25%, 0) rotate(12deg); }
+  100% { transform: translate3d(-25%, -25%, 0) rotate(12deg); }
+}
+
+@keyframes foilSparkle{
   0%   { opacity: 0.25; }
   50%  { opacity: 0.55; }
   100% { opacity: 0.25; }
 }
 
-/* Respect reduced motion */
 @media (prefers-reduced-motion: reduce){
-  .card-img-wrap.foil::after,
-  .card-img-wrap.foil::before{
-    animation: none !important;
-  }
+  .card-img-wrap.foil::before,
+  .card-img-wrap.foil::after{ animation: none !important; }
 }
