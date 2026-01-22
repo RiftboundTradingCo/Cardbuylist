@@ -502,9 +502,14 @@ app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async
 ========================= */
 app.use(express.json());
 
-// block direct static access to /admin/*.html
 app.use((req, res, next) => {
-  if (req.path.startsWith("/admin/") && req.path.endsWith(".html")) {
+  // block direct static access to /admin/*.html
+  // BUT allow the shared header partial
+  if (
+    req.path.startsWith("/admin/") &&
+    req.path.endsWith(".html") &&
+    req.path !== "/admin/_admin-header.html"
+  ) {
     return res.status(404).send("Not found");
   }
   next();
