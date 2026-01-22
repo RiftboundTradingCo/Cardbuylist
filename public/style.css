@@ -1607,21 +1607,65 @@ body {
   justify-content: center;
 }
 
-.card-img-wrap.foil img{
-  filter: saturate(1.15) contrast(1.05);
+/* Wrapper must be positioned so badge + overlay can sit on top */
+.card-img-wrap {
+  position: relative;
+  display: inline-block;
+  border-radius: 14px; /* match your card rounding */
+  overflow: hidden;    /* keeps overlay inside rounded corners */
 }
 
-.foil-badge{
+/* Smaller FOIL badge */
+.foil-badge {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  padding: 6px 10px;
+  top: 8px;
+  left: 8px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
   border-radius: 999px;
-  font-weight: 900;
-  font-size: 12px;
-  letter-spacing: .5px;
-  background: rgba(255,255,255,.92);
-  border: 1px solid rgba(0,0,0,.15);
-  box-shadow: 0 6px 14px rgba(0,0,0,.18);
-  pointer-events: none;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(0,0,0,0.18);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  letter-spacing: 0.02em;
 }
+
+/* Foil shimmer overlay */
+.card-img-wrap.foil::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  pointer-events: none;
+
+  /* A subtle rainbow + diagonal sheen */
+  background:
+    linear-gradient(120deg,
+      rgba(255, 255, 255, 0.00) 35%,
+      rgba(255, 255, 255, 0.28) 45%,
+      rgba(255, 255, 255, 0.00) 55%
+    ),
+    conic-gradient(from 180deg,
+      rgba(255, 0, 128, 0.12),
+      rgba(0, 255, 255, 0.12),
+      rgba(255, 255, 0, 0.12),
+      rgba(255, 0, 128, 0.12)
+    );
+
+  mix-blend-mode: screen; /* key for “foil” feel */
+  opacity: 0.55;
+  transform: rotate(12deg);
+}
+
+/* Optional: a tiny sparkle vibe */
+.card-img-wrap.foil::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 20% 30%, rgba(255,255,255,0.18), transparent 35%),
+              radial-gradient(circle at 70% 60%, rgba(255,255,255,0.12), transparent 40%);
+  opacity: 0.5;
+  mix-blend-mode: screen;
+}
+
