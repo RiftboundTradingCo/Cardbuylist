@@ -33,74 +33,80 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    ALL = Array.isArray(data.items) ? data.items : [];
+    ALL = Array.isArray(data.items) ? data.items
+    : Array.isArray(data.rows) ? data.rows
+    : [];
     render();
   }
 
   function render() {
-    const needle = q.trim().toLowerCase();
-    const items = Array.isArray(data.items) ? data.items
-            : Array.isArray(data.rows)  ? data.rows
-            : [];
-      ? ALL
-      : ALL.filter((it) => {
-          const s =
-            `${it.sku} ${it.name} ${it.set_code || ""} ${it.card_number || ""} ${it.rarity || ""}`.toLowerCase();
-          return s.includes(needle);
-        });
+  const needle = q.trim().toLowerCase();
 
-    tbody.innerHTML = "";
+  const items = !needle
+    ? ALL
+    : ALL.filter((it) => {
+        const s =
+          `${it.sku} ${it.name} ${it.set_code || ""} ${it.card_number || ""} ${it.rarity || ""}`.toLowerCase();
+        return s.includes(needle);
+      });
 
-    for (const it of items) {
-      const tr = document.createElement("tr");
-      tr.dataset.sku = it.sku;
+  tbody.innerHTML = "";
 
-      tr.innerHTML = `
-        <td style="padding:10px;">
-          ${it.image ? `<img src="${encodeURI(moneyImg(it.image))}" style="width:44px;height:62px;object-fit:cover;border-radius:8px;border:1px solid rgba(0,0,0,.15);" />` : ""}
-        </td>
-        <td style="padding:10px; font-weight:800;">${it.sku}</td>
+  for (const it of items) {
+    const tr = document.createElement("tr");
+    tr.dataset.sku = it.sku;
 
-        <td style="padding:10px;">
-          <input class="f-name" value="${escapeHtml(it.name || "")}" style="width:260px;" />
-        </td>
+    tr.innerHTML = `
+      <td style="padding:10px;">
+        ${
+          it.image
+            ? `<img src="${encodeURI(moneyImg(it.image))}" style="width:44px;height:62px;object-fit:cover;border-radius:8px;border:1px solid rgba(0,0,0,.15);" />`
+            : ""
+        }
+      </td>
+      <td style="padding:10px; font-weight:800;">${escapeHtml(it.sku)}</td>
 
-        <td style="padding:10px;">
-          <input class="f-set" value="${escapeHtml(it.set_code || "")}" style="width:90px;" />
-        </td>
+      <td style="padding:10px;">
+        <input class="f-name" value="${escapeHtml(it.name || "")}" style="width:260px;" />
+      </td>
 
-        <td style="padding:10px;">
-          <input class="f-num" value="${escapeHtml(it.card_number || "")}" style="width:80px;" />
-        </td>
+      <td style="padding:10px;">
+        <input class="f-set" value="${escapeHtml(it.set_code || "")}" style="width:90px;" />
+      </td>
 
-        <td style="padding:10px;">
-          <select class="f-rarity" style="width:120px;">
-            ${["", "Common", "Uncommon", "Rare", "Epic", "Showcase"]
-              .map((r) => `<option value="${r}" ${String(it.rarity || "") === r ? "selected" : ""}>${r || "—"}</option>`)
-              .join("")}
-          </select>
-        </td>
+      <td style="padding:10px;">
+        <input class="f-num" value="${escapeHtml(it.card_number || "")}" style="width:80px;" />
+      </td>
 
-        <td style="padding:10px;">
-          <input class="f-foil" type="checkbox" ${it.foil ? "checked" : ""} />
-        </td>
+      <td style="padding:10px;">
+        <select class="f-rarity" style="width:120px;">
+          ${["", "Common", "Uncommon", "Rare", "Epic", "Showcase"]
+            .map((r) => `<option value="${r}" ${String(it.rarity || "") === r ? "selected" : ""}>${r || "—"}</option>`)
+            .join("")}
+        </select>
+      </td>
 
-        <td style="padding:10px;">
-          <input class="f-price" type="number" min="0" step="1" value="${Number(it.price_cents || 0)}" style="width:120px;" />
-        </td>
+      <td style="padding:10px;">
+        <input class="f-foil" type="checkbox" ${it.foil ? "checked" : ""} />
+      </td>
 
-        <td style="padding:10px;">
-          <input class="f-stock" type="number" min="0" step="1" value="${Number(it.stock || 0)}" style="width:90px;" />
-        </td>
+      <td style="padding:10px;">
+        <input class="f-price" type="number" min="0" step="1" value="${Number(it.price_cents || 0)}" style="width:120px;" />
+      </td>
 
-        <td style="padding:10px;">
-          <button class="saveBtn cart-primary" type="button" style="padding:8px 12px;">Save</button>
-        </td>
-      `;
+      <td style="padding:10px;">
+        <input class="f-stock" type="number" min="0" step="1" value="${Number(it.stock || 0)}" style="width:90px;" />
+      </td>
 
-      tbody.appendChild(tr);
-    }
+      <td style="padding:10px;">
+        <button class="saveBtn cart-primary" type="button" style="padding:8px 12px;">Save</button>
+      </td>
+    `;
+
+    tbody.appendChild(tr);
   }
+}
+
 
   // Save click (event delegation)
   document.addEventListener("click", async (e) => {
