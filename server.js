@@ -723,6 +723,36 @@ app.post("/api/admin/selllist/upload", requireAdminApi, upload.single("file"), a
   }
 });
 
+// Catalog CSV import
+app.post(
+  "/api/admin/import-catalog-csv",
+  requireAdminApi,
+  upload.single("file"),
+  async (req, res) => {
+    const file = req.file;
+    if (!file) return res.status(400).json({ ok: false, error: "No file uploaded" });
+
+    let rows;
+    try {
+      const csvText = file.buffer.toString("utf8");
+      rows = parse(csvText, { columns: true, skip_empty_lines: true, trim: true });
+    } catch (e) {
+      return res.status(400).json({ ok: false, error: "Could not parse CSV" });
+    }
+
+    const toInt = (v) => {
+      const n = parseInt(String(v ?? "").trim(), 10);
+      return Number.isFinite(n) ? n : 0;
+    };
+    const toBool = (v) => {
+      const s = String(v ?? "").trim().toLowerCase();
+      return s === "true" || s === "1" || s === "yes" || s === "y";
+    };
+    const cleanText = (v) => {
+      const s = String(v ?? "").trim();
+      return s.length ? s : null;
+    };
+
 /* =========================
    STRIPE CHECKOUT SESSION
 ========================= */
