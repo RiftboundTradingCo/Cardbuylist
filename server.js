@@ -524,17 +524,28 @@ app.use(express.static(path.join(__dirname, "public")));
 app.get("/api/admin/inventory", requireAdminApi, async (req, res) => {
   try {
     const r = await pool.query(`
-      SELECT sku, name, price_cents, stock, image, set_code, card_number, rarity, foil
-      FROM app.inventory
-      ORDER BY name ASC
+      SELECT
+        p.sku,
+        p.name,
+        p.image,
+        p.set_code,
+        p.card_number,
+        p.rarity,
+        v.condition,
+        v.foil,
+        v.price_cents,
+        v.stock
+      FROM app.inventory_products p
+      LEFT JOIN app.inventory_variants v ON v.sku = p.sku
+      ORDER BY p.name, v.condition, v.foil
     `);
-    return res.json({ ok: true, items: r.rows });
+
+    return res.json({ ok: true, rows: r.rows });
   } catch (e) {
-    console.error(e);
+    console.error("GET /api/admin/inventory failed:", e);
     return res.status(500).json({ ok: false, error: "Failed to load inventory" });
   }
 });
-
 app.put("/api/admin/inventory/:sku", requireAdminApi, async (req, res) => {
   try {
     const sku = String(req.params.sku || "").trim();
