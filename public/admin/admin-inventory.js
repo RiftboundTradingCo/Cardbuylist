@@ -39,7 +39,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function render() {
     const needle = q.trim().toLowerCase();
-    const items = !needle
+    const items = Array.isArray(data.items) ? data.items
+            : Array.isArray(data.rows)  ? data.rows
+            : [];
       ? ALL
       : ALL.filter((it) => {
           const s =
