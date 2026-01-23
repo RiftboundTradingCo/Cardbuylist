@@ -595,35 +595,128 @@ app.put("/api/admin/inventory/:sku", requireAdminApi, async (req, res) => {
   }
 });
 
-// Catalog CSV import
+// Catalog CSV import -> upserts into app.inventory
 app.post(
   "/api/admin/import-catalog-csv",
   requireAdminApi,
   upload.single("file"),
   async (req, res) => {
-    const file = req.file;
-    if (!file) return res.status(400).json({ ok: false, error: "No file uploaded" });
-
-    let rows;
     try {
-      const csvText = file.buffer.toString("utf8");
-      rows = parse(csvText, { columns: true, skip_empty_lines: true, trim: true });
-    } catch (e) {
-      return res.status(400).json({ ok: false, error: "Could not parse CSV" });
-    }
+      const file = req.file;
+      if (!file) return res.status(400).json({ ok: false, error: "No file uploaded" });
 
-    const toInt = (v) => {
-      const n = parseInt(String(v ?? "").trim(), 10);
-      return Number.isFinite(n) ? n : 0;
-    };
-    const toBool = (v) => {
-      const s = String(v ?? "").trim().toLowerCase();
-      return s === "true" || s === "1" || s === "yes" || s === "y";
-    };
-    const cleanText = (v) => {
-      const s = String(v ?? "").trim();
-      return s.length ? s : null;
-    };
+      let rows;
+      try {
+        const csvText = file.buffer.toString("utf8");
+        rows = parse(csvText, { columns: true, skip_empty_lines: true, trim: true });
+      } catch (e) {
+        return res.status(400).json({ ok: false, error: "Could not parse CSV" });
+      }
+
+      const toInt = (v) => {
+        const n = parseInt(String(v ?? "").trim(), 10);
+        return Number.isFinite(n) ? n : 0;
+      };
+      const toBool = (v) => {
+        const s = String(v ?? "").trim().toLowerCase();
+        return s === "true" || s === "1" || s === "yes" || s === "y";
+      };
+      const cleanText = (v) => {
+        const s = String(v ?? "").trim();
+        return s.length ? s : null;
+      };
+      const normalizeImage = (v) => {
+        const s = String(v ?? "").trim();
+        if (!s) return null;
+        return s.startsWith("/") ? s : `/${s}`;
+      };
+
+      // Map CSV rows to inventory records
+      const cleaned = [];
+      for (const r of rows) {
+        const sku = String(r.sku ?? r.SKU ?? r.Sku ?? "").trim();
+        if (!sku) continue;
+
+        cleaned.push({
+          sku,
+          name: cleanText(r.name ?? r.Name),
+          image: normalizeImage(r.image ?? r.Image),
+          set_code: cleanText(r.set_code ?? r.set ?? r.Set),
+          card_number: cleanText(r.card_number ?? r.number ?? r.Number),
+          rarity: cleanText(r.rarity ?? r.Rarity),
+          foil: toBool(r.foil ?? r.Foil),
+
+          price_cents: toInt(r.price_cents ?? r.priceCents ?? 0),
+
+          stock_nm: toInt(r.stock_nm ?? 0),
+          stock_lp: toInt(r.stock_lp ?? 0),
+          stock_mp: toInt(r.stock_mp ?? 0),
+          stock_hp: toInt(r.stock_hp ?? 0),
+        });
+      }
+
+      if (!cleaned.length) {
+        return res.status(400).json({ ok: false, error: "No valid rows (missing sku?)" });
+      }
+
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+
+        const sql = `
+          INSERT INTO app.inventory
+            (sku, name, price_cents, image, set_code, card_number, rarity, foil,
+             stock_nm, stock_lp, stock_mp, stock_hp, updated_at)
+          VALUES
+            ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, NOW())
+          ON CONFLICT (sku) DO UPDATE SET
+            name       = COALESCE(EXCLUDED.name, app.inventory.name),
+            price_cents= EXCLUDED.price_cents,
+            image      = COALESCE(EXCLUDED.image, app.inventory.image),
+            set_code   = EXCLUDED.set_code,
+            card_number= EXCLUDED.card_number,
+            rarity     = EXCLUDED.rarity,
+            foil       = EXCLUDED.foil,
+            stock_nm   = EXCLUDED.stock_nm,
+            stock_lp   = EXCLUDED.stock_lp,
+            stock_mp   = EXCLUDED.stock_mp,
+            stock_hp   = EXCLUDED.stock_hp,
+            updated_at = NOW()
+        `;
+
+        for (const it of cleaned) {
+          await client.query(sql, [
+            it.sku,
+            it.name,
+            it.price_cents,
+            it.image,
+            it.set_code,
+            it.card_number,
+            it.rarity,
+            it.foil,
+            it.stock_nm,
+            it.stock_lp,
+            it.stock_mp,
+            it.stock_hp,
+          ]);
+        }
+
+        await client.query("COMMIT");
+        return res.json({ ok: true, rows: cleaned.length });
+      } catch (e) {
+        await client.query("ROLLBACK");
+        console.error("import-catalog-csv error:", e);
+        return res.status(500).json({ ok: false, error: "Import failed" });
+      } finally {
+        client.release();
+      }
+    } catch (e) {
+      console.error("import-catalog-csv outer error:", e);
+      return res.status(500).json({ ok: false, error: "Import failed" });
+    }
+  }
+);
+
 
 /* =========================
    ADMIN API: SELL LIST CSV UPLOAD
