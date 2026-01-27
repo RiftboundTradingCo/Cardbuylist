@@ -1177,37 +1177,40 @@ app.post("/api/submit", async (req, res) => {
 ========================= */
 app.get("/api/catalog", async (req, res) => {
   try {
+    // prevent stale data
+    res.set("Cache-Control", "no-store");
+
     const r = await pool.query(`
       SELECT
-        p.sku, p.name, p.image, p.set_code, p.card_number, p.rarity,
-        v.condition, v.foil, v.price_cents, v.stock
-      FROM app.inventory_products p
-      LEFT JOIN app.inventory_variants v ON v.sku = p.sku
-      ORDER BY p.name, v.condition, v.foil
+        sku, name, image, set_code, card_number, rarity, foil,
+        price_cents,
+        stock_nm, stock_lp, stock_mp, stock_hp
+      FROM app.inventory
+      ORDER BY name ASC
     `);
 
     const catalog = {};
     for (const row of r.rows) {
-      if (!catalog[row.sku]) {
-        catalog[row.sku] = {
-          sku: row.sku,
-          name: row.name,
-          image: row.image || null,
-          set_code: row.set_code || null,
-          card_number: row.card_number || null,
-          rarity: row.rarity || null,
-          variants: [],
-        };
-      }
+      const sku = String(row.sku || "").trim();
+      if (!sku) continue;
 
-      if (row.condition) {
-        catalog[row.sku].variants.push({
-          condition: row.condition,
-          foil: !!row.foil,
-          price_cents: Number(row.price_cents || 0),
-          stock: Number(row.stock || 0),
-        });
-      }
+      const basePriceCents = Number(row.price_cents || 0);
+      const foil = !!row.foil;
+
+      catalog[sku] = {
+        sku,
+        name: row.name,
+        image: row.image || null,
+        set_code: row.set_code || null,
+        card_number: row.card_number || null,
+        rarity: row.rarity || null,
+        variants: [
+          { condition: "NM", foil, price_cents: centsForCondition(basePriceCents, "Near Mint"),       stock: Number(row.stock_nm || 0) },
+          { condition: "LP", foil, price_cents: centsForCondition(basePriceCents, "Lightly Played"),  stock: Number(row.stock_lp || 0) },
+          { condition: "MP", foil, price_cents: centsForCondition(basePriceCents, "Moderately Played"),stock: Number(row.stock_mp || 0) },
+          { condition: "HP", foil, price_cents: centsForCondition(basePriceCents, "Heavily Played"),  stock: Number(row.stock_hp || 0) },
+        ].filter(v => v.stock > 0 || v.price_cents > 0) // optional: keep catalog cleaner
+      };
     }
 
     return res.json({ ok: true, catalog });
@@ -1217,55 +1220,6 @@ app.get("/api/catalog", async (req, res) => {
   }
 });
 
-app.get("/api/selllist", async (req, res) => {
-  try {
-    const r = await pool.query(`
-      SELECT
-        sku,
-        name,
-        image,
-        set_code,
-        card_number,
-        rarity,
-        foil,
-        price_nm,
-        price_lp,
-        price_mp,
-        max_nm,
-        max_lp,
-        max_mp
-      FROM app.selllist
-      ORDER BY sku
-    `);
-
-    const selllist = {};
-    for (const row of r.rows) {
-      selllist[row.sku] = {
-        name: row.name,
-        image: row.image || null,
-        set_code: row.set_code || null,
-        card_number: row.card_number || null,
-        rarity: row.rarity || null,
-        foil: !!row.foil,
-        prices: {
-          NM: (Number(row.price_nm) || 0) / 100,
-          LP: (Number(row.price_lp) || 0) / 100,
-          MP: (Number(row.price_mp) || 0) / 100,
-        },
-        max: {
-          NM: Number(row.max_nm) || 0,
-          LP: Number(row.max_lp) || 0,
-          MP: Number(row.max_mp) || 0,
-        },
-      };
-    }
-
-    return res.json({ ok: true, selllist });
-  } catch (e) {
-    console.error("selllist db error:", e);
-    return res.status(500).json({ ok: false, error: "Selllist load failed" });
-  }
-});
 
 /* =========================
    AUTH (DB-backed)
