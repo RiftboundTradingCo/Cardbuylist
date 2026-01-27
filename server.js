@@ -545,55 +545,82 @@ app.get("/api/admin/inventory", requireAdminApi, async (req, res) => {
     console.error("GET /api/admin/inventory failed:", e);
     return res.status(500).json({ ok: false, error: "Failed to load inventory" });
   }
-});
+
 app.put("/api/admin/inventory/:sku", requireAdminApi, async (req, res) => {
   try {
     const sku = String(req.params.sku || "").trim();
-    if (!sku) return res.status(400).json({ ok: false, error: "Missing SKU" });
-
-    const { name, price_cents, stock, image, set_code, card_number, rarity, foil } = req.body || {};
-
-    const nName = name == null ? null : String(name).trim();
-    const nPrice = price_cents == null ? null : Number(price_cents);
-    const nStock = stock == null ? null : Number(stock);
-    const nImage = image == null ? null : String(image).trim();
-    const nSet = set_code == null ? null : String(set_code).trim();
-    const nNum = card_number == null ? null : String(card_number).trim();
-    const nRarity = rarity == null ? null : String(rarity).trim();
-    const nFoil = !!foil;
-
-    if (nPrice != null && (!Number.isFinite(nPrice) || nPrice < 0)) {
-      return res.status(400).json({ ok: false, error: "Invalid price_cents" });
+    if (!sku) {
+      return res.status(400).json({ ok: false, error: "Missing SKU" });
     }
-    if (nStock != null && (!Number.isFinite(nStock) || nStock < 0)) {
-      return res.status(400).json({ ok: false, error: "Invalid stock" });
-    }
+
+    const {
+      name,
+      image,
+      set_code,
+      card_number,
+      rarity,
+      foil,
+      price_cents,
+      stock_nm,
+      stock_lp,
+      stock_mp,
+      stock_hp,
+    } = req.body || {};
+
+    const toInt = (v) => {
+      const n = Number(v);
+      return Number.isFinite(n) && n >= 0 ? Math.trunc(n) : 0;
+    };
 
     const r = await pool.query(
       `
       UPDATE app.inventory
       SET
-        name = COALESCE($2, name),
-        price_cents = COALESCE($3, price_cents),
-        stock = COALESCE($4, stock),
-        image = COALESCE($5, image),
-        set_code = $6,
-        card_number = $7,
-        rarity = $8,
-        foil = $9
+        name        = COALESCE($2, name),
+        image       = COALESCE($3, image),
+        set_code    = COALESCE($4, set_code),
+        card_number = COALESCE($5, card_number),
+        rarity      = COALESCE($6, rarity),
+        foil        = COALESCE($7, foil),
+        price_cents = COALESCE($8, price_cents),
+
+        stock_nm = COALESCE($9, stock_nm),
+        stock_lp = COALESCE($10, stock_lp),
+        stock_mp = COALESCE($11, stock_mp),
+        stock_hp = COALESCE($12, stock_hp),
+
+        updated_at = NOW()
       WHERE sku = $1
-      RETURNING sku, name, price_cents, stock, image, set_code, card_number, rarity, foil
+      RETURNING *
       `,
-      [sku, nName, nPrice, nStock, nImage, nSet, nNum, nRarity, nFoil]
+      [
+        sku,
+        name ?? null,
+        image ?? null,
+        set_code ?? null,
+        card_number ?? null,
+        rarity ?? null,
+        typeof foil === "boolean" ? foil : null,
+        Number.isFinite(Number(price_cents)) ? Number(price_cents) : null,
+
+        toInt(stock_nm),
+        toInt(stock_lp),
+        toInt(stock_mp),
+        toInt(stock_hp),
+      ]
     );
 
-    if (!r.rowCount) return res.status(404).json({ ok: false, error: "SKU not found" });
-    return res.json({ ok: true, item: r.rows[0] });
+    if (!r.rowCount) {
+      return res.status(404).json({ ok: false, error: "SKU not found" });
+    }
+
+    res.json({ ok: true, item: r.rows[0] });
   } catch (e) {
-    console.error(e);
-    return res.status(500).json({ ok: false, error: e.message || "Update failed" });
+    console.error("admin inventory update error:", e);
+    res.status(500).json({ ok: false, error: e.message || "Update failed" });
   }
 });
+
 
 // Catalog CSV import -> upserts into app.inventory
 app.post(
