@@ -545,6 +545,7 @@ app.get("/api/admin/inventory", requireAdminApi, async (req, res) => {
     console.error("GET /api/admin/inventory failed:", e);
     return res.status(500).json({ ok: false, error: "Failed to load inventory" });
   }
+});
 
 app.put("/api/admin/inventory/:sku", requireAdminApi, async (req, res) => {
   try {
